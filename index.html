@@ -3,32 +3,523 @@
 <head>
     <meta charset="utf-8">
     <title>Route Navigator</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://api-maps.yandex.ru/2.1/?apikey=YANDEX_API_KEY&lang=ru_RU&suppressMapOpenBlock=true"></script>
     <link rel="stylesheet" href="assets/css/shared.css">
-    <link rel="stylesheet" href="assets/css/launcher.css">
+    <style>
+    :root {
+        --bg: #050505;
+        --dark-panel: linear-gradient(180deg, rgba(20,20,20,0.85), rgba(10,10,10,0.8));
+        --btn-txt: #ffffff;
+        --border: rgba(255,255,255,0.25);
+        --panel-blur: blur(22px);
+        --twa-header-height: 44px;
+        --target-lime: #00FF00;
+    }
+    
+    html, body {
+        margin: 0; padding: 0; height: 100%; width: 100%;
+        font-family: -apple-system, sans-serif; overflow: hidden;
+        background: var(--bg); position: fixed; touch-action: none;
+        color: var(--btn-txt);
+    }
+    
+    #map { position: absolute; inset: 0; z-index: 1; touch-action: auto; }
+    [class*="-copyrights-pane"], [class*="-map-copyrights-promo"], [class*="-controls-pane"] { display: none !important; }
+    
+    /* Верхняя панель */
+    .top-ui-wrapper {
+        position: absolute; top: 0; left: 0; right: 0;
+        height: var(--twa-header-height); margin-top: env(safe-area-inset-top, 0px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 9005; pointer-events: none; padding: 0 16px;
+    }
+    
+    #menuBtn {
+        pointer-events: auto;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        padding: 10px 24px;
+        border-radius: 100px;
+        border: 1px solid var(--border);
+        color: var(--btn-txt);
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s;
+    }
+    #menuBtn:active { transform: scale(0.95); background: rgba(30,32,40,0.9); }
+    
+    /* Загрузочный экран */
+    .loading-overlay {
+        position: fixed; inset: 0; background: rgba(8,10,14,0.95);
+        z-index: 9999; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        color: white; font-weight: 600; text-align: center;
+        padding: 20px; backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    .loading-overlay.hidden { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+    
+    /* Боковое меню */
+    .menu-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        z-index: 1998; display: none; opacity: 0; transition: opacity 0.25s;
+    }
+    .menu-overlay.visible { display: block; opacity: 1; }
+    
+    .side-menu {
+        position: fixed; top: 0; left: 0; width: min(320px, 85vw); height: 100%;
+        background: linear-gradient(180deg, rgba(25,27,35,0.95), rgba(18,20,28,0.95));
+        border-right: 1px solid var(--border); z-index: 1999;
+        transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
+        display: flex; flex-direction: column;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+    }
+    .side-menu.visible { transform: translateX(0); }
+    
+    .menu-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+        background: rgba(30,32,40,0.5);
+    }
+    .menu-title { font-size: 20px; font-weight: 800; }
+    .menu-close {
+        width: 32px; height: 32px; border-radius: 10px;
+        background: rgba(255,255,255,0.1); border: 1px solid var(--border);
+        color: var(--btn-txt); font-size: 20px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+    }
+    
+    .menu-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .menu-section:last-child { border-bottom: none; }
+    .menu-section-title {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.8px; color: rgba(255,255,255,0.5); margin-bottom: 12px;
+    }
+    
+    .menu-btn {
+        width: 100%; display: flex; align-items: center; gap: 12px;
+        padding: 14px 16px; border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(40,40,45,0.44);
+        color: var(--btn-txt); font-size: 15px; font-weight: 600;
+        cursor: pointer; transition: transform 0.15s, background 0.15s;
+        margin-bottom: 8px;
+    }
+    .menu-btn:last-child { margin-bottom: 0; }
+    .menu-btn:active { transform: scale(0.98); }
+    .menu-btn-green { background: rgba(52,199,89,0.42); border-color: rgba(103,255,153,0.45); }
+    .menu-btn-blue { background: rgba(61,160,255,0.48); border-color: rgba(90,180,255,0.5); }
+    
+    /* Список маршрутов в меню */
+    .routes-list {
+        display: flex; flex-direction: column; gap: 8px;
+        max-height: 35vh; overflow-y: auto; margin-bottom: 12px;
+    }
+    .route-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 14px; border-radius: 12px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border);
+        cursor: pointer; transition: background 0.15s, transform 0.15s;
+    }
+    .route-item:active { transform: scale(0.98); }
+    .route-item-name {
+        font-size: 14px; font-weight: 600; flex: 1;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        margin-right: 8px;
+    }
+    .route-item-btn {
+        width: 28px; height: 28px; border-radius: 8px;
+        background: rgba(255,255,255,0.1); border: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+    }
+    .route-item-btn svg { fill: var(--btn-txt); width: 14px; height: 14px; }
+    
+    /* Модальные окна */
+    .modal-overlay {
+        position: fixed; inset: 0; display: flex;
+        align-items: flex-end; justify-content: center;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        z-index: 3000;
+    }
+    .modal-sheet {
+        width: min(92vw, 500px); margin: 0 16px 20px;
+        background: linear-gradient(180deg, rgba(30,32,40,0.95), rgba(20,22,30,0.95));
+        border: 1px solid var(--border); border-radius: 20px 20px 0 0;
+        padding: 20px; display: flex; flex-direction: column; gap: 12px;
+        box-shadow: 0 -12px 40px rgba(0,0,0,0.4);
+        max-height: 85vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 18px; font-weight: 800; text-align: center; }
+    .modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .modal-header h3 { margin: 0; font-size: 18px; font-weight: 800; }
+    .close-circle {
+        width: 32px; height: 32px; border-radius: 10px;
+        background: rgba(255,255,255,0.1); border: 1px solid var(--border);
+        color: var(--btn-txt); font-size: 20px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+    }
+    .input {
+        width: 100%; padding: 14px 16px; border-radius: 12px;
+        border: 1px solid var(--border); background: rgba(40,42,50,0.5);
+        color: var(--btn-txt); font-size: 16px; font-family: inherit;
+        outline: none; box-sizing: border-box;
+    }
+    .hint { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .modal-btn {
+        width: 100%; display: flex; align-items: center; justify-content: center;
+        gap: 10px; padding: 14px 16px; border-radius: 12px;
+        border: 1px solid var(--border); background: rgba(40,40,45,0.44);
+        color: var(--btn-txt); font-size: 15px; font-weight: 600;
+        cursor: pointer; transition: transform 0.15s;
+    }
+    .modal-btn:active { transform: scale(0.98); }
+    .modal-btn-green { background: rgba(52,199,89,0.42); border-color: rgba(103,255,153,0.45); }
+    .modal-btn-danger { background: rgba(255,95,87,0.42); border-color: rgba(255,127,120,0.5); }
+    .modal-btn-muted { background: rgba(40,40,45,0.3); }
+    .modal-divider { height: 1px; background: var(--border); margin: 8px 0; }
+    
+    /* Инструкция */
+    .instruction-modal {
+        position: fixed; inset: 0; z-index: 3000; display: none;
+        align-items: flex-end; justify-content: center;
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+    .instruction-content {
+        width: min(92vw, 600px); margin: 0 16px 20px;
+        background: linear-gradient(180deg, rgba(30,32,40,0.95), rgba(20,22,30,0.95));
+        border: 1px solid var(--border); border-radius: 20px 20px 0 0;
+        display: flex; flex-direction: column; max-height: 85vh;
+    }
+    .instruction-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .instruction-title { font-size: 18px; font-weight: 800; }
+    .instruction-close {
+        width: 32px; height: 32px; border-radius: 10px;
+        background: rgba(255,255,255,0.1); border: 1px solid var(--border);
+        color: var(--btn-txt); font-size: 20px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+    }
+    .instruction-text {
+        padding: 20px; font-size: 14px; line-height: 1.6;
+        color: var(--btn-txt); overflow-y: auto; white-space: pre-wrap;
+    }
+    
+    /* Toast уведомления */
+    .toast {
+        position: fixed; top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 10px);
+        left: 50%; transform: translateX(-50%) translateY(-100px);
+        background: var(--dark-panel); color: #ffffff;
+        padding: 10px 20px; border-radius: 50px;
+        font-size: 14px; z-index: 9999;
+        transition: 0.4s; opacity: 0;
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        border: 1px solid var(--border); font-weight: 700;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: rgba(52,199,89,0.95); }
+    .toast.error { background: rgba(255,59,48,0.95); }
+    .toast.info { background: rgba(0,0,0,0.82); }
+    
+    /* Wake lock video */
+    #v { position: fixed; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; }
+    
+    /* ============================================ */
+    /* НАВИГАТОР - UI элементы */
+    /* ============================================ */
+    
+    /* HUD - информационная панель */
+    .nav-hud {
+        position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
+        left: 16px; right: 88px; z-index: 9000;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        border-radius: 20px; padding: 16px;
+        color: var(--btn-txt);
+        border: 1px solid var(--border);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.22);
+        display: none; flex-direction: column; gap: 8px;
+        pointer-events: auto;
+    }
+    .nav-hud.active { display: flex; }
+    
+    .hud-header { display: flex; align-items: flex-start; gap: 10px; }
+    .hud-index {
+        background: rgba(255,255,255,0.2); color: white;
+        font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px;
+    }
+    .hud-cmd { font-size: 16px; font-weight: 700; flex: 1; }
+    
+    .hud-main-content { display: flex; align-items: center; gap: 10px; }
+    .hud-stats {
+        display: flex; align-items: center; gap: 16px; flex: 1;
+        padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .stat-label { font-size: 9px; color: #aaa; text-transform: uppercase; font-weight: 700; }
+    .stat-value { font-size: 14px; font-weight: 700; }
+    .stat-value.in-range { color: var(--target-lime); }
+    
+    .hud-side-actions { display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
+    
+    .action-icon-btn {
+        width: 36px; height: 36px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid var(--border);
+        cursor: pointer; flex-shrink: 0;
+    }
+    .action-icon-btn svg { fill: #f3f4f6; width: 20px; height: 20px; }
+    .action-icon-btn.comm-btn svg { fill: #d1d5db; }
+    
+    /* HUD выбора точки */
+    #selectionHud {
+        position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
+        left: 16px; right: 88px; z-index: 9001;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        border-radius: 20px; padding: 16px;
+        color: var(--btn-txt);
+        border: 1px solid var(--border);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.22);
+        display: none; flex-direction: column; gap: 8px;
+        pointer-events: auto;
+    }
+    #selectionHud.active { display: flex; }
+    #selectionHud .hud-actions {
+        width: 100%; display: flex; padding-top: 8px; gap: 10px; align-items: center;
+    }
+    #selConfirmBtn {
+        flex: 1; padding: 14px; border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--dark-panel);
+        color: var(--btn-txt); font-size: 15px; font-weight: 700;
+        cursor: pointer;
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        transition: transform 0.15s;
+    }
+    #selConfirmBtn:active { transform: scale(0.95); }
+    
+    /* Контрольная стопка справа */
+    .control-stack {
+        position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
+        right: 16px; z-index: 9000;
+        display: flex; flex-direction: column; gap: 12px;
+        width: 56px; pointer-events: none;
+    }
+    
+    /* Телеметрия */
+    #telemetryPanel {
+        pointer-events: auto;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        border-radius: 18px; padding: 10px 0;
+        color: white;
+        display: none; flex-direction: column;
+        align-items: center;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+        transition: transform 0.15s, background 0.15s;
+    }
+    #telemetryPanel.visible { display: flex; }
+    #telemetryPanel:active { transform: scale(0.95); }
+    .tel-item { display: flex; flex-direction: column; align-items: center; }
+    .tel-label { font-size: 8px; color: #aaa; font-weight: 700; text-transform: uppercase; }
+    .tel-value { font-size: 15px; font-weight: 800; }
+    
+    /* Кнопки управления */
+    .map-btn {
+        pointer-events: auto;
+        width: 56px; height: 56px; border-radius: 50%;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        border: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s;
+    }
+    .map-btn:active { transform: scale(0.95); }
+    .map-btn.active { background: rgba(255,255,255,0.22); }
+    .map-btn svg { fill: white; width: 26px; }
+    
+    /* Настройки навигатора */
+    #navSettingsOverlay {
+        position: absolute; bottom: 0; right: 72px; z-index: 9010;
+        background: linear-gradient(180deg, rgba(30,32,40,0.9), rgba(20,22,30,0.9));
+        border-radius: 20px;
+        display: none; flex-direction: column;
+        width: 220px; padding: 14px; gap: 12px;
+        pointer-events: auto; color: #f3f4f6;
+        border: 1px solid var(--border);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+    }
+    #navSettingsOverlay.visible { display: flex; }
+    .settings-row {
+        display: flex; justify-content: space-between;
+        align-items: center; font-size: 13px; font-weight: 600;
+    }
+    .trigger-input {
+        width: 54px; padding: 6px; border-radius: 10px;
+        border: 1px solid var(--border); text-align: center;
+        background: rgba(255,255,255,0.1); color: #fff;
+        font-size: 13px; font-weight: 600;
+    }
+    
+    /* Список точек навигатора */
+    #navPointsMenu {
+        position: absolute; bottom: 100px; left: 16px; right: 80px;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        z-index: 9010;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+        pointer-events: auto;
+        height: 75vh;
+        display: none; flex-direction: column;
+        overflow: hidden;
+    }
+    #navPointsMenu .menu-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        font-weight: 800; font-size: 11px; text-align: center;
+        color: rgba(255,255,255,0.5); text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    #navPointsList {
+        overflow-y: auto; padding: 8px;
+        display: flex; flex-direction: column; gap: 6px;
+        height: calc(100% - 40px);
+    }
+    .point-item {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 12px; border-radius: 16px; color: white;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        cursor: pointer;
+    }
+    .point-item:active { background: rgba(255,255,255,0.08); }
+    .point-item.active { background: rgba(255,255,255,0.14); }
+    .point-badge {
+        min-width: 24px; height: 24px; border-radius: 8px;
+        background: rgba(255,255,255,0.1);
+        font-size: 11px; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+        margin-top: 4px;
+    }
+    .active .point-badge { background: rgba(255,255,255,0.24); color: #fff; }
+    .point-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .point-name {
+        font-size: 15px; font-weight: 600; line-height: 1.3;
+        color: #fff; word-wrap: break-word;
+    }
+    .point-actions { display: flex; gap: 6px; align-items: center; }
+    
+    /* Оверлей комментария */
+    #commentOverlay {
+        position: absolute; top: 80px; left: 50%;
+        transform: translateX(-50%);
+        width: 85%; max-width: 320px;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        padding: 16px; color: var(--btn-txt);
+        z-index: 9025;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        pointer-events: auto; text-align: center;
+        display: none; flex-direction: column; gap: 8px;
+    }
+    .overlay-title {
+        font-size: 11px; font-weight: 800;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase; margin-bottom: 4px;
+    }
+    .info-value { font-size: 14px; font-weight: 400; line-height: 1.4; }
+    
+    /* Cache status */
+    #cacheStatus {
+        position: absolute; top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 10px);
+        right: 16px; z-index: 9006;
+        font-size: 9px; color: #c7c9d1; font-weight: 800;
+        text-transform: uppercase;
+        background: rgba(32,34,40,0.6);
+        border: 1px solid var(--border);
+        padding: 2px 8px; border-radius: 6px;
+        display: none; pointer-events: auto;
+    }
+    
+    /* Wake overlay */
+    #wakeOverlay {
+        position: fixed; inset: 0; z-index: 9998;
+        display: none; align-items: center; justify-content: center;
+        background: rgba(8,10,14,0.72);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    .wake-btn {
+        max-width: 90vw; padding: 18px 22px; border-radius: 18px;
+        border: 1px solid var(--border);
+        background: var(--dark-panel);
+        color: var(--btn-txt); font-size: 16px; font-weight: 800;
+        text-align: center; cursor: pointer;
+        box-shadow: 0 16px 30px rgba(0,0,0,0.3);
+    }
+    </style>
 </head>
 <body>
 
-<div id="loadingScreen" class="loading-screen">ЗАГРУЗКА ДАННЫХ</div>
-
-<!-- Карта (общая для всех режимов) -->
-<div id="map"></div>
-
-<!-- Верхняя панель -->
-<div class="top-ui-wrapper">
-    <button id="menuBtn" class="top-bar-btn">
-        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="white"/></svg>
-        <span id="topTitle">Меню</span>
-    </button>
-    <div id="cacheStatus" class="cache-status" style="display:none;">Офлайн-кэш: 0%</div>
+<div id="loading" class="loading-overlay">
+    <div id="loadingText">ЗАГРУЗКА...</div>
+    <div id="errorMsg" style="color: #FF3B30; display: none; margin-top: 10px;"></div>
 </div>
 
-<!-- Кнопка геолокации -->
-<button id="locateBtn" class="map-btn" onclick="toggleAutoCenter()">
-    <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 7.48 7.94 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" fill="white"/></svg>
-</button>
+<div id="wakeOverlay">
+    <button id="wakeBtn" class="wake-btn" type="button">Нажмите, чтобы экран не выключался</button>
+</div>
+
+<video id="v" playsinline muted loop></video>
+<div id="map"></div>
+
+<!-- Верхняя панель с кнопкой МЕНЮ -->
+<div class="top-ui-wrapper">
+    <button id="menuBtn">МЕНЮ</button>
+</div>
+
+<!-- Cache status -->
+<div id="cacheStatus">Офлайн-кэш: 0%</div>
+
+<!-- Оверлей комментария -->
+<div id="commentOverlay" onclick="this.style.display='none'">
+    <div class="overlay-title">Комментарий</div>
+    <div id="commentText" class="info-value">...</div>
+</div>
 
 <!-- Боковое меню -->
 <div id="menuOverlay" class="menu-overlay" onclick="closeMenu()"></div>
@@ -39,143 +530,47 @@
     </div>
     
     <div class="menu-section">
-        <div class="menu-section-title">Режимы</div>
-        <button id="modeLauncherBtn" class="menu-btn menu-btn-blue">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z" fill="currentColor"/></svg>
-            Управление маршрутами
-        </button>
-        <button id="modeCatalogBtn" class="menu-btn menu-btn-blue">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="currentColor" stroke="currentColor" stroke-width="2"/></svg>
-            Каталог маршрутов
+        <div class="menu-section-title">Маршруты</div>
+        <div id="routesList" class="routes-list"></div>
+        <button id="createNewBtn" class="menu-btn menu-btn-green">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
+            Создать новый маршрут
         </button>
     </div>
     
-    <div class="menu-section" id="routesSection" style="display:none;">
-        <div class="menu-section-title">Ваши маршруты</div>
-        <div id="routesList" class="routes-list">
-            <!-- Список маршрутов -->
-        </div>
-        <button id="createNewBtn" class="menu-btn menu-btn-green">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
-            Создать новый маршрут
+    <div class="menu-section">
+        <div class="menu-section-title">Каталог</div>
+        <button id="openCatalogBtn" class="menu-btn menu-btn-blue">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="currentColor" stroke="currentColor" stroke-width="2"/></svg>
+            Публичные маршруты
         </button>
     </div>
     
     <div class="menu-section">
         <div class="menu-section-title">Действия</div>
         <button id="instructionBtn" class="menu-btn">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/></svg>
             Инструкция
         </button>
     </div>
 </div>
 
-<!-- ПАНЕЛЬ УПРАВЛЕНИЯ МАРШРУТАМИ (Launcher) -->
-<div id="launcherPanel" class="mode-panel" style="display:none;">
-    <div class="panel-content">
-        <h2 class="panel-title">Управление маршрутами</h2>
-        <div id="launcherRoutesList" class="launcher-routes-list">
-            <!-- Список маршрутов -->
-        </div>
-        <button id="launcherCreateBtn" class="panel-btn panel-btn-green">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
-            Создать новый маршрут
-        </button>
-    </div>
-</div>
-
-<!-- ПАНЕЛЬ КАТАЛОГА (Catalog) -->
-<div id="catalogPanel" class="mode-panel" style="display:none;">
-    <div class="panel-content">
-        <h2 class="panel-title">Каталог публичных маршрутов</h2>
-        <p class="panel-subtitle">Выберите маршрут для запуска в навигаторе</p>
-        <div id="catalogList" class="catalog-list">
-            <!-- Список каталога -->
-        </div>
-    </div>
-</div>
-
-<!-- ПАНЕЛЬ РЕДАКТОРА (Editor) -->
-<div id="editorPanel" class="mode-panel mode-panel-full" style="display:none;">
-    <div class="editor-toolbar">
-        <button id="editorBackBtn" class="toolbar-btn">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="white"/></svg>
-        </button>
-        <span id="editorTitle" class="toolbar-title">Редактор</span>
-        <button id="editorSaveBtn" class="toolbar-btn toolbar-btn-green">Сохранить</button>
-        <button id="editorSettingsBtn" class="toolbar-btn">⚙️</button>
-    </div>
-    <div class="editor-bottom-controls">
-        <button id="editorAddPointBtn" class="editor-add-btn">Добавить новую точку</button>
-    </div>
-    <div id="editorFloatingSave" class="editor-floating-save" style="display:none;">
-        <button id="editorSaveChangesBtn" class="editor-save-btn">Сохранить изменения</button>
-    </div>
-</div>
-
-<!-- ПАНЕЛЬ НАВИГАТОРА (Navigator) -->
-<div id="navigatorPanel" class="mode-panel mode-panel-full" style="display:none;">
-    <div id="navHud" class="nav-hud">
-        <div class="hud-header">
-            <span class="hud-index" id="hudIndex">1</span>
-            <div class="hud-cmd" id="hudCmd">Маршрут не выбран</div>
-        </div>
-        <div class="hud-main-content">
-            <div class="hud-stats">
-                <div class="stat-item">
-                    <span class="stat-label">Дист</span>
-                    <br><span class="stat-value" id="hudDist">---</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Цель АЗ</span>
-                    <br><span class="stat-value" id="hudTargetAz">---</span>
-                </div>
-            </div>
-            <div class="hud-side-actions">
-                <button id="navCommentBtn" class="action-icon-btn comm-btn" style="display:none">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                </button>
-                <button id="navSpeakBtn" class="action-icon-btn">
-                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-                </button>
-            </div>
-        </div>
-    </div>
-    <div class="nav-bottom-controls">
-        <button id="navListBtn" class="nav-list-btn">
-            <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
-        </button>
-    </div>
-</div>
-
-<!-- Модальные окна -->
-<!-- Создание маршрута -->
+<!-- Модальное окно создания маршрута -->
 <div id="createModal" class="modal-overlay" style="display:none;">
     <div class="modal-sheet">
         <div class="modal-title">Новый маршрут</div>
         <input id="routeNameInput" class="input" type="text" placeholder="Введите название" oninput="this.value = this.value.replace(/[^a-zA-Z0-9_]/g, '')">
         <div class="hint">Допустимы только английские буквы, цифры и знак нижнего подчеркивания.</div>
-        <div class="modal-actions">
+        <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 12px;">
             <button id="cancelCreateBtn" class="modal-btn modal-btn-muted">Отмена</button>
             <button id="confirmCreateBtn" class="modal-btn modal-btn-green">Создать</button>
         </div>
     </div>
 </div>
 
-<!-- Инструкция -->
-<div id="instructionModal" class="instruction-modal" style="display:none;">
-    <div class="instruction-content">
-        <div class="instruction-header">
-            <span class="instruction-title">Инструкция</span>
-            <button id="instructionCloseBtn" class="instruction-close">✕</button>
-        </div>
-        <div id="instructionText" class="instruction-text"></div>
-    </div>
-</div>
-
-<!-- Действия с маршрутом -->
+<!-- Модальное окно действий с маршрутом -->
 <div id="routeActionsModal" class="modal-overlay" style="display:none;">
-    <div class="modal-sheet modal-sheet-small">
+    <div class="modal-sheet" style="max-width: 400px;">
         <div class="modal-title">Действия с маршрутом</div>
         <button id="openEditorBtn" class="modal-btn">
             <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
@@ -202,22 +597,1263 @@
     </div>
 </div>
 
-<!-- Список точек маршрута -->
-<div id="pointsListModal" class="modal-overlay" style="display:none;">
-    <div class="modal-sheet">
-        <div class="modal-header">
-            <h3>Точки маршрута</h3>
-            <button class="close-circle" onclick="closePointsModal()">✕</button>
+<!-- Модальное окно инструкции -->
+<div id="instructionModal" class="instruction-modal" style="display:none;">
+    <div class="instruction-content">
+        <div class="instruction-header">
+            <span class="instruction-title">Инструкция</span>
+            <button id="instructionCloseBtn" class="instruction-close">✕</button>
         </div>
-        <div id="pointsList" class="points-list"></div>
+        <div id="instructionText" class="instruction-text"></div>
     </div>
 </div>
 
-<!-- Видео для wake lock -->
-<video id="v" playsinline muted loop></video>
+<!-- Модальное окно каталога -->
+<div id="catalogModal" class="modal-overlay" style="display:none;">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h3>Каталог публичных маршрутов</h3>
+            <button class="close-circle" onclick="document.getElementById('catalogModal').style.display='none'">✕</button>
+        </div>
+        <div id="catalogList" class="routes-list" style="max-height: 60vh;"></div>
+    </div>
+</div>
 
-<script src="assets/js/shared.js"></script>
-<script src="assets/js/telegram-time-report.js"></script>
-<script src="assets/js/app.js"></script>
+<!-- ============================================ -->
+<!-- НАВИГАТОР UI -->
+<!-- ============================================ -->
+
+<!-- HUD текущей точки -->
+<div id="navHud" class="nav-hud">
+    <div class="hud-header">
+        <span class="hud-index" id="hudIndex">1</span>
+        <div class="hud-cmd" id="hudCmd">Маршрут не выбран</div>
+    </div>
+    <div class="hud-main-content">
+        <div class="hud-stats">
+            <div class="stat-item">
+                <span class="stat-label">Дист</span>
+                <br><span class="stat-value" id="hudDist">---</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Цель АЗ</span>
+                <br><span class="stat-value" id="hudTargetAz">---</span>
+            </div>
+        </div>
+        <div class="hud-side-actions">
+            <button id="navCommentBtn" class="action-icon-btn comm-btn" style="display:none">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </button>
+            <button id="navSpeakBtn" class="action-icon-btn">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- HUD выбора точки -->
+<div id="selectionHud" class="nav-hud" style="display:none;">
+    <div class="hud-header">
+        <span class="hud-index" id="selIndex">0</span>
+        <div class="hud-cmd" id="selCmd">Точка маршрута</div>
+    </div>
+    <div class="hud-actions">
+        <button id="selConfirmBtn">Выбрать</button>
+        <button id="selSpeakBtn" class="action-icon-btn">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        </button>
+        <button id="selCommentBtn" class="action-icon-btn comm-btn" style="display:none">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </button>
+    </div>
+</div>
+
+<!-- Контрольная стопка -->
+<div class="control-stack">
+    <div id="telemetryPanel" onclick="toggleNavSettings(); event.stopPropagation();">
+        <div class="tel-item"><span class="tel-label">КМ/Ч</span><span class="tel-value" id="telSpeed">0</span></div>
+        <div style="height:1px; width:50%; background:rgba(255,255,255,0.1); margin:4px 0;"></div>
+        <div class="tel-item"><span class="tel-label">АЗ</span><span class="tel-value" id="telAz">0°</span></div>
+    </div>
+    <button id="navListBtn" class="map-btn" onclick="toggleNavPointsList()">
+        <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+    </button>
+    <button id="navLocateBtn" class="map-btn" onclick="toggleAutoCenter()">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 7.48 7.94 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+    </button>
+</div>
+
+<!-- Список точек навигатора -->
+<div id="navPointsMenu">
+    <div class="menu-header">Список точек</div>
+    <div id="navPointsList"></div>
+</div>
+
+<!-- Настройки навигатора -->
+<div id="navSettingsOverlay">
+    <div class="settings-row"><span>Триггер (м)</span><input type="number" class="trigger-input" id="cfgTrigger" value="25"></div>
+    <div class="settings-row"><span>Мин. скорость</span><input type="number" class="trigger-input" id="cfgSpeed" value="2"></div>
+    <div class="settings-row"><span>Азимут допуск</span><input type="number" class="trigger-input" id="cfgAz" value="45"></div>
+</div>
+
+<script>
+// ============================================
+// ОБЩИЕ УТИЛИТЫ
+// ============================================
+const TOKEN_SUFFIX = "AEIlGh23bO2ygpYMlJrB9MOA42UceJ";
+const byId = (id) => document.getElementById(id);
+
+function getTelegramWebApp() {
+    return window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+}
+
+function getTelegramUser() {
+    const tg = getTelegramWebApp();
+    return tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+}
+
+function getUserIdentity() {
+    const tgUser = getTelegramUser();
+    const fallbackId = localStorage.getItem('debug_uid') || ("guest_" + Math.random().toString(36).slice(2, 7));
+    return {
+        id: tgUser ? tgUser.id : fallbackId,
+        name: tgUser ? (tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : "")) : "Guest",
+        username: tgUser && tgUser.username ? `@${tgUser.username}` : ""
+    };
+}
+
+function getTokenFromUrl() {
+    const prefix = (new URLSearchParams(location.search).get('t') || '').slice(0, 10);
+    return prefix.length < 10 ? null : prefix + TOKEN_SUFFIX;
+}
+
+function buildInitFileContent() {
+    const tg = getTelegramWebApp();
+    const user = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+    const fullName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'Unknown';
+    const uname = user && user.username ? `@${user.username}` : '-';
+    const userId = user && user.id ? String(user.id) : '-';
+    const now = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'Europe/Moscow',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).format(new Date());
+    return `👤 User: ${fullName} (${uname})\n🆔 ID: ${userId}\n🕒 ${now} (Moscow)`;
+}
+
+async function apiRequest(token, url, method = 'GET', body = null) {
+    if (!token) return null;
+    const res = await fetch(url, {
+        method,
+        headers: {
+            'Authorization': `token ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: body ? JSON.stringify(body) : null
+    });
+    if (!res.ok) return null;
+    return res.status === 204 ? true : res.json();
+}
+
+// ============================================
+// ГЛОБАЛЬНОЕ СОСТОЯНИЕ
+// ============================================
+const APP = {
+    token: null,
+    user: getUserIdentity(),
+    gistId: null,
+    routes: [],
+    selectedRoute: null,
+    map: null,
+    userMarker: null,
+    lastPos: null,
+    lastAz: 0,
+    autoCenter: true,
+    currentSpeed: 0,
+    
+    // Editor
+    editorPoints: [],
+    editorCurFile: null,
+    editorActivePoint: null,
+    editorIsDrawing: false,
+    editorIsAdd: false,
+    
+    // Navigator
+    navPoints: [],
+    navCurrentIndex: -1,
+    navPreviewIndex: -1,
+    navAudio: new Audio(),
+    navIconCache: new Map(),
+    navConfig: { TRIGGER_DIST: 25, AZ_TOLERANCE: 45, SPEED_THRESHOLD: 2 },
+    
+    // Catalog
+    catalogData: {
+        "7292595756-m_1": "Экзаменационный маршрут Мещера 1",
+        "7292595756-Razvoroty_perek_1": "Развороты на перекрестках Мещера",
+        "7292595756-Ev_m1": "Э.В. Мещера 1",
+        "7292595756-Ev_k1": "Э.В. Кузнечиха 1"
+    }
+};
+
+const tg = getTelegramWebApp();
+const COLORS = {
+    Gold: { hex: '#FFD700', label: 'Маневры на перекрестке' },
+    Blue: { hex: '#007AFF', label: 'Разворот вне перекрестка' },
+    Red: { hex: '#FF3B30', label: 'Разгон до максимальной скорости' },
+    Fuchsia: { hex: '#AF52DE', label: 'Остановка и начало движения на подъем' },
+    Orange: { hex: '#FF9500', label: 'Левые и правые повороты' },
+    Purple: { hex: '#5856D6', label: 'Параллельная парковка и гараж' },
+    Cyan: { hex: '#5AC8FA', label: 'Разворот в ограниченном пространстве' },
+    Brown: { hex: '#A2845E', label: 'Остановка' },
+    Lime: { hex: '#34C759', label: 'Начало движения' }
+};
+
+const COMMAND_SETS = {
+    Gold: ["На перекрестке повернем налево", "На перекрестке едем прямо", "На перекрестке повернем направо", "На перекрестке выполним разворот", "На круговом движении первый съезд", "На круговом движении второй съезд", "На круговом движении третий съезд", "На круговом движении четвертый съезд", "На круговом движении выполним разворот", "На регулируемом перекрестке повернем налево", "На регулируемом перекрестке едем прямо", "На регулируемом перекрестке повернем направо", "На регулируемом перекрестке выполним разворот", "На нерегулируемом перекрестке повернем налево", "На нерегулируемом перекрестке едем прямо", "На нерегулируемом перекрестке повернем направо", "На нерегулируемом перекрестке выполним разворот", "Выполним разворот в ближайшем разрешенном месте"],
+    Blue: ["Выполним разворот вне перекрестка", "Выполним разворот в ближайшем разрешенном месте", "Найдите место для разворота и развернитесь"],
+    Red: ["Выполняем разгон до максимальной скорости", "Набираем максимальную скорость на данном участке дороги", "Разгоняемся до максимальной разрешенной скорости"],
+    Fuchsia: ["По моей команде выполним остановку и начало движения на подъеме", "Выполняем остановку и начало движения на подъеме"],
+    Orange: ["Поворачиваем направо", "Поворачиваем налево", "Далее повернем направо", "Далее повернем налево", "На светофоре повернем направо", "На светофоре повернем налево", "Поворачиваем направо к ленте", "Поворачиваем направо на заправку", "Едем в прямом направлении"],
+    Purple: ["Выполняем параллельную парковку и гараж"],
+    Cyan: ["Выполняем разворот в ограниченном пространстве", "Выполним разворот в ограниченном пространстве с использованием передачи заднего хода"],
+    Brown: ["Выполняем остановку параллельно краю проезжей части", "Выполняем остановку в ближайшем разрешенном месте"],
+    Lime: ["Начинаем движение", "Как будете готовы начинаем движение"]
+};
+
+// ============================================
+// УВЕДОМЛЕНИЯ
+// ============================================
+function showToast(text, type = 'info', duration = 2000) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = text;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 300);
+    }, duration);
+}
+
+// ============================================
+// МЕНЮ
+// ============================================
+function openMenu() {
+    byId('sideMenu').classList.add('visible');
+    byId('menuOverlay').classList.add('visible');
+}
+
+function closeMenu() {
+    byId('sideMenu').classList.remove('visible');
+    byId('menuOverlay').classList.remove('visible');
+}
+
+// ============================================
+// КАРТА И ГЕОЛОКАЦИЯ
+// ============================================
+function getUserLocSvg(azimuth = 0) {
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+            <g transform="rotate(${azimuth}, 20, 20)">
+                <path d="M20,4 L32,34 L20,28 L8,34 Z" fill="#FF3B30" stroke="white" stroke-width="2"/>
+            </g>
+        </svg>
+    `);
+}
+
+function calcAzimuth(p1, p2) {
+    if (!p1 || !p2) return 0;
+    const [la1, lo1] = p1.map(v => v * Math.PI / 180);
+    const [la2, lo2] = p2.map(v => v * Math.PI / 180);
+    const y = Math.sin(lo2 - lo1) * Math.cos(la2);
+    const x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(lo2 - lo1);
+    return Math.round((Math.atan2(y, x) * 180 / Math.PI + 360) % 360);
+}
+
+function initGeolocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+            (position) => {
+                const coords = [position.coords.latitude, position.coords.longitude];
+                if (APP.lastPos && position.coords.speed && position.coords.speed > 0) {
+                    APP.lastAz = calcAzimuth(APP.lastPos, coords);
+                }
+                APP.lastPos = coords;
+                APP.currentSpeed = (position.coords.speed || 0) * 3.6;
+                
+                if (APP.userMarker) {
+                    APP.userMarker.geometry.setCoordinates(coords);
+                    APP.userMarker.options.set('visible', true);
+                    APP.userMarker.options.set('iconImageHref', getUserLocSvg(APP.lastAz));
+                }
+                
+                // Обновляем телеметрию
+                const telSpeed = byId('telSpeed');
+                const telAz = byId('telAz');
+                if (telSpeed) telSpeed.textContent = Math.round(APP.currentSpeed);
+                if (telAz) telAz.textContent = `${Math.round(APP.lastAz)}°`;
+                
+                // Автоцентрирование в режиме навигатора
+                if (APP.autoCenter && APP.map) {
+                    APP.map.setCenter(coords);
+                }
+                
+                // Проверка триггеров навигатора
+                if (APP.navCurrentIndex >= 0) {
+                    navCheckTriggers();
+                }
+            },
+            (error) => console.warn('Geolocation error:', error),
+            { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        );
+    }
+}
+
+function toggleAutoCenter() {
+    APP.autoCenter = !APP.autoCenter;
+    const navLocateBtn = byId('navLocateBtn');
+    if (navLocateBtn) navLocateBtn.classList.toggle('active', APP.autoCenter);
+    if (APP.autoCenter && APP.lastPos) APP.map.setCenter(APP.lastPos);
+    showToast(APP.autoCenter ? 'Привязка включена' : 'Привязка отключена', 'info');
+}
+
+// ============================================
+// API GITHUB GISTS
+// ============================================
+async function findUserGist() {
+    let allGists = [], page = 1, perPage = 100;
+    while (true) {
+        const gists = await apiRequest(APP.token, `https://api.github.com/gists?per_page=${perPage}&page=${page}&t=${Date.now()}`);
+        if (!gists || gists.length === 0) break;
+        allGists = allGists.concat(gists);
+        if (gists.length < perPage) break;
+        page++;
+    }
+    if (!allGists) return null;
+    const existing = allGists.find((g) => (g.description || '').includes(`[${APP.user.id}]`));
+    return existing ? existing.id : null;
+}
+
+async function ensureUserGist() {
+    if (APP.gistId) return true;
+    const existingId = await findUserGist();
+    if (existingId) { APP.gistId = existingId; return true; }
+    const created = await apiRequest(APP.token, 'https://api.github.com/gists', 'POST', {
+        description: `[${APP.user.id}] User: ${APP.user.name} ${APP.user.username || ''}`.trim(),
+        public: true,
+        files: { '.init': { content: buildInitFileContent() } }
+    });
+    if (!created) return false;
+    APP.gistId = created.id;
+    return true;
+}
+
+async function fetchRoutes() {
+    if (!APP.gistId) return [];
+    const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
+    if (!gist) return [];
+    return Object.keys(gist.files || {}).filter((fn) => fn.endsWith('.json')).sort((a, b) => a.localeCompare(b));
+}
+
+async function fetchAllGists(username) {
+    let allGists = [], page = 1, perPage = 100;
+    while (true) {
+        try {
+            const res = await fetch(`https://api.github.com/users/${username}/gists?per_page=${perPage}&page=${page}`);
+            if (!res.ok) break;
+            const data = await res.json();
+            if (data.length === 0) break;
+            allGists = allGists.concat(data);
+            if (data.length < perPage) break;
+            page++;
+        } catch (e) { break; }
+    }
+    return allGists;
+}
+
+// ============================================
+// МАРШРУТЫ - ДЕЙСТВИЯ
+// ============================================
+function renderRoutesList() {
+    const list = byId('routesList');
+    if (!list) return;
+    if (!APP.routes.length) {
+        list.innerHTML = '<div style="padding:14px;text-align:center;color:rgba(255,255,255,0.5);font-size:13px;">Маршрутов нет</div>';
+        return;
+    }
+    list.innerHTML = APP.routes.map((file) => {
+        const name = file.replace('.json', '');
+        return `
+            <div class="route-item" data-file="${file}">
+                <span class="route-item-name">${name}</span>
+                <div style="display:flex;gap:6px;">
+                    <button class="route-item-btn edit-btn" title="Редактировать">
+                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
+                    </button>
+                    <button class="route-item-btn navigate-btn" title="Навигатор">
+                        <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="currentColor"/></svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    list.querySelectorAll('.route-item').forEach((item) => {
+        const file = item.dataset.file;
+        item.addEventListener('click', (e) => {
+            if (!e.target.closest('.route-item-btn')) {
+                APP.selectedRoute = file;
+                openRouteActions();
+            }
+        });
+        item.querySelector('.edit-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            APP.selectedRoute = file;
+            openEditorWithRoute(file);
+        });
+        item.querySelector('.navigate-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            APP.selectedRoute = file;
+            openNavigatorWithRoute(file);
+        });
+    });
+}
+
+function openRouteActions() {
+    if (!APP.selectedRoute) { showToast('Выберите маршрут', 'error'); return; }
+    byId('routeActionsModal').style.display = 'flex';
+    closeMenu();
+}
+
+function closeRouteActions() {
+    byId('routeActionsModal').style.display = 'none';
+}
+
+async function createRoute() {
+    const name = (byId('routeNameInput').value || '').trim().replace(/[^a-zA-Z0-9_]/g, '');
+    if (!name) { showToast('Введите название маршрута', 'error'); return; }
+    const gistOk = await ensureUserGist();
+    if (!gistOk) { showToast('Ошибка подключения к GitHub', 'error'); return; }
+    const fileName = `${name}.json`;
+    if (APP.routes.includes(fileName)) { showToast('Маршрут с таким именем уже существует', 'error'); return; }
+    const ok = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}`, 'PATCH', {
+        files: { [fileName]: { content: '[]' } }
+    });
+    if (!ok) { showToast('Не удалось создать маршрут', 'error'); return; }
+    byId('createModal').style.display = 'none';
+    APP.routes = await fetchRoutes();
+    renderRoutesList();
+    APP.selectedRoute = fileName;
+    openEditorWithRoute(fileName);
+}
+
+async function renameRoute() {
+    if (!APP.selectedRoute) return;
+    const currentName = APP.selectedRoute.replace('.json', '');
+    const nextRaw = prompt('Новое название маршрута (разрешены: a-z, 0-9, _)', currentName);
+    if (nextRaw === null) return;
+    const nextName = nextRaw.trim().replace(/[^a-zA-Z0-9_]/g, '');
+    if (!nextName || nextName === currentName) return;
+    const nextFile = `${nextName}.json`;
+    if (APP.routes.includes(nextFile)) { showToast('Маршрут с таким именем уже существует', 'error'); return; }
+    const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
+    if (!gist || !gist.files || !gist.files[APP.selectedRoute]) { showToast('Не удалось загрузить данные', 'error'); return; }
+    const content = gist.files[APP.selectedRoute].content || '[]';
+    const ok = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}`, 'PATCH', {
+        files: { [APP.selectedRoute]: null, [nextFile]: { content } }
+    });
+    if (!ok) { showToast('Не удалось переименовать', 'error'); return; }
+    APP.routes = await fetchRoutes();
+    APP.selectedRoute = nextFile;
+    closeRouteActions();
+    showToast('Маршрут переименован', 'success');
+}
+
+async function deleteRoute() {
+    if (!APP.selectedRoute) return;
+    const routeName = APP.selectedRoute.replace('.json', '');
+    if (!confirm(`Удалить маршрут "${routeName}"?`)) return;
+    const ok = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}`, 'PATCH', {
+        files: { [APP.selectedRoute]: null }
+    });
+    if (!ok) { showToast('Не удалось удалить', 'error'); return; }
+    APP.routes = await fetchRoutes();
+    APP.selectedRoute = null;
+    renderRoutesList();
+    closeRouteActions();
+    showToast('Маршрут удалён', 'success');
+}
+
+async function copyRouteLink() {
+    if (!APP.selectedRoute) return;
+    const routeName = APP.selectedRoute.replace('.json', '');
+    const link = `https://t.me/e_ia_bot/nav?startapp=${APP.user.id}-${routeName}`;
+    try { await navigator.clipboard.writeText(link); showToast('Ссылка скопирована', 'success'); }
+    catch (e) { prompt('Скопируйте ссылку вручную:', link); }
+    closeRouteActions();
+}
+
+function openEditorWithRoute(file) {
+    APP.selectedRoute = file;
+    hideNavigatorUI();
+    byId('editorPanel').style.display = 'block';
+    byId('editorTitle').textContent = file.replace('.json', '');
+    loadEditorRoute(file);
+    closeMenu();
+}
+
+function openNavigatorWithRoute(file, isCatalog = false) {
+    APP.selectedRoute = file;
+    loadNavigatorRoute(file, isCatalog);
+    closeMenu();
+}
+
+// ============================================
+// КАТАЛОГ
+// ============================================
+function openCatalog() {
+    const list = byId('catalogList');
+    list.innerHTML = Object.entries(APP.catalogData).map(([key, label]) => `
+        <div class="route-item" data-key="${key}">
+            <span class="route-item-name">${label}</span>
+            <button class="route-item-btn navigate-btn" style="background:rgba(52,199,89,0.3);border-color:rgba(103,255,153,0.4);">
+                <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="currentColor"/></svg>
+            </button>
+        </div>
+    `).join('');
+    
+    list.querySelectorAll('.route-item').forEach((item) => {
+        const key = item.dataset.key;
+        item.querySelector('.navigate-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            openNavigatorWithRoute(key, true);
+        });
+    });
+    
+    byId('catalogModal').style.display = 'flex';
+    closeMenu();
+}
+
+// ============================================
+// РЕДАКТОР
+// ============================================
+function getEditorIconSvg(colorName, id) {
+    const color = COLORS[colorName]?.hex || '#FFD700';
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+            <circle cx="20" cy="20" r="12" fill="${color}" stroke="#000" stroke-width="2"/>
+            <text x="20" y="24" font-size="14" font-weight="bold" text-anchor="middle" fill="#000">${id}</text>
+        </svg>
+    `);
+}
+
+async function loadEditorRoute(file) {
+    if (!APP.gistId) { showToast('Сначала создайте маршрут', 'error'); return; }
+    try {
+        const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
+        if (!gist || !gist.files[file]) { showToast('Маршрут не найден', 'error'); return; }
+        const data = JSON.parse(gist.files[file].content || '[]');
+        APP.editorPoints = data;
+        APP.editorCurFile = file;
+        renderEditorPoints();
+        showToast(`Загружен: ${file.replace('.json', '')}`, 'success');
+    } catch (e) {
+        showToast('Ошибка: ' + e.message, 'error');
+    }
+}
+
+function renderEditorPoints() {
+    if (APP.map) {
+        APP.editorPoints.forEach(p => {
+            if (p.placemark) APP.map.geoObjects.remove(p.placemark);
+            if (p.line) APP.map.geoObjects.remove(p.line);
+        });
+    }
+    APP.editorPoints = APP.editorPoints.map((p, i) => {
+        p.id = i + 1;
+        const placemark = new ymaps.Placemark(p.pts[0], {}, {
+            iconLayout: 'default#image',
+            iconImageHref: getEditorIconSvg(p.color, p.id),
+            iconImageSize: [40, 40],
+            iconImageOffset: [-20, -20]
+        });
+        const line = new ymaps.Polyline(p.pts, {}, {
+            strokeColor: COLORS[p.color]?.hex || '#FFD700',
+            strokeWidth: 3,
+            strokeOpacity: 0.8
+        });
+        if (APP.map) {
+            APP.map.geoObjects.add(placemark);
+            APP.map.geoObjects.add(line);
+        }
+        return { ...p, placemark, line };
+    });
+}
+
+function handleEditorAddBtn() {
+    if (APP.editorIsDrawing) { stopEditorDrawing(); return; }
+    if (APP.editorIsAdd) { stopEditorAdd(); return; }
+    openCreatePointModal();
+}
+
+function openCreatePointModal() {
+    APP.editorIsAdd = true;
+    APP.map.setCursor('crosshair');
+    showToast('Нажмите на карту для установки точки', 'info');
+}
+
+function stopEditorAdd() {
+    APP.editorIsAdd = false;
+    APP.map.setCursor('grab');
+}
+
+function stopEditorDrawing() {
+    if (APP.editorActivePoint) {
+        APP.editorActivePoint.line.editor.stopEditing();
+        APP.editorActivePoint.pm.options.set('draggable', false);
+    }
+    APP.editorIsDrawing = false;
+    APP.editorActivePoint = null;
+}
+
+function addEditorPoint(coords, data = null) {
+    const p = {
+        id: data?.id || (APP.editorPoints.length + 1),
+        color: data?.color || 'Gold',
+        cmd: data?.cmd || '',
+        comm: data?.comm || '',
+        pts: data?.pts || [coords],
+        placemark: null,
+        line: null
+    };
+    const placemark = new ymaps.Placemark(coords, {}, {
+        iconLayout: 'default#image',
+        iconImageHref: getEditorIconSvg(p.color, p.id),
+        iconImageSize: [40, 40],
+        iconImageOffset: [-20, -20]
+    });
+    const line = new ymaps.Polyline(p.pts, {}, {
+        strokeColor: COLORS[p.color].hex,
+        strokeWidth: 3,
+        strokeOpacity: 0.8
+    });
+    placemark.events.add('click', () => { openEditPointModal(p); });
+    if (APP.map) {
+        APP.map.geoObjects.add(placemark);
+        APP.map.geoObjects.add(line);
+    }
+    APP.editorPoints.push({ ...p, placemark, line });
+    return APP.editorPoints[APP.editorPoints.length - 1];
+}
+
+function openEditPointModal(p) {
+    APP.editorActivePoint = p;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3>Точка ${p.id}</h3>
+                <button class="close-circle" onclick="this.closest('.modal-overlay').remove()">✕</button>
+            </div>
+            <div style="padding: 0 20px 20px; display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="font-size: 12px; color: rgba(255,255,255,0.5);">Категория</label>
+                    <select id="editPointColor" class="input" style="margin-top: 4px;">
+                        ${Object.entries(COLORS).map(([k, v]) => `<option value="${k}" ${k === p.color ? 'selected' : ''}>${v.label}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: rgba(255,255,255,0.5);">Команда</label>
+                    <select id="editPointCmd" class="input" style="margin-top: 4px;">
+                        ${(COMMAND_SETS[p.color] || []).map(cmd => `<option value="${cmd}" ${cmd === p.cmd ? 'selected' : ''}>${cmd}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: rgba(255,255,255,0.5);">Комментарий</label>
+                    <textarea id="editPointComm" class="input" style="margin-top: 4px; min-height: 80px;" placeholder="Необязательно">${p.comm || ''}</textarea>
+                </div>
+                <button class="menu-btn" onclick="startEditorPathEdit()">✏️ Изменить путь</button>
+                <button class="menu-btn menu-btn-danger" onclick="deleteEditorPoint()">🗑️ Удалить точку</button>
+                <button class="menu-btn menu-btn-green" onclick="updateEditorPoint()">✓ Сохранить</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const colorSel = modal.querySelector('#editPointColor');
+    const cmdSel = modal.querySelector('#editPointCmd');
+    colorSel.addEventListener('change', () => {
+        p.color = colorSel.value;
+        cmdSel.innerHTML = (COMMAND_SETS[p.color] || []).map(cmd => `<option value="${cmd}">${cmd}</option>`).join('');
+        p.cmd = cmdSel.value;
+        updateEditorPointIcon(p);
+    });
+}
+
+function updateEditorPointIcon(p) {
+    p.placemark.options.set('iconImageHref', getEditorIconSvg(p.color, p.id));
+    p.line.options.set('strokeColor', COLORS[p.color].hex);
+}
+
+function updateEditorPoint() {
+    const modal = document.querySelector('.modal-overlay');
+    const color = document.getElementById('editPointColor').value;
+    const cmd = document.getElementById('editPointCmd').value;
+    const comm = document.getElementById('editPointComm').value;
+    APP.editorActivePoint.color = color;
+    APP.editorActivePoint.cmd = cmd;
+    APP.editorActivePoint.comm = comm;
+    updateEditorPointIcon(APP.editorActivePoint);
+    modal.remove();
+    showToast('Точка обновлена', 'success');
+}
+
+function startEditorPathEdit() {
+    const modal = document.querySelector('.modal-overlay');
+    modal.remove();
+    APP.editorIsDrawing = true;
+    APP.editorActivePoint.line.editor.startDrawing();
+    APP.editorActivePoint.pm.options.set('draggable', true);
+    showToast('Рисуйте путь на карте. Нажмите "Добавить точку" для завершения', 'info');
+}
+
+function deleteEditorPoint() {
+    if (!confirm('Удалить точку?')) return;
+    const modal = document.querySelector('.modal-overlay');
+    const idx = APP.editorPoints.findIndex(p => p.id === APP.editorActivePoint.id);
+    if (idx >= 0) {
+        APP.map.geoObjects.remove(APP.editorPoints[idx].placemark);
+        APP.map.geoObjects.remove(APP.editorPoints[idx].line);
+        APP.editorPoints.splice(idx, 1);
+        APP.editorPoints.forEach((p, i) => { p.id = i + 1; });
+        renderEditorPoints();
+    }
+    modal.remove();
+    showToast('Точка удалена', 'success');
+}
+
+async function saveEditorRoute() {
+    if (!APP.editorCurFile) return;
+    const data = APP.editorPoints.map(p => ({
+        id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm
+    }));
+    const ok = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}`, 'PATCH', {
+        files: { [APP.editorCurFile]: { content: JSON.stringify(data) } }
+    });
+    if (ok) showToast('Сохранено', 'success');
+    else showToast('Ошибка сохранения', 'error');
+}
+
+// ============================================
+// НАВИГАТОР
+// ============================================
+function getNavIconSvg(col, txt, az, isEnd, isCurr = false, hasComm = false) {
+    const key = `${col}-${txt}-${az}-${isEnd}-${isCurr}-${hasComm}`;
+    if (APP.navIconCache.has(key)) return APP.navIconCache.get(key);
+    const s = isEnd ? 34 : 40, c = s / 2;
+    const strk = isCurr ? '#00FF00' : (isEnd ? '#FFFFFF' : '#000000');
+    const textColor = hasComm ? '#FF9500' : '#000000';
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}">
+            <g transform="rotate(${az},${c},${c})">
+                <polygon points="${c},2 ${c+10},${s-5} ${c},${s-14} ${c-10},${s-5}" fill="${col}" stroke="${strk}" stroke-width="${isCurr ? 2 : 1.5}"/>
+            </g>
+            <circle cx="${c}" cy="${c}" r="${isEnd ? 7 : 9}" fill="${col}" stroke="${strk}" stroke-width="${isCurr ? 2 : 1.5}"/>
+            <text x="${c}" y="${c+0.5}" font-size="${isEnd ? 8 : 9}" font-family="Arial" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="${textColor}" stroke="white" stroke-width="2" style="paint-order:stroke fill">${txt}</text>
+        </svg>
+    `;
+    const dataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    APP.navIconCache.set(key, dataUrl);
+    return dataUrl;
+}
+
+function showNavigatorUI() {
+    byId('navHud').style.display = 'flex';
+    byId('telemetryPanel').style.display = 'flex';
+    byId('navListBtn').style.display = 'flex';
+    byId('navLocateBtn').style.display = 'flex';
+    byId('cacheStatus').style.display = 'block';
+}
+
+function hideNavigatorUI() {
+    byId('navHud').style.display = 'none';
+    byId('selectionHud').style.display = 'none';
+    byId('telemetryPanel').style.display = 'none';
+    byId('navListBtn').style.display = 'none';
+    byId('navLocateBtn').style.display = 'none';
+    byId('navPointsMenu').style.display = 'none';
+    byId('navSettingsOverlay').style.display = 'none';
+    byId('cacheStatus').style.display = 'none';
+    byId('commentOverlay').style.display = 'none';
+}
+
+async function loadNavigatorRoute(file, isCatalog = false) {
+    let url = null;
+    if (isCatalog) {
+        try {
+            const gistList = await fetchAllGists('yvayvapyvapyva');
+            const parts = file.split('-');
+            const targetId = parts[0];
+            const routeName = parts.slice(1).join('-');
+            const targetFileName = routeName + '.json';
+            const targetGist = gistList.find(g => g.description && g.description.includes(`[${targetId}]`));
+            if (targetGist) {
+                const fileObj = Object.values(targetGist.files).find(f => f.filename.toLowerCase() === targetFileName.toLowerCase());
+                if (fileObj) url = fileObj.raw_url;
+            }
+        } catch (e) { console.error('Ошибка поиска gist:', e); }
+    } else {
+        if (!APP.gistId) { showToast('Сначала создайте маршрут', 'error'); return; }
+        try {
+            const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
+            if (gist && gist.files[file]) url = gist.files[file].raw_url;
+        } catch (e) { console.error('Ошибка загрузки gist:', e); }
+    }
+    if (!url) { showToast('Ошибка загрузки маршрута', 'error'); return; }
+    try {
+        const res = await fetch(url);
+        const raw = await res.json();
+        APP.navPoints = raw.map((d, i) => {
+            const pts = d.pts || [];
+            return {
+                id: d.id || (i + 1),
+                lat: pts[0]?.[0],
+                lon: pts[0]?.[1],
+                color: d.color,
+                hex: COLORS[d.color]?.hex || '#007AFF',
+                cmd: (d.cmd || d.comm || `Т${i + 1}`).trim(),
+                comm: d.comm || '',
+                pts: pts,
+                az: pts.length >= 2 ? calcAzimuth(pts[0], pts[1]) : 0
+            };
+        });
+        APP.navCurrentIndex = 0;
+        showNavigatorUI();
+        renderNavigatorPoints();
+        updateNavHud();
+        byId('navHud').classList.add('active');
+        preloadNavAudio();
+        showToast('Маршрут загружен', 'success');
+    } catch (e) {
+        showToast('Ошибка данных: ' + e.message, 'error');
+    }
+}
+
+function renderNavigatorPoints() {
+    if (APP.map) {
+        APP.navPoints.forEach(p => {
+            if (p.placemark) APP.map.geoObjects.remove(p.placemark);
+            if (p.line) APP.map.geoObjects.remove(p.line);
+            if (p.endPlacemark) APP.map.geoObjects.remove(p.endPlacemark);
+        });
+    }
+    APP.navPoints = APP.navPoints.map((p, i) => {
+        // Скрываем точки до текущей цели
+        if (i < APP.navCurrentIndex) {
+            return { ...p, placemark: null, line: null, endPlacemark: null, hidden: true };
+        }
+        const isCurrent = (i === APP.navCurrentIndex);
+        const isPreview = (i === APP.navPreviewIndex);
+        const hasComm = p.comm && p.comm.trim() !== '';
+        const showPath = isCurrent || isPreview;
+        const placemark = new ymaps.Placemark([p.lat, p.lon], {}, {
+            iconLayout: 'default#image',
+            iconImageHref: getNavIconSvg(p.hex, p.id, p.az, false, isCurrent, hasComm),
+            iconImageSize: [40, 40],
+            iconImageOffset: [-20, -20],
+            zIndex: (isCurrent || isPreview) ? 1000 : 500
+        });
+        placemark.events.add('click', function() {
+            if (i !== APP.navCurrentIndex) {
+                APP.navPreviewIndex = i;
+                showNavSelection(i);
+            }
+        });
+        let line = null, endPlacemark = null;
+        if (showPath && p.pts && p.pts.length >= 2) {
+            line = new ymaps.Polyline(p.pts, {}, {
+                strokeColor: p.hex,
+                strokeWidth: isCurrent ? 4 : 3,
+                strokeOpacity: isCurrent ? 1 : 0.6,
+                outline: true,
+                outlineColor: '#000000',
+                outlineWidth: 1.5
+            });
+            const last = p.pts[p.pts.length - 1];
+            const prev = p.pts[p.pts.length - 2];
+            endPlacemark = new ymaps.Placemark(last, {}, {
+                iconLayout: 'default#image',
+                iconImageHref: getNavIconSvg(p.hex, p.id, calcAzimuth(prev, last), true, isCurrent, hasComm),
+                iconImageSize: [34, 34],
+                iconImageOffset: [-17, -17],
+                zIndex: isCurrent ? 950 : 900,
+                interactive: false
+            });
+        }
+        if (APP.map) {
+            APP.map.geoObjects.add(placemark);
+            if (line) APP.map.geoObjects.add(line);
+            if (endPlacemark) APP.map.geoObjects.add(endPlacemark);
+        }
+        return { ...p, placemark, line, endPlacemark, hidden: false };
+    });
+    renderNavList();
+    updateNavHud();
+}
+
+function updateNavHud() {
+    const t = APP.navPoints[APP.navCurrentIndex];
+    if (!t) return;
+    byId('hudIndex').textContent = APP.navCurrentIndex + 1;
+    byId('hudCmd').textContent = t.cmd;
+    byId('hudTargetAz').textContent = `${Math.round(t.az)}°`;
+    const hasComm = t.comm && t.comm.trim() !== '';
+    byId('navCommentBtn').style.display = hasComm ? 'flex' : 'none';
+    byId('navSpeakBtn').onclick = () => playNavCommand(t.cmd);
+    if (hasComm) {
+        byId('navCommentBtn').onclick = () => showNavComment(t.comm);
+    }
+}
+
+function showNavSelection(i) {
+    const p = APP.navPoints[i];
+    byId('navHud').classList.remove('active');
+    byId('selectionHud').classList.add('active');
+    byId('selIndex').textContent = i + 1;
+    byId('selCmd').textContent = p.cmd;
+    
+    // Надёжное назначение обработчиков
+    const confirmBtn = byId('selConfirmBtn');
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    newConfirmBtn.onclick = () => { setNavTarget(i); closeNavSelection(); };
+    
+    const speakBtn = byId('selSpeakBtn');
+    const newSpeakBtn = speakBtn.cloneNode(true);
+    speakBtn.parentNode.replaceChild(newSpeakBtn, speakBtn);
+    newSpeakBtn.onclick = (ev) => { ev.stopPropagation(); playNavCommand(p.cmd); };
+    
+    const hasComm = p.comm && p.comm.trim() !== '';
+    const commentBtn = byId('selCommentBtn');
+    commentBtn.style.display = hasComm ? 'flex' : 'none';
+    if (hasComm) {
+        const newCommentBtn = commentBtn.cloneNode(true);
+        commentBtn.parentNode.replaceChild(newCommentBtn, commentBtn);
+        newCommentBtn.onclick = (ev) => { ev.stopPropagation(); showNavComment(p.comm); };
+    }
+    
+    renderNavigatorPoints();
+}
+
+function closeNavSelection() {
+    byId('selectionHud').classList.remove('active');
+    APP.navPreviewIndex = -1;
+    if (APP.navCurrentIndex >= 0) {
+        byId('navHud').classList.add('active');
+        renderNavigatorPoints();
+    }
+}
+
+function setNavTarget(i) {
+    APP.navCurrentIndex = i;
+    APP.navPreviewIndex = -1;
+    renderNavigatorPoints();
+    updateNavHud();
+    // Закрываем меню списка если открыто
+    byId('navPointsMenu').style.display = 'none';
+}
+
+function renderNavList() {
+    const list = byId('navPointsList');
+    if (!list) return;
+    list.innerHTML = APP.navPoints.map((p, i) => {
+        // Пройденные точки показываем серыми
+        const isPassed = i < APP.navCurrentIndex;
+        const isCurrent = i === APP.navCurrentIndex;
+        const hasComm = p.comm && p.comm.trim() !== '';
+        const cmdSafe = p.cmd.replace(/'/g, "\\'");
+        const commSafe = p.comm ? p.comm.replace(/'/g, "\\'") : '';
+        return `
+            <div class="point-item ${isCurrent ? 'active' : ''}" onclick="setNavTarget(${i}); toggleNavPointsList();" style="${isPassed ? 'opacity:0.4;' : ''}">
+                <div class="point-badge" style="${isCurrent ? 'background:#00FF00;color:black' : (isPassed ? 'background:rgba(255,255,255,0.2)' : '')}">${i + 1}</div>
+                <div class="point-content">
+                    <div class="point-name" style="${isPassed ? 'text-decoration:line-through;' : ''}">${p.cmd}</div>
+                </div>
+                ${!isPassed && hasComm ? `
+                <button class="action-icon-btn comm-btn" onclick="event.stopPropagation(); showNavComment('${commSafe}'); toggleNavPointsList();">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="#d1d5db"/></svg>
+                </button>` : ''}
+                ${!isPassed ? `
+                <button class="action-icon-btn" onclick="event.stopPropagation(); playNavCommand('${cmdSafe}');">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" fill="#f3f4f6"/></svg>
+                </button>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleNavPointsList() {
+    const menu = byId('navPointsMenu');
+    menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    if (menu.style.display === 'flex') {
+        renderNavList();
+        byId('navSettingsOverlay').classList.remove('visible');
+    }
+}
+
+function toggleNavSettings() {
+    const overlay = byId('navSettingsOverlay');
+    overlay.classList.toggle('visible');
+    byId('navPointsMenu').style.display = 'none';
+}
+
+function showNavComment(txt) {
+    const overlay = byId('commentOverlay');
+    byId('commentText').textContent = txt;
+    overlay.style.display = 'flex';
+}
+
+async function preloadNavAudio() {
+    if (!('caches' in window)) return;
+    const cache = await caches.open('route-audio-v1');
+    const uniquePaths = [...new Set(APP.navPoints.map(p => getAudioPath(p.cmd)).filter(p => p))];
+    let loaded = 0;
+    const cacheStatus = byId('cacheStatus');
+    cacheStatus.style.display = 'block';
+    cacheStatus.textContent = `Кэширование: 0%`;
+    for (const path of uniquePaths) {
+        try {
+            const response = await fetch(path);
+            if (response.ok) await cache.put(path, response);
+        } catch (e) { console.warn("Failed to cache:", path); }
+        loaded++;
+        cacheStatus.textContent = `Кэширование: ${Math.round((loaded / uniquePaths.length) * 100)}%`;
+    }
+    setTimeout(() => {
+        cacheStatus.textContent = "Готов к офлайну";
+        setTimeout(() => cacheStatus.style.display = 'none', 3000);
+    }, 1000);
+}
+
+function getAudioPath(text) {
+    if (!text) return null;
+    const normalized = text.normalize('NFC').toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-`~()]/g, "").trim().replace(/\s+/g, '_');
+    return `audio/${encodeURIComponent(normalized)}.mp3`;
+}
+
+async function playNavCommand(text) {
+    const path = getAudioPath(text);
+    if (!path) return;
+    APP.navAudio.pause();
+    if ('caches' in window) {
+        const cache = await caches.open('route-audio-v1');
+        const cachedResponse = await cache.match(path);
+        if (cachedResponse) {
+            const blob = await cachedResponse.blob();
+            APP.navAudio.src = URL.createObjectURL(blob);
+            APP.navAudio.play().catch(e => console.error("Cached play error", e));
+            return;
+        }
+    }
+    APP.navAudio.src = path;
+    APP.navAudio.play().catch((err) => console.warn("Network audio play failed:", path));
+}
+
+function navCheckTriggers() {
+    if (APP.navCurrentIndex < 0 || !APP.lastPos || !APP.navPoints[APP.navCurrentIndex]) return;
+    const t = APP.navPoints[APP.navCurrentIndex];
+    const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
+    let ad = Math.abs(APP.lastAz - t.az) % 360;
+    if (ad > 180) ad = 360 - ad;
+    updateNavHudDist(d, ad);
+    if (d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE) {
+        playNavCommand(t.cmd);
+        APP.navCurrentIndex++;
+        APP.navPreviewIndex = -1;
+        if (APP.navCurrentIndex < APP.navPoints.length) {
+            renderNavigatorPoints();
+            updateNavHud();
+        } else {
+            byId('hudCmd').textContent = "ФИНИШ";
+            renderNavigatorPoints();
+        }
+    }
+}
+
+function updateNavHudDist(d, ad) {
+    const t = APP.navPoints[APP.navCurrentIndex];
+    if (!t) return;
+    byId('hudDist').textContent = `${Math.round(d)}м`;
+    byId('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
+    byId('hudTargetAz').classList.toggle('in-range', ad <= APP.navConfig.AZ_TOLERANCE);
+}
+
+// ============================================
+// WAKE LOCK
+// ============================================
+const v = byId('v');
+let wl = null;
+let wakeWanted = false;
+
+const wake = async () => {
+    if (APP.navAudio.paused) {
+        APP.navAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+        APP.navAudio.play().catch(() => {});
+    }
+    if (wl) { try { await wl.release(); } catch(e) {} wl = null; }
+    if ('wakeLock' in navigator) {
+        try {
+            wl = await navigator.wakeLock.request('screen');
+            wakeWanted = true;
+            byId('wakeOverlay').style.display = 'none';
+        } catch(e) {
+            if (wakeWanted) byId('wakeOverlay').style.display = 'flex';
+        }
+    } else if (wakeWanted) {
+        byId('wakeOverlay').style.display = 'flex';
+    }
+    if (!v.src) v.src = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21hdmMxbXA0MgAAAAhmcmVlAAAALm1kYXQAAAHvYXZjQwFQAFr/4AAZAWgAVv/AAB9AAAADAAIAAAMAHBDeEAEABWj/gAAAAA5ieHRyY3Rsc3RyYmMAAAALYm9vdnNoZHIAAAADbXZoZAAAAAAAAAAAAAAAAAAAA+gAAAPoAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAGlzb21hdmMxbXA0MgAAAAhmcmVlAAAALm1kYXQ=";
+    v.play().catch(()=>{});
+};
+
+const wakeFromUser = () => {
+    wakeWanted = true;
+    wake();
+};
+
+['touchstart', 'click'].forEach(e => document.addEventListener(e, wakeFromUser));
+
+byId('wakeBtn').addEventListener('click', wakeFromUser);
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && wakeWanted) wake();
+});
+
+// ============================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================
+async function initApp() {
+    const tg = getTelegramWebApp();
+    if (tg) {
+        tg.expand();
+        if (tg.requestFullscreen) { try { tg.requestFullscreen(); } catch (e) {} }
+        if (tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
+    }
+    
+    APP.token = getTokenFromUrl();
+    
+    // Обработка start_param для прямого запуска навигатора
+    const urlParams = new URLSearchParams(location.search);
+    const startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || urlParams.get('startapp');
+    const hasTParam = urlParams.has('t');
+    
+    // Инициализация карты
+    ymaps.ready(() => {
+        APP.map = new ymaps.Map('map', {
+            center: [56.3399, 43.9332],
+            zoom: 17,
+            type: 'yandex#satellite',
+            controls: []
+        });
+        
+        APP.userMarker = new ymaps.Placemark([0, 0], {}, {
+            iconLayout: 'default#image',
+            iconImageHref: getUserLocSvg(0),
+            iconImageSize: [40, 40],
+            iconImageOffset: [-20, -20],
+            zIndex: 5000,
+            visible: false
+        });
+        APP.map.geoObjects.add(APP.userMarker);
+        
+        initGeolocation();
+        
+        // Обработчик клика для редактора
+        APP.map.events.add('click', (e) => {
+            if (APP.editorIsAdd) {
+                const newPoint = addEditorPoint(e.get('coords'));
+                stopEditorAdd();
+                showToast('Точка добавлена', 'success');
+            }
+        });
+        
+        byId('loading').classList.add('hidden');
+        
+        // Поиск gist пользователя
+        if (APP.token) {
+            findUserGist().then(id => {
+                if (id) {
+                    APP.gistId = id;
+                    fetchRoutes().then(() => renderRoutesList());
+                }
+            });
+        }
+        
+        // Если есть start_param - запускаем навигатор
+        if (startParam && hasTParam) {
+            openNavigatorWithRoute(startParam, startParam.includes('-'));
+        }
+    });
+    
+    // Обработчики UI
+    byId('menuBtn').addEventListener('click', openMenu);
+    byId('createNewBtn').addEventListener('click', () => {
+        byId('createModal').style.display = 'flex';
+        byId('routeNameInput').value = '';
+        closeMenu();
+    });
+    byId('cancelCreateBtn').addEventListener('click', () => {
+        byId('createModal').style.display = 'none';
+    });
+    byId('confirmCreateBtn').addEventListener('click', createRoute);
+    byId('instructionBtn').addEventListener('click', openInstruction);
+    byId('instructionCloseBtn').addEventListener('click', () => {
+        byId('instructionModal').style.display = 'none';
+    });
+    byId('openEditorBtn').addEventListener('click', () => {
+        closeRouteActions();
+        setTimeout(() => openEditorWithRoute(APP.selectedRoute), 100);
+    });
+    byId('openNavigatorBtn').addEventListener('click', () => {
+        closeRouteActions();
+        setTimeout(() => openNavigatorWithRoute(APP.selectedRoute), 100);
+    });
+    byId('renameRouteBtn').addEventListener('click', renameRoute);
+    byId('copyLinkBtn').addEventListener('click', copyRouteLink);
+    byId('deleteRouteBtn').addEventListener('click', deleteRoute);
+    byId('closeActionsBtn').addEventListener('click', closeRouteActions);
+    byId('openCatalogBtn').addEventListener('click', openCatalog);
+    
+    // Настройки навигатора
+    byId('cfgTrigger').addEventListener('input', (e) => {
+        APP.navConfig.TRIGGER_DIST = Number(e.target.value);
+    });
+    byId('cfgSpeed').addEventListener('input', (e) => {
+        APP.navConfig.SPEED_THRESHOLD = Number(e.target.value);
+    });
+    byId('cfgAz').addEventListener('input', (e) => {
+        APP.navConfig.AZ_TOLERANCE = Number(e.target.value);
+    });
+}
+
+async function openInstruction() {
+    try {
+        const response = await fetch('instr.txt');
+        const text = await response.text();
+        byId('instructionText').textContent = text;
+    } catch (e) {
+        byId('instructionText').textContent = 'Не удалось загрузить инструкцию';
+    }
+    byId('instructionModal').style.display = 'flex';
+    closeMenu();
+}
+
+// Запуск
+initApp();
+</script>
 </body>
 </html>
