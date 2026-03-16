@@ -248,7 +248,59 @@
     /* ============================================ */
     /* НАВИГАТОР - UI элементы */
     /* ============================================ */
-    
+
+    /* Кнопка названия маршрута */
+    #navRouteHeaderBtn {
+        position: absolute;
+        top: calc(16px + env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9005;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        padding: 10px 20px;
+        border-radius: 100px;
+        border: 1px solid var(--border);
+        color: var(--btn-txt);
+        font-size: 14px;
+        font-weight: 700;
+        max-width: 90%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+        text-align: center;
+        cursor: pointer;
+        display: none;
+    }
+    #navRouteHeaderBtn.visible { display: block; }
+
+    /* Оверлей информации о маршруте */
+    #navGistInfoOverlay {
+        position: absolute;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 85%;
+        max-width: 320px;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        padding: 16px;
+        color: var(--btn-txt);
+        z-index: 9700;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        pointer-events: auto;
+        text-align: center;
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+    }
+    #navGistInfoOverlay.visible { display: flex; }
+
     /* HUD - информационная панель */
     .nav-hud {
         position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
@@ -512,6 +564,15 @@
 
 <!-- Кнопка меню - по центру -->
 <button id="menuBtn">М<br>Е<br>Н<br>Ю</button>
+
+<!-- Кнопка названия маршрута (навигатор) -->
+<div id="navRouteHeaderBtn" onclick="toggleNavGistInfo();">Загрузка...</div>
+
+<!-- Оверлей информации о маршруте (навигатор) -->
+<div id="navGistInfoOverlay" onclick="this.classList.remove('visible')">
+    <div class="overlay-title">О маршруте</div>
+    <div id="navGistDesc" class="info-value">Нет описания</div>
+</div>
 
 <!-- Cache status -->
 <div id="cacheStatus">Офлайн-кэш: 0%</div>
@@ -786,6 +847,7 @@ const APP = {
     navAudio: new Audio(),
     navIconCache: new Map(),
     navConfig: { TRIGGER_DIST: 25, AZ_TOLERANCE: 45, SPEED_THRESHOLD: 2 },
+    navMode: false,
     
     // Catalog
     catalogData: {
@@ -1378,6 +1440,7 @@ function showNavigatorUI() {
     byId('navListBtn').style.display = 'flex';
     byId('navLocateBtn').style.display = 'flex';
     byId('cacheStatus').style.display = 'block';
+    byId('navRouteHeaderBtn').classList.add('visible');
 }
 
 function hideNavigatorUI() {
@@ -1390,6 +1453,14 @@ function hideNavigatorUI() {
     byId('navSettingsOverlay').style.display = 'none';
     byId('cacheStatus').style.display = 'none';
     byId('commentOverlay').style.display = 'none';
+    byId('navRouteHeaderBtn').classList.remove('visible');
+    byId('navGistInfoOverlay').classList.remove('visible');
+    APP.navMode = false;
+}
+
+function toggleNavGistInfo() {
+    const overlay = byId('navGistInfoOverlay');
+    overlay.classList.toggle('visible');
 }
 
 async function loadNavigatorRoute(file, isCatalog = false) {
@@ -1449,10 +1520,19 @@ async function loadNavigatorRoute(file, isCatalog = false) {
             };
         });
         APP.navCurrentIndex = 0;
+        APP.navMode = true;
         showNavigatorUI();
         renderNavigatorPoints();
         updateNavHud();
         byId('navHud').classList.add('active');
+        
+        // Устанавливаем название маршрута в кнопку
+        const routeName = file.replace('.json', '');
+        byId('navRouteHeaderBtn').textContent = routeName.toUpperCase();
+        
+        // Устанавливаем описание (если есть)
+        byId('navGistDesc').textContent = 'Маршрут загружен';
+        
         preloadNavAudio();
         
         // Центрируем карту на всех точках маршрута
@@ -1827,13 +1907,17 @@ async function initApp() {
         APP.map.geoObjects.add(APP.userMarker);
         
         initGeolocation();
-        
+
         // Обработчик клика для редактора
         APP.map.events.add('click', (e) => {
             if (APP.editorIsAdd) {
                 const newPoint = addEditorPoint(e.get('coords'));
                 stopEditorAdd();
                 showToast('Точка добавлена', 'success');
+            } else if (APP.navMode) {
+                // В режиме навигатора закрываем оверлеи при клике на карту
+                byId('navGistInfoOverlay').classList.remove('visible');
+                byId('commentOverlay').style.display = 'none';
             }
         });
         
