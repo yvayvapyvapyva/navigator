@@ -832,14 +832,14 @@ const APP = {
     lastAz: 0,
     autoCenter: true,
     currentSpeed: 0,
-    
+
     // Editor
     editorPoints: [],
     editorCurFile: null,
     editorActivePoint: null,
     editorIsDrawing: false,
     editorIsAdd: false,
-    
+
     // Navigator
     navPoints: [],
     navCurrentIndex: -1,
@@ -848,7 +848,8 @@ const APP = {
     navIconCache: new Map(),
     navConfig: { TRIGGER_DIST: 25, AZ_TOLERANCE: 45, SPEED_THRESHOLD: 2 },
     navMode: false,
-    
+    navGistDesc: 'Описание отсутствует',
+
     // Catalog
     catalogData: {
         "7292595756-m_1": "Экзаменационный маршрут Мещера 1",
@@ -1465,6 +1466,9 @@ function toggleNavGistInfo() {
 
 async function loadNavigatorRoute(file, isCatalog = false) {
     let url = null;
+    let gistDescription = 'Описание отсутствует';
+    let actualFileName = file; // Имя файла без .json для отображения
+
     if (isCatalog) {
         try {
             const gistList = await fetchAllGists('yvayvapyvapyva');
@@ -1474,15 +1478,24 @@ async function loadNavigatorRoute(file, isCatalog = false) {
             const targetFileName = routeName + '.json';
             const targetGist = gistList.find(g => g.description && g.description.includes(`[${targetId}]`));
             if (targetGist) {
+                gistDescription = targetGist.description || 'Описание отсутствует';
                 const fileObj = Object.values(targetGist.files).find(f => f.filename.toLowerCase() === targetFileName.toLowerCase());
-                if (fileObj) url = fileObj.raw_url;
+                if (fileObj) {
+                    url = fileObj.raw_url;
+                    actualFileName = fileObj.filename.replace('.json', '');
+                }
             }
         } catch (e) { console.error('Ошибка поиска gist:', e); }
     } else {
         if (!APP.gistId) { showToast('Сначала создайте маршрут', 'error'); return; }
         try {
             const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
-            if (gist && gist.files[file]) url = gist.files[file].raw_url;
+            if (gist && gist.files[file]) {
+                url = gist.files[file].raw_url;
+                gistDescription = gist.description || 'Описание отсутствует';
+                // Используем точное имя файла из gist (с учётом регистра)
+                actualFileName = file.replace('.json', '');
+            }
         } catch (e) { console.error('Ошибка загрузки gist:', e); }
     }
     if (!url) { showToast('Ошибка загрузки маршрута', 'error'); return; }
@@ -1525,13 +1538,13 @@ async function loadNavigatorRoute(file, isCatalog = false) {
         renderNavigatorPoints();
         updateNavHud();
         byId('navHud').classList.add('active');
-        
-        // Устанавливаем название маршрута в кнопку
-        const routeName = file.replace('.json', '');
-        byId('navRouteHeaderBtn').textContent = routeName.toUpperCase();
-        
-        // Устанавливаем описание (если есть)
-        byId('navGistDesc').textContent = 'Маршрут загружен';
+
+        // Устанавливаем название маршрута в кнопку (точное имя файла из gist)
+        byId('navRouteHeaderBtn').textContent = actualFileName;
+
+        // Устанавливаем описание маршрута
+        APP.navGistDesc = gistDescription;
+        byId('navGistDesc').textContent = gistDescription;
         
         preloadNavAudio();
         
