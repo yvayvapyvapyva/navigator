@@ -1437,6 +1437,17 @@ async function loadNavigatorRoute(file, isCatalog = false) {
         updateNavHud();
         byId('navHud').classList.add('active');
         preloadNavAudio();
+        
+        // Центрируем карту на всех точках маршрута
+        if (APP.navPoints.length > 0 && APP.map) {
+            setTimeout(() => {
+                const bounds = APP.map.geoObjects.getBounds();
+                if (bounds) {
+                    APP.map.setBounds(bounds, { zoomMargin: 80 });
+                }
+            }, 100);
+        }
+        
         showToast('Маршрут загружен', 'success');
     } catch (e) {
         showToast('Ошибка данных: ' + e.message, 'error');
