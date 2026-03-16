@@ -230,12 +230,16 @@
         position: fixed; top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 10px);
         left: 50%; transform: translateX(-50%) translateY(-100px);
         background: var(--dark-panel); color: #ffffff;
-        padding: 10px 20px; border-radius: 50px;
+        padding: 14px 24px; border-radius: 16px;
         font-size: 14px; z-index: 9999;
         transition: 0.4s; opacity: 0;
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
         border: 1px solid var(--border); font-weight: 700;
+        max-width: 80vw;
+        white-space: pre-wrap;
+        text-align: center;
+        line-height: 1.4;
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .toast.success { background: rgba(52,199,89,0.95); }
@@ -1955,6 +1959,12 @@ async function initApp() {
                     fetchRoutes().then(() => {
                         renderRoutesList();
                         console.log('Маршруты загружены:', APP.routes.length);
+                        
+                        // Приветственное сообщение с количеством маршрутов
+                        const userName = APP.user.name || 'Пользователь';
+                        const routesCount = APP.routes.length;
+                        const welcomeMsg = `Здравствуйте, ${userName}!\nУ вас маршрутов: ${routesCount}`;
+                        showToast(welcomeMsg, 'info', 2000);
                     });
                 } else {
                     // Gist не найден - показываем пустой список
@@ -1962,10 +1972,16 @@ async function initApp() {
                     APP.routes = [];
                     renderRoutesList();
                     console.log('Gist не найден, создайте первый маршрут');
+                    
+                    // Приветственное сообщение для нового пользователя
+                    const userName = APP.user.name || 'Пользователь';
+                    showToast(`Здравствуйте, ${userName}!\nУ вас маршрутов: 0`, 'info', 2000);
                 }
             }).catch(err => {
                 console.error('Ошибка поиска gist:', err);
                 renderRoutesList();
+                const userName = APP.user.name || 'Пользователь';
+                showToast(`Здравствуйте, ${userName}!\nУ вас маршрутов: 0`, 'info', 2000);
             });
         } else {
             renderRoutesList();
