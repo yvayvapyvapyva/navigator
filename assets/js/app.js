@@ -352,21 +352,37 @@ function openEditorWithRoute(file) {
 }
 
 async function loadEditorRoute(file) {
-  if (!APP.gistId) return;
+  console.log('Загрузка маршрута в редактор:', file);
   
-  const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
-  if (!gist || !gist.files[file]) {
-    showToast('Ошибка загрузки маршрута', 'error');
+  if (!APP.gistId) {
+    console.error('Нет gistId');
+    showToast('Сначала создайте маршрут', 'error');
     return;
   }
-  
-  const data = JSON.parse(gist.files[file].content || '[]');
-  APP.editorPoints = data;
-  APP.editorCurFile = file;
-  
-  // Отображаем точки на карте
-  renderEditorPoints();
-  showToast(`Загружен: ${file.replace('.json', '')}`, 'success');
+
+  try {
+    const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
+    console.log('Gist загружен:', gist ? 'да' : 'нет');
+    
+    if (!gist || !gist.files[file]) {
+      console.error('Файл не найден:', file);
+      showToast('Маршрут не найден', 'error');
+      return;
+    }
+
+    const data = JSON.parse(gist.files[file].content || '[]');
+    console.log('Данные маршрута:', data);
+    
+    APP.editorPoints = data;
+    APP.editorCurFile = file;
+
+    // Отображаем точки на карте
+    renderEditorPoints();
+    showToast(`Загружен: ${file.replace('.json', '')}`, 'success');
+  } catch (e) {
+    console.error('Ошибка загрузки:', e);
+    showToast('Ошибка: ' + e.message, 'error');
+  }
 }
 
 function renderEditorPoints() {
@@ -427,22 +443,59 @@ function openNavigatorWithRoute(file, isCatalog = false) {
 }
 
 async function loadNavigatorRoute(file, isCatalog = false) {
+  console.log('Загрузка маршрута:', file, 'каталог:', isCatalog);
+  
   let url = null;
   
   if (isCatalog) {
     // Для каталога - ищем в публичных gist
-    const gistList = await fetchAllGists('yvayvapyvapyva');
-    const targetGist = gistList.find(g => g.description && g.description.includes(`[${file.split('-')[0]}]`));
-    if (targetGist) {
-      const fileObj = Object.values(targetGist.files).find(f => f.filename.toLowerCase() === `${file}.json`.toLowerCase());
-      if (fileObj) url = fileObj.raw_url;
+    console.log('Поиск в публичных gist...');
+    try {
+      const gistList = await fetchAllGists('yvayvapyvapyva');
+      console.log('Найдено gist:', gistList.length);
+      
+      const targetId = file.split('-')[0];
+      const targetFileName = file + '.json';
+      
+      const targetGist = gistList.find(g => 
+        g.description && g.description.includes(`[${targetId}]`)
+      );
+      
+      if (targetGist) {
+        console.log('Найден gist:', targetGist.id);
+        const fileObj = Object.values(targetGist.files).find(
+          f => f.filename.toLowerCase() === targetFileName.toLowerCase()
+        );
+        if (fileObj) {
+          url = fileObj.raw_url;
+          console.log('URL найден:', url);
+        } else {
+          console.error('Файл не найден в gist');
+        }
+      } else {
+        console.error('Gist не найден для ID:', targetId);
+      }
+    } catch (e) {
+      console.error('Ошибка поиска gist:', e);
     }
   } else {
     // Для пользовательских маршрутов
-    if (!APP.gistId) return;
-    const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
-    if (gist && gist.files[file]) {
-      url = gist.files[file].raw_url;
+    console.log('Загрузка пользовательского маршрута');
+    if (!APP.gistId) {
+      console.error('Нет gistId');
+      showToast('Сначала создайте маршрут', 'error');
+      return;
+    }
+    try {
+      const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
+      console.log('Gist загружен:', gist ? 'да' : 'нет');
+      if (gist && gist.files[file]) {
+        url = gist.files[file].raw_url;
+      } else {
+        console.error('Файл не найден в gist');
+      }
+    } catch (e) {
+      console.error('Ошибка загрузки gist:', e);
     }
   }
   
@@ -452,8 +505,11 @@ async function loadNavigatorRoute(file, isCatalog = false) {
   }
   
   try {
+    console.log('Загрузка данных маршрута...');
     const res = await fetch(url);
+    console.log('Ответ:', res.status);
     const raw = await res.json();
+    console.log('Данные:', raw);
     
     APP.navPoints = raw.map((d, i) => {
       const pts = d.pts || [];
@@ -480,25 +536,37 @@ async function loadNavigatorRoute(file, isCatalog = false) {
     
     showToast('Маршрут загружен', 'success');
   } catch (e) {
-    showToast('Ошибка данных', 'error');
+    console.error('Ошибка парсинга данных:', e);
+    showToast('Ошибка данных: ' + e.message, 'error');
   }
 }
 
 async function fetchAllGists(username) {
+  console.log('Загрузка gist пользователя:', username);
   let allGists = [];
   let page = 1;
   const perPage = 100;
   
   while (true) {
-    const res = await fetch(`https://api.github.com/users/${username}/gists?per_page=${perPage}&page=${page}`);
-    if (!res.ok) break;
-    const data = await res.json();
-    if (data.length === 0) break;
-    allGists = allGists.concat(data);
-    if (data.length < perPage) break;
-    page++;
+    try {
+      const res = await fetch(`https://api.github.com/users/${username}/gists?per_page=${perPage}&page=${page}`);
+      if (!res.ok) {
+        console.error('HTTP ошибка:', res.status);
+        break;
+      }
+      const data = await res.json();
+      console.log('Страница', page, ':', data.length, 'gist');
+      if (data.length === 0) break;
+      allGists = allGists.concat(data);
+      if (data.length < perPage) break;
+      page++;
+    } catch (e) {
+      console.error('Ошибка загрузки страницы:', e);
+      break;
+    }
   }
   
+  console.log('Всего gist:', allGists.length);
   return allGists;
 }
 
