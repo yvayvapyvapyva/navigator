@@ -28,34 +28,34 @@
     #map { position: absolute; inset: 0; z-index: 1; touch-action: auto; }
     [class*="-copyrights-pane"], [class*="-map-copyrights-promo"], [class*="-controls-pane"] { display: none !important; }
 
-    /* Кнопка меню - у левого края по центру */
+    /* Кнопка меню - внизу по центру */
     #menuBtn {
         position: absolute;
-        top: 50%;
-        left: 16px;
-        transform: translateY(-50%);
+        bottom: calc(24px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%);
         z-index: 9005;
         pointer-events: auto;
         background: var(--dark-panel);
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
-        padding: 14px 20px;
-        border-radius: 16px;
+        padding: 16px 24px;
+        border-radius: 20px;
         border: 1px solid var(--border);
         color: var(--btn-txt);
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 800;
         box-shadow: 0 10px 25px rgba(0,0,0,0.22);
         cursor: pointer;
         transition: transform 0.15s, background 0.15s;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        line-height: 1.2;
-        min-width: 60px;
+        gap: 10px;
+        min-width: 180px;
     }
-    #menuBtn:active { transform: translateY(-50%) scale(0.95); background: rgba(30,32,40,0.9); }
+    #menuBtn svg { fill: currentColor; }
+    #menuBtn:active { transform: translateX(-50%) scale(0.95); background: rgba(30,32,40,0.9); }
     /* Загрузочный экран */
     .loading-overlay {
         position: fixed; inset: 0; background: rgba(8,10,14,0.95);
@@ -76,27 +76,29 @@
     .menu-overlay.visible { display: block; opacity: 1; }
 
     .side-menu {
-        position: fixed; top: 0; left: 0; width: min(320px, 85vw); height: 100%;
+        position: fixed; top: calc(env(safe-area-inset-top) + var(--twa-header-height)); left: 0; width: 100%; height: 100%;
         background: linear-gradient(180deg, rgba(25,27,35,0.95), rgba(18,20,28,0.95));
-        border-right: 1px solid var(--border); z-index: 9501;
-        transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
+        border-right: none; z-index: 9501;
+        transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
         display: flex; flex-direction: column;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+        box-shadow: 0 4px 24px rgba(0,0,0,0.4);
     }
-    .side-menu.visible { transform: translateX(0); }
+    .side-menu.visible { transform: translateY(0); }
     
     .menu-header {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 16px 20px; border-bottom: 1px solid var(--border);
+        padding: 20px; border-bottom: 1px solid var(--border);
         background: rgba(30,32,40,0.5);
+        position: sticky; top: 0;
     }
     .menu-title { font-size: 20px; font-weight: 800; }
     .menu-close {
-        width: 32px; height: 32px; border-radius: 10px;
+        width: 44px; height: 44px; border-radius: 12px;
         background: rgba(255,255,255,0.1); border: 1px solid var(--border);
-        color: var(--btn-txt); font-size: 20px;
+        color: var(--btn-txt); font-size: 24px;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
+        flex-shrink: 0;
     }
     
     .menu-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
@@ -567,7 +569,10 @@
 <div id="map"></div>
 
 <!-- Кнопка меню - по центру -->
-<button id="menuBtn">М<br>Е<br>Н<br>Ю</button>
+<button id="menuBtn">
+    <svg viewBox="0 0 24 24" width="24" height="24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
+    МЕНЮ
+</button>
 
 <!-- Кнопка названия маршрута (навигатор) -->
 <div id="navRouteHeaderBtn" onclick="toggleNavGistInfo();">Загрузка...</div>
