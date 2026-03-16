@@ -27,32 +27,35 @@
     
     #map { position: absolute; inset: 0; z-index: 1; touch-action: auto; }
     [class*="-copyrights-pane"], [class*="-map-copyrights-promo"], [class*="-controls-pane"] { display: none !important; }
-    
-    /* Верхняя панель */
-    .top-ui-wrapper {
-        position: absolute; top: 0; left: 0; right: 0;
-        height: var(--twa-header-height); margin-top: env(safe-area-inset-top, 0px);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 9005; pointer-events: none; padding: 0 16px;
-    }
-    
+
+    /* Кнопка меню - у левого края по центру */
     #menuBtn {
+        position: absolute;
+        top: 50%;
+        left: 16px;
+        transform: translateY(-50%);
+        z-index: 9005;
         pointer-events: auto;
         background: var(--dark-panel);
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
-        padding: 10px 24px;
-        border-radius: 100px;
+        padding: 14px 20px;
+        border-radius: 16px;
         border: 1px solid var(--border);
         color: var(--btn-txt);
         font-size: 14px;
-        font-weight: 700;
+        font-weight: 800;
         box-shadow: 0 10px 25px rgba(0,0,0,0.22);
         cursor: pointer;
         transition: transform 0.15s, background 0.15s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.2;
+        min-width: 60px;
     }
-    #menuBtn:active { transform: scale(0.95); background: rgba(30,32,40,0.9); }
-    
+    #menuBtn:active { transform: translateY(-50%) scale(0.95); background: rgba(30,32,40,0.9); }
     /* Загрузочный экран */
     .loading-overlay {
         position: fixed; inset: 0; background: rgba(8,10,14,0.95);
@@ -68,14 +71,14 @@
     .menu-overlay {
         position: fixed; inset: 0; background: rgba(0,0,0,0.6);
         backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-        z-index: 1998; display: none; opacity: 0; transition: opacity 0.25s;
+        z-index: 9500; display: none; opacity: 0; transition: opacity 0.25s;
     }
     .menu-overlay.visible { display: block; opacity: 1; }
-    
+
     .side-menu {
         position: fixed; top: 0; left: 0; width: min(320px, 85vw); height: 100%;
         background: linear-gradient(180deg, rgba(25,27,35,0.95), rgba(18,20,28,0.95));
-        border-right: 1px solid var(--border); z-index: 1999;
+        border-right: 1px solid var(--border); z-index: 9501;
         transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
         display: flex; flex-direction: column;
         box-shadow: 4px 0 24px rgba(0,0,0,0.4);
@@ -149,7 +152,7 @@
         align-items: flex-end; justify-content: center;
         background: rgba(0,0,0,0.6);
         backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-        z-index: 3000;
+        z-index: 9600;
     }
     .modal-sheet {
         width: min(92vw, 500px); margin: 0 16px 20px;
@@ -194,7 +197,7 @@
     
     /* Инструкция */
     .instruction-modal {
-        position: fixed; inset: 0; z-index: 3000; display: none;
+        position: fixed; inset: 0; z-index: 9600; display: none;
         align-items: flex-end; justify-content: center;
         background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
@@ -368,7 +371,7 @@
     
     /* Настройки навигатора */
     #navSettingsOverlay {
-        position: absolute; bottom: 0; right: 72px; z-index: 9010;
+        position: absolute; bottom: 0; right: 72px; z-index: 9700;
         background: linear-gradient(180deg, rgba(30,32,40,0.9), rgba(20,22,30,0.9));
         border-radius: 20px;
         display: none; flex-direction: column;
@@ -398,7 +401,7 @@
         -webkit-backdrop-filter: var(--panel-blur);
         border-radius: 24px;
         border: 1px solid var(--border);
-        z-index: 9010;
+        z-index: 9700;
         box-shadow: 0 20px 40px rgba(0,0,0,0.35);
         pointer-events: auto;
         height: 75vh;
@@ -451,7 +454,7 @@
         border-radius: 20px;
         border: 1px solid var(--border);
         padding: 16px; color: var(--btn-txt);
-        z-index: 9025;
+        z-index: 9700;
         box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         pointer-events: auto; text-align: center;
         display: none; flex-direction: column; gap: 8px;
@@ -507,10 +510,8 @@
 <video id="v" playsinline muted loop></video>
 <div id="map"></div>
 
-<!-- Верхняя панель с кнопкой МЕНЮ -->
-<div class="top-ui-wrapper">
-    <button id="menuBtn">МЕНЮ</button>
-</div>
+<!-- Кнопка меню - по центру -->
+<button id="menuBtn">М<br>Е<br>Н<br>Ю</button>
 
 <!-- Cache status -->
 <div id="cacheStatus">Офлайн-кэш: 0%</div>
