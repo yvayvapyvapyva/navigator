@@ -904,7 +904,18 @@ function showToast(text, type = 'info', duration = 2000) {
 // ============================================
 // МЕНЮ
 // ============================================
-function openMenu() {
+async function openMenu() {
+    // Обновляем список маршрутов при открытии меню
+    if (APP.gistId) {
+        await fetchRoutes();
+    } else if (APP.token) {
+        const id = await findUserGist();
+        if (id) {
+            APP.gistId = id;
+            await fetchRoutes();
+        }
+    }
+    renderRoutesList();
     byId('sideMenu').classList.add('visible');
     byId('menuOverlay').classList.add('visible');
 }
@@ -1935,15 +1946,29 @@ async function initApp() {
         });
         
         byId('loading').classList.add('hidden');
-        
-        // Поиск gist пользователя
+
+        // Поиск gist пользователя и загрузка маршрутов
         if (APP.token) {
             findUserGist().then(id => {
                 if (id) {
                     APP.gistId = id;
-                    fetchRoutes().then(() => renderRoutesList());
+                    fetchRoutes().then(() => {
+                        renderRoutesList();
+                        console.log('Маршруты загружены:', APP.routes.length);
+                    });
+                } else {
+                    // Gist не найден - показываем пустой список
+                    APP.gistId = null;
+                    APP.routes = [];
+                    renderRoutesList();
+                    console.log('Gist не найден, создайте первый маршрут');
                 }
+            }).catch(err => {
+                console.error('Ошибка поиска gist:', err);
+                renderRoutesList();
             });
+        } else {
+            renderRoutesList();
         }
         
         // Если есть start_param - запускаем навигатор
