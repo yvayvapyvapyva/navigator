@@ -901,17 +901,8 @@ function showToast(text, type = 'info', duration = 2000) {
 // ============================================
 // МЕНЮ
 // ============================================
-async function openMenu() {
-    // Обновляем список маршрутов при открытии меню
-    if (APP.gistId) {
-        APP.routes = await fetchRoutes();
-    } else if (APP.token) {
-        const id = await findUserGist();
-        if (id) {
-            APP.gistId = id;
-            APP.routes = await fetchRoutes();
-        }
-    }
+function openMenu() {
+    // Маршруты уже загружены при инициализации, просто отображаем их
     renderRoutesList();
     byId('sideMenu').classList.add('visible');
     byId('menuOverlay').classList.add('visible');
