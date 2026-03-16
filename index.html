@@ -609,24 +609,17 @@
     /* РЕДАКТОР - UI элементы */
     /* ============================================ */
     #editorPanel {
-        display: none;
-    }
-    #editorPanel.visible {
-        display: block;
+        z-index: 10000;
     }
     .editor-top-controls {
         position: absolute;
         top: calc(16px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
-        z-index: 9005;
-        display: flex;
+        z-index: 10000;
         justify-content: space-between;
         gap: 10px;
         pointer-events: none;
-    }
-    .editor-top-controls.visible {
-        display: flex;
     }
     .editor-btn-top {
         pointer-events: auto;
@@ -661,11 +654,8 @@
         bottom: calc(24px + env(safe-area-inset-bottom));
         left: 50%;
         transform: translateX(-50%);
-        z-index: 9005;
+        z-index: 10000;
         pointer-events: auto;
-    }
-    .editor-bottom-controls.visible {
-        display: block;
     }
     #editorAddPointBtn {
         background: var(--dark-panel);
@@ -690,12 +680,8 @@
         top: calc(env(safe-area-inset-top) + 10px);
         left: 50%;
         transform: translateX(-50%);
-        z-index: 9006;
-        display: none;
+        z-index: 10001;
         pointer-events: auto;
-    }
-    #editorFloatingSave.visible {
-        display: block;
     }
     #editorSaveBtn {
         background: var(--dark-panel);
@@ -936,7 +922,7 @@
 <!-- ============================================ -->
 <div id="editorPanel">
     <!-- Верхние кнопки редактора -->
-    <div class="editor-top-controls" id="editorTopControls" style="display:none;">
+    <div class="editor-top-controls" id="editorTopControls">
         <button class="editor-btn-top" onclick="closeEditorAndShowMenu()" style="min-width:56px;justify-content:center;">
             <span>←</span>
         </button>
@@ -947,14 +933,14 @@
             <span>⚙️</span>
         </button>
     </div>
-    
+
     <!-- Плавающая кнопка сохранения -->
-    <div id="editorFloatingSave" style="display:none;">
+    <div id="editorFloatingSave">
         <button id="editorSaveBtn" onclick="saveEditorRoute()">Сохранить изменения</button>
     </div>
-    
+
     <!-- Нижняя кнопка добавления точки -->
-    <div class="editor-bottom-controls" id="editorBottomControls" style="display:none;">
+    <div class="editor-bottom-controls" id="editorBottomControls">
         <button id="editorAddPointBtn" onclick="handleEditorAddBtn()">
             <span id="editorAddText">Добавить новую точку</span>
         </button>
@@ -1459,19 +1445,28 @@ async function copyRouteLink() {
 }
 
 function openEditorWithRoute(file) {
+    console.log('=== openEditorWithRoute ===');
+    console.log('File:', file);
+    
     APP.selectedRoute = file;
 
     // Скрываем навигатор UI
     hideNavigatorUI();
 
     // Показываем редактор UI
-    byId('editorPanel').classList.add('visible');
-    byId('editorTopControls').classList.add('visible');
-    byId('editorBottomControls').classList.add('visible');
-    byId('editorRouteName').textContent = file.replace('.json', '');
+    const editorPanel = byId('editorPanel');
+    const editorTopControls = byId('editorTopControls');
+    const editorBottomControls = byId('editorBottomControls');
+    const editorRouteName = byId('editorRouteName');
+    const menuBtn = byId('menuBtn');
+    
+    if (editorPanel) editorPanel.style.display = 'block';
+    if (editorTopControls) editorTopControls.style.display = 'flex';
+    if (editorBottomControls) editorBottomControls.style.display = 'block';
+    if (editorRouteName) editorRouteName.textContent = file.replace('.json', '');
+    if (menuBtn) menuBtn.style.display = 'none';
 
-    // Скрываем кнопку меню в режиме редактора
-    byId('menuBtn').style.display = 'none';
+    console.log('Editor UI shown');
 
     loadEditorRoute(file);
     closeMenu();
@@ -1563,11 +1558,17 @@ async function editorDeleteRoute() {
 }
 
 function hideEditorUI() {
-    byId('editorPanel').classList.remove('visible');
-    byId('editorTopControls').classList.remove('visible');
-    byId('editorBottomControls').classList.remove('visible');
-    byId('editorFloatingSave').style.display = 'none';
-    byId('menuBtn').style.display = 'flex';
+    const editorPanel = byId('editorPanel');
+    const editorTopControls = byId('editorTopControls');
+    const editorBottomControls = byId('editorBottomControls');
+    const editorFloatingSave = byId('editorFloatingSave');
+    const menuBtn = byId('menuBtn');
+    
+    if (editorPanel) editorPanel.style.display = 'none';
+    if (editorTopControls) editorTopControls.style.display = 'none';
+    if (editorBottomControls) editorBottomControls.style.display = 'none';
+    if (editorFloatingSave) editorFloatingSave.style.display = 'none';
+    if (menuBtn) menuBtn.style.display = 'flex';
 }
 
 function openNavigatorWithRoute(file, isCatalog = false) {
@@ -2467,6 +2468,9 @@ document.addEventListener('visibilitychange', () => {
 // ИНИЦИАЛИЗАЦИЯ
 // ============================================
 async function initApp() {
+    // Скрываем редактор при загрузке
+    hideEditorUI();
+    
     const tg = getTelegramWebApp();
     if (tg) {
         tg.expand();
