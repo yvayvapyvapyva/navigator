@@ -5,63 +5,108 @@
     <title>Route App Launcher</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=YANDEX_API_KEY&lang=ru_RU&suppressMapOpenBlock=true"></script>
     <link rel="stylesheet" href="assets/css/shared.css">
     <link rel="stylesheet" href="assets/css/launcher.css">
 </head>
 <body>
+
 <div id="loadingScreen" class="loading-screen">ЗАГРУЗКА ДАННЫХ</div>
 
-<div id="routesScreen" class="screen" style="display:none;">
-    <div class="card">
-        <button class="btn btn-blue create-top-btn catalog-btn">Каталог публичных маршрутов</button>
-        <h1 id="routesTitle" class="routes-title">Список ваших маршрутов</h1>
-        <button id="createNewBtn" class="btn btn-green create-top-btn">Создать новый маршрут</button>
-        <div id="routesRow" class="routes-row">
-            <select id="routesSelect" class="routes-select routes-select-wide">
-                <option value="">Выберите маршрут</option>
-            </select>
-            <button id="routeSettingsBtn" class="route-settings-btn" aria-label="Настройки маршрута">⚙️</button>
+<div id="map"></div>
+
+<!-- Верхняя панель -->
+<div class="top-ui-wrapper">
+    <button id="menuBtn" class="top-bar-btn">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="white"/></svg>
+        <span>Меню</span>
+    </button>
+</div>
+
+<!-- Кнопка геолокации -->
+<button id="locateBtn" class="map-btn" onclick="toggleAutoCenter()">
+    <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 7.48 7.94 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" fill="white"/></svg>
+</button>
+
+<!-- Главное меню (выезжает слева) -->
+<div id="menuOverlay" class="menu-overlay" onclick="closeMenu()"></div>
+<div id="sideMenu" class="side-menu">
+    <div class="menu-header">
+        <span class="menu-title">Меню</span>
+        <button class="menu-close" onclick="closeMenu()">✕</button>
+    </div>
+    
+    <div class="menu-section">
+        <div class="menu-section-title">Маршруты</div>
+        <div id="routesList" class="routes-list">
+            <!-- Список маршрутов -->
         </div>
-        <div id="selectedRouteLabel" class="selected-route-label" style="display:none;"></div>
-        <div id="openActions" class="actions" style="display:none;">
-            <button id="openEditorBtn" class="btn btn-green">Открыть маршрут в редакторе</button>
-            <button id="openNavigatorBtn" class="btn btn-green">Открыть маршрут в навигаторе</button>
-        </div>
+        <button id="createNewBtn" class="menu-btn menu-btn-green">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
+            Создать новый маршрут
+        </button>
+    </div>
+    
+    <div class="menu-section">
+        <div class="menu-section-title">Действия</div>
+        <button id="instructionBtn" class="menu-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/></svg>
+            Инструкция
+        </button>
     </div>
 </div>
 
-<div id="routeSettingsModal" class="modal-overlay" style="display:none;">
+<!-- Модальное окно создания маршрута -->
+<div id="createModal" class="modal-overlay" style="display:none;">
     <div class="modal-sheet">
-        <div class="modal-title">Действия с маршрутом</div>
-        <button id="renameRouteBtn" class="modal-btn">Переименовать маршрут</button>
-        <button id="copyLinkBtn" class="modal-btn">Копировать ссылку на маршрут</button>
-        <button id="deleteRouteBtn" class="modal-btn modal-btn-danger">Удалить маршрут</button>
-        <button id="closeSettingsBtn" class="modal-btn modal-btn-muted">Закрыть</button>
-    </div>
-</div>
-
-<div id="emptyScreen" class="screen" style="display:none;">
-    <div class="card small">
-        <button class="btn btn-blue create-top-btn catalog-btn">Каталог публичных маршрутов</button>
-        <h1>Маршрутов нет</h1>
-        <button id="emptyCreateBtn" class="btn btn-green">Создать новый маршрут</button>
-    </div>
-</div>
-
-<div id="createScreen" class="screen" style="display:none;">
-    <div class="card small">
-        <button id="backFromCreateBtn" class="btn btn-muted create-top-btn">Назад</button>
-        <h1>Новый маршрут</h1>
+        <div class="modal-title">Новый маршрут</div>
         <input id="routeNameInput" class="input" type="text" placeholder="Введите название" oninput="this.value = this.value.replace(/[^a-zA-Z0-9_]/g, '')">
         <div class="hint">Допустимы только английские буквы, цифры и знак нижнего подчеркивания.</div>
-        <button id="confirmCreateBtn" class="btn btn-green">Создать</button>
+        <div class="modal-actions">
+            <button id="cancelCreateBtn" class="modal-btn modal-btn-muted">Отмена</button>
+            <button id="confirmCreateBtn" class="modal-btn modal-btn-green">Создать</button>
+        </div>
     </div>
 </div>
 
-<button id="instructionBtn" class="btn btn-muted instruction-btn" type="button">ИНСТРУКЦИЯ..</button>
+<!-- Модальное окно инструкции -->
 <div id="instructionModal" class="instruction-modal" style="display:none;">
-    <div id="instructionText" class="instruction-text"></div>
-    <button id="instructionCloseBtn" class="btn btn-muted instruction-close" type="button">Закрыть</button>
+    <div class="instruction-content">
+        <div class="instruction-header">
+            <span class="instruction-title">Инструкция</span>
+            <button id="instructionCloseBtn" class="instruction-close">✕</button>
+        </div>
+        <div id="instructionText" class="instruction-text"></div>
+    </div>
+</div>
+
+<!-- Модальное окно действий с маршрутом -->
+<div id="routeActionsModal" class="modal-overlay" style="display:none;">
+    <div class="modal-sheet modal-sheet-small">
+        <div class="modal-title">Действия с маршрутом</div>
+        <button id="openEditorBtn" class="modal-btn">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
+            Открыть в редакторе
+        </button>
+        <button id="openNavigatorBtn" class="modal-btn modal-btn-green">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="currentColor"/></svg>
+            Открыть в навигаторе
+        </button>
+        <div class="modal-divider"></div>
+        <button id="renameRouteBtn" class="modal-btn">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
+            Переименовать
+        </button>
+        <button id="copyLinkBtn" class="modal-btn">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" fill="currentColor"/></svg>
+            Копировать ссылку
+        </button>
+        <button id="deleteRouteBtn" class="modal-btn modal-btn-danger">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>
+            Удалить маршрут
+        </button>
+        <button id="closeActionsBtn" class="modal-btn modal-btn-muted">Закрыть</button>
+    </div>
 </div>
 
 <script src="assets/js/shared.js"></script>
