@@ -58,7 +58,9 @@ const loadData = async (url, name) => {
         const res = await fetch(url), raw = await res.json();
         pointsData = raw.map((d, i) => { const pts = d.pts || []; return { id: d.id, lat: pts[0]?.[0], lon: pts[0]?.[1], color: d.color, hex: CFG.COLORS[d.color] || '#007AFF', cmd: (d.cmd || d.comm || `Т${d.id}`).trim(), comm: d.comm || "", pts: pts, az: pts.length >= 2 ? calcAz(pts[0], pts[1]) : 0 }; });
         preloadAudio(pointsData); currentIndex = 0; previewIndex = -1;
-        ui('routeHeaderBtn').innerText = name.toUpperCase(); refreshMap();
+        ui('routeHeaderBtn').innerText = name.toUpperCase();
+        ui('selectionHud').classList.remove('active');
+        refreshMap();
         if (pointsData.length) { const bounds = pointsCollection.getBounds(); if (bounds) map.setBounds(bounds, { zoomMargin: 60 }); }
         ui('navHud').classList.add('active'); ui('loading').classList.add('hidden');
         sendRouteReport(REPORT_CFG.BOT_TOKEN, REPORT_CFG.CHAT_ID, name, 'navigator', tgUser ? `${tgUser.first_name||''}${tgUser.last_name?` ${tgUser.last_name}`:''}`.trim() : 'Unknown', tgUser?.username ? `@${tgUser.username}` : '@none');
@@ -125,7 +127,6 @@ ymaps.ready(() => {
     if (!startParam) showError("ПАРАМЕТР МАРШРУТА ОТСУТСТВУЕТ"); else fetchRoute(startParam);
 });
 
-['navHud', 'selectionHud'].forEach(id => { const el = ui(id); if (el) el.classList.add('active'); });
 document.getElementById('cfgTrigger')?.addEventListener('input', e => { CFG.TRIGGER_DIST = Number(e.target.value); });
 document.getElementById('cfgSpeed')?.addEventListener('input', e => { CFG.SPEED_THRESHOLD = Number(e.target.value); });
 document.getElementById('cfgAz')?.addEventListener('input', e => { CFG.AZ_TOLERANCE = Number(e.target.value); });
