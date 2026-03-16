@@ -194,6 +194,60 @@
     .modal-btn-danger { background: rgba(255,95,87,0.42); border-color: rgba(255,127,120,0.5); }
     .modal-btn-muted { background: rgba(40,40,45,0.3); }
     .modal-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+    /* Выпадающий список цветов */
+    .color-dropdown {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: linear-gradient(180deg, rgba(25,25,30,0.9), rgba(15,15,18,0.85));
+        border-radius: 30px; padding: 12px; display: none; flex-direction: column;
+        gap: 4px; z-index: 10000; box-shadow: 0 30px 100px rgba(0,0,0,0.5);
+        width: 90%; max-width: 400px; border: 1px solid var(--border);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .dropdown-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+        z-index: 9999; display: none; backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+    .color-row {
+        display: flex; align-items: center; gap: 16px; padding: 14px;
+        border-radius: 18px; cursor: pointer;
+    }
+    .swatch {
+        width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    }
+    
+    /* Стили для списка точек редактора */
+    .sortable-point-item {
+        background: linear-gradient(180deg, rgba(25,25,30,0.75), rgba(15,15,18,0.65));
+        padding: 16px; border-radius: 20px; margin-bottom: 12px;
+        border: 1px solid rgba(255,255,255,0.25);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .item-main-row {
+        display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+    }
+    .point-number-text {
+        font-size: 18px; font-weight: 800; color: #d1d5db;
+        min-width: 24px; text-align: center;
+    }
+    .item-actions {
+        display: flex; gap: 8px; margin-top: 12px; width: 100%;
+    }
+    .btn-item-action {
+        flex: 1; padding: 12px; border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.25);
+        background: linear-gradient(180deg, rgba(20,20,20,0.7), rgba(10,10,10,0.6));
+        color: #ffffff; font-size: 14px; font-weight: 600;
+        cursor: pointer; box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    .btn-item-action:active { transform: scale(0.98); }
+    .btn-item-action.btn-del {
+        color: #ff6b6b;
+    }
     
     /* Инструкция */
     .instruction-modal {
@@ -550,6 +604,121 @@
         text-align: center; cursor: pointer;
         box-shadow: 0 16px 30px rgba(0,0,0,0.3);
     }
+
+    /* ============================================ */
+    /* РЕДАКТОР - UI элементы */
+    /* ============================================ */
+    #editorPanel {
+        display: none;
+    }
+    #editorPanel.visible {
+        display: block;
+    }
+    .editor-top-controls {
+        position: absolute;
+        top: calc(16px + env(safe-area-inset-top));
+        left: 16px;
+        right: 16px;
+        z-index: 9005;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        pointer-events: none;
+    }
+    .editor-top-controls.visible {
+        display: flex;
+    }
+    .editor-btn-top {
+        pointer-events: auto;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        padding: 14px 22px;
+        border-radius: 30px;
+        border: 1px solid var(--border);
+        color: var(--btn-txt);
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .editor-btn-top:active {
+        transform: scale(0.95);
+    }
+    #editorRouteNameBtn {
+        flex: 1;
+        max-width: calc(100% - 80px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .editor-bottom-controls {
+        position: absolute;
+        bottom: calc(24px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9005;
+        pointer-events: auto;
+    }
+    .editor-bottom-controls.visible {
+        display: block;
+    }
+    #editorAddPointBtn {
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        padding: 14px 22px;
+        border-radius: 30px;
+        border: 1px solid var(--border);
+        color: var(--btn-txt);
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s;
+        white-space: nowrap;
+    }
+    #editorAddPointBtn:active {
+        transform: scale(0.95);
+    }
+    #editorFloatingSave {
+        position: absolute;
+        top: calc(env(safe-area-inset-top) + 10px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9006;
+        display: none;
+        pointer-events: auto;
+    }
+    #editorFloatingSave.visible {
+        display: block;
+    }
+    #editorSaveBtn {
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        padding: 10px 20px;
+        border-radius: 100px;
+        border: 1px solid var(--border);
+        color: var(--btn-txt);
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s;
+        white-space: nowrap;
+    }
+    #editorSaveBtn:active {
+        transform: scale(0.95);
+    }
+    #editorSaveBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
     </style>
 </head>
 <body>
@@ -762,6 +931,85 @@
     <div class="settings-row"><span>Азимут допуск</span><input type="number" class="trigger-input" id="cfgAz" value="45"></div>
 </div>
 
+<!-- ============================================ -->
+<!-- РЕДАКТОР UI -->
+<!-- ============================================ -->
+<div id="editorPanel">
+    <!-- Верхние кнопки редактора -->
+    <div class="editor-top-controls" id="editorTopControls" style="display:none;">
+        <button class="editor-btn-top" onclick="closeEditorAndShowMenu()" style="min-width:56px;justify-content:center;">
+            <span>←</span>
+        </button>
+        <button id="editorRouteNameBtn" class="editor-btn-top" onclick="openEditorPointsModal()" style="flex:1;">
+            <span id="editorRouteName">Маршрут</span>
+        </button>
+        <button class="editor-btn-top" onclick="openEditorSettings()" style="min-width:56px;justify-content:center;">
+            <span>⚙️</span>
+        </button>
+    </div>
+    
+    <!-- Плавающая кнопка сохранения -->
+    <div id="editorFloatingSave" style="display:none;">
+        <button id="editorSaveBtn" onclick="saveEditorRoute()">Сохранить изменения</button>
+    </div>
+    
+    <!-- Нижняя кнопка добавления точки -->
+    <div class="editor-bottom-controls" id="editorBottomControls" style="display:none;">
+        <button id="editorAddPointBtn" onclick="handleEditorAddBtn()">
+            <span id="editorAddText">Добавить новую точку</span>
+        </button>
+    </div>
+</div>
+
+<!-- Модальное окно настроек редактора -->
+<div id="editorSettingsModal" class="modal-overlay" style="display:none;">
+    <div class="modal-sheet" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3>Настройки маршрута</h3>
+            <button class="close-circle" onclick="closeEditorSettings()">✕</button>
+        </div>
+        <div style="padding: 0 20px 20px; display: flex; flex-direction: column; gap: 12px;">
+            <button class="modal-btn" onclick="editorRenameRoute()">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
+                Переименовать маршрут
+            </button>
+            <button class="modal-btn" onclick="editorCopyLink()">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" fill="currentColor"/></svg>
+                Копировать ссылку
+            </button>
+            <button class="modal-btn modal-btn-danger" onclick="editorDeleteRoute()">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>
+                Удалить маршрут
+            </button>
+            <button class="modal-btn modal-btn-green" onclick="openNavigatorWithRoute(APP.editorCurFile)">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="currentColor"/></svg>
+                Открыть в навигаторе
+            </button>
+            <button class="modal-btn modal-btn-muted" onclick="closeEditorSettings()">
+                Закрыть
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно списка точек редактора -->
+<div id="editorPointsModal" class="modal-overlay" style="display:none;">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h3 id="editorPointsModalTitle">Список точек</h3>
+            <button class="close-circle" onclick="closeEditorPointsModal()">✕</button>
+        </div>
+        <div id="editorPointsList" style="max-height: 60vh; overflow-y: auto; padding: 0 20px;"></div>
+        <div style="padding: 20px;">
+            <button class="modal-btn modal-btn-green" onclick="closeEditorPointsModal()">Готово</button>
+        </div>
+    </div>
+</div>
+
+<!-- Выпадающий список цветов -->
+<div id="editorColorDropdown" class="color-dropdown" style="display:none;"></div>
+<div id="editorDropdownOverlay" class="dropdown-overlay" style="display:none;" onclick="closeEditorColorDropdown()"></div>
+
 <script>
 // ============================================
 // ОБЩИЕ УТИЛИТЫ
@@ -843,6 +1091,8 @@ const APP = {
     editorActivePoint: null,
     editorIsDrawing: false,
     editorIsAdd: false,
+    editorColorCallback: null,
+    newPointData: null,
 
     // Navigator
     navPoints: [],
@@ -1149,9 +1399,15 @@ async function createRoute() {
         files: { [fileName]: { content: '[]' } }
     });
     if (!ok) { showToast('Не удалось создать маршрут', 'error'); return; }
+    
+    // Закрываем модальное окно создания
     byId('createModal').style.display = 'none';
+    
+    // Обновляем список маршрутов
     APP.routes = await fetchRoutes();
     renderRoutesList();
+    
+    // Переходим в режим редактора
     APP.selectedRoute = fileName;
     openEditorWithRoute(fileName);
 }
@@ -1204,11 +1460,114 @@ async function copyRouteLink() {
 
 function openEditorWithRoute(file) {
     APP.selectedRoute = file;
+
+    // Скрываем навигатор UI
     hideNavigatorUI();
-    byId('editorPanel').style.display = 'block';
-    byId('editorTitle').textContent = file.replace('.json', '');
+
+    // Показываем редактор UI
+    byId('editorPanel').classList.add('visible');
+    byId('editorTopControls').classList.add('visible');
+    byId('editorBottomControls').classList.add('visible');
+    byId('editorRouteName').textContent = file.replace('.json', '');
+
+    // Скрываем кнопку меню в режиме редактора
+    byId('menuBtn').style.display = 'none';
+
     loadEditorRoute(file);
     closeMenu();
+}
+
+function closeEditorAndShowMenu() {
+    hideEditorUI();
+    openMenu();
+}
+
+function showEditorSaveButton(show) {
+    byId('editorFloatingSave').style.display = show ? 'block' : 'none';
+}
+
+function openEditorSettings() {
+    byId('editorSettingsModal').style.display = 'flex';
+}
+
+function closeEditorSettings() {
+    byId('editorSettingsModal').style.display = 'none';
+}
+
+function closeEditorPointsModal() {
+    byId('editorPointsModal').style.display = 'none';
+}
+
+function editorRenameRoute() {
+    if (!APP.editorCurFile) return;
+    const currentName = APP.editorCurFile.replace('.json', '');
+    const nextRaw = prompt('Новое название маршрута (разрешены: a-z, 0-9, _)', currentName);
+    if (nextRaw === null) return;
+    const nextName = nextRaw.trim().replace(/[^a-zA-Z0-9_]/g, '');
+    if (!nextName || nextName === currentName) return;
+    const nextFile = `${nextName}.json`;
+    
+    renameRouteFile(APP.editorCurFile, nextFile).then(() => {
+        APP.editorCurFile = nextFile;
+        byId('editorRouteName').textContent = nextName;
+        closeEditorSettings();
+        showToast('Маршрут переименован', 'success');
+    }).catch(() => {
+        showToast('Ошибка переименования', 'error');
+    });
+}
+
+async function renameRouteFile(oldFile, newFile) {
+    const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
+    if (!gist || !gist.files || !gist.files[oldFile]) throw new Error('Файл не найден');
+    const content = gist.files[oldFile].content || '[]';
+    const ok = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}`, 'PATCH', {
+        files: { [oldFile]: null, [newFile]: { content } }
+    });
+    if (!ok) throw new Error('Ошибка переименования');
+    APP.routes = await fetchRoutes();
+    renderRoutesList();
+}
+
+function editorCopyLink() {
+    if (!APP.editorCurFile) return;
+    const routeName = APP.editorCurFile.replace('.json', '');
+    const link = `https://t.me/e_ia_bot/nav?startapp=${APP.user.id}-${routeName}`;
+    navigator.clipboard.writeText(link).then(() => {
+        showToast('Ссылка скопирована', 'success');
+    }).catch(() => {
+        prompt('Скопируйте ссылку вручную:', link);
+    });
+    closeEditorSettings();
+}
+
+async function editorDeleteRoute() {
+    if (!APP.editorCurFile) return;
+    const routeName = APP.editorCurFile.replace('.json', '');
+    if (!confirm(`Удалить маршрут "${routeName}"?`)) return;
+    
+    try {
+        const ok = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}`, 'PATCH', {
+            files: { [APP.editorCurFile]: null }
+        });
+        if (!ok) throw new Error('Ошибка удаления');
+        APP.routes = await fetchRoutes();
+        APP.editorCurFile = null;
+        APP.editorPoints = [];
+        hideEditorUI();
+        renderRoutesList();
+        showToast('Маршрут удалён', 'success');
+    } catch (e) {
+        showToast('Ошибка удаления', 'error');
+    }
+}
+
+function hideEditorUI() {
+    byId('editorPanel').classList.remove('visible');
+    byId('editorTopControls').classList.remove('visible');
+    byId('editorBottomControls').classList.remove('visible');
+    byId('editorFloatingSave').style.display = 'none';
+    byId('menuBtn').style.display = 'flex';
 }
 
 function openNavigatorWithRoute(file, isCatalog = false) {
@@ -1256,6 +1615,78 @@ function getEditorIconSvg(colorName, id) {
     `);
 }
 
+// Инициализация выпадающего списка цветов
+function initEditorColorDropdown() {
+    const dropdown = byId('editorColorDropdown');
+    if (!dropdown) return;
+    dropdown.innerHTML = '';
+    Object.entries(COLORS).forEach(([name, data]) => {
+        const row = document.createElement('div');
+        row.className = 'color-row';
+        row.innerHTML = `<div class="swatch" style="background:${data.hex}"></div><div style="font-weight:600;">${data.label}</div>`;
+        row.onclick = () => {
+            if (APP.editorColorCallback) {
+                APP.editorColorCallback(data.hex, name);
+            }
+            closeEditorColorDropdown();
+        };
+        dropdown.appendChild(row);
+    });
+}
+
+function openEditorColorDropdown(callback) {
+    APP.editorColorCallback = callback;
+    byId('editorColorDropdown').style.display = 'flex';
+    byId('editorDropdownOverlay').style.display = 'block';
+}
+
+function closeEditorColorDropdown() {
+    byId('editorColorDropdown').style.display = 'none';
+    byId('editorDropdownOverlay').style.display = 'none';
+    APP.editorColorCallback = null;
+}
+
+// Открытие модального окна списка точек
+function openEditorPointsModal() {
+    const list = byId('editorPointsList');
+    if (!list) return;
+    
+    list.innerHTML = APP.editorPoints.map((p, i) => `
+        <div class="sortable-point-item" data-index="${i}">
+            <div class="item-main-row">
+                <span class="point-number-text">${i + 1}</span>
+                <div class="color-indicator-btn" style="background:${COLORS[p.color]?.hex || '#FFD700'}; width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);"></div>
+                <span style="flex:1;font-weight:600;">${p.cmd || 'Без команды'}</span>
+            </div>
+            <div class="item-actions">
+                <button class="btn-item-action btn-path" onclick="editPointFromList(${i})">🖋️ Изменить</button>
+                <button class="btn-item-action btn-del" onclick="deletePointFromList(${i})">🗑️ Удалить</button>
+            </div>
+        </div>
+    `).join('');
+    
+    byId('editorPointsModalTitle').textContent = APP.editorCurFile ? APP.editorCurFile.replace('.json', '') : 'Список точек';
+    byId('editorPointsModal').style.display = 'flex';
+}
+
+function editPointFromList(index) {
+    closeEditorPointsModal();
+    const point = APP.editorPoints[index];
+    if (point) {
+        openEditPointModal(point);
+    }
+}
+
+function deletePointFromList(index) {
+    if (!confirm('Удалить эту точку?')) return;
+    APP.editorPoints.splice(index, 1);
+    APP.editorPoints.forEach((p, i) => { p.id = i + 1; });
+    renderEditorPoints();
+    showEditorSaveButton(true);
+    openEditorPointsModal(); // Обновить список
+}
+
+
 async function loadEditorRoute(file) {
     if (!APP.gistId) { showToast('Сначала создайте маршрут', 'error'); return; }
     try {
@@ -1265,6 +1696,7 @@ async function loadEditorRoute(file) {
         APP.editorPoints = data;
         APP.editorCurFile = file;
         renderEditorPoints();
+        showEditorSaveButton(false);
         showToast(`Загружен: ${file.replace('.json', '')}`, 'success');
     } catch (e) {
         showToast('Ошибка: ' + e.message, 'error');
@@ -1302,18 +1734,100 @@ function renderEditorPoints() {
 function handleEditorAddBtn() {
     if (APP.editorIsDrawing) { stopEditorDrawing(); return; }
     if (APP.editorIsAdd) { stopEditorAdd(); return; }
-    openCreatePointModal();
+    openCreatePointModalWithParams();
 }
 
 function openCreatePointModal() {
     APP.editorIsAdd = true;
     APP.map.setCursor('crosshair');
+    byId('editorAddText').textContent = 'Нажмите на карту';
+    showToast('Нажмите на карту для установки точки', 'info');
+}
+
+// Открытие модального окна создания новой точки с параметрами
+function openCreatePointModalWithParams() {
+    APP.newPointData = {
+        color: 'Gold',
+        cmd: '',
+        comm: ''
+    };
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3>Новая точка</h3>
+                <button class="close-circle" onclick="this.closest('.modal-overlay').remove(); stopEditorAdd();">✕</button>
+            </div>
+            <div style="padding: 0 20px 20px; display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="font-size: 12px; color: rgba(255,255,255,0.5);">Категория</label>
+                    <div style="display:flex;gap:8px;margin-top:4px;align-items:center;">
+                        <div id="newPointColorIndicator" style="width:40px;height:40px;border-radius:50%;background:#FFD700;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);"></div>
+                        <button class="btn-item-action" onclick="openNewPointColorPicker()" style="flex:1;">Выбрать цвет</button>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: rgba(255,255,255,0.5);">Команда</label>
+                    <select id="newPointCmd" class="input" style="margin-top: 4px;">
+                        ${(COMMAND_SETS['Gold'] || []).map(cmd => `<option value="${cmd}">${cmd}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: rgba(255,255,255,0.5);">Комментарий</label>
+                    <textarea id="newPointComm" class="input" style="margin-top: 4px; min-height: 60px;" placeholder="Необязательно"></textarea>
+                </div>
+                <button class="menu-btn menu-btn-green" onclick="confirmCreatePoint()">✓ Добавить точку</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const cmdSel = modal.querySelector('#newPointCmd');
+    cmdSel.addEventListener('change', () => {
+        if (APP.newPointData) APP.newPointData.cmd = cmdSel.value;
+    });
+}
+
+function openNewPointColorPicker() {
+    openEditorColorDropdown((hex, name) => {
+        APP.newPointData = APP.newPointData || {};
+        APP.newPointData.color = name;
+        APP.newPointData.cmd = (COMMAND_SETS[name] || [])[0] || '';
+        
+        const indicator = document.getElementById('newPointColorIndicator');
+        if (indicator) indicator.style.background = hex;
+        
+        const cmdSel = document.getElementById('newPointCmd');
+        if (cmdSel) {
+            cmdSel.innerHTML = (COMMAND_SETS[name] || []).map(cmd => `<option value="${cmd}">${cmd}</option>`).join('');
+            APP.newPointData.cmd = cmdSel.value;
+        }
+    });
+}
+
+function confirmCreatePoint() {
+    const modal = document.querySelector('.modal-overlay');
+    const cmd = document.getElementById('newPointCmd').value;
+    const comm = document.getElementById('newPointComm').value;
+    
+    if (!APP.newPointData) APP.newPointData = {};
+    APP.newPointData.cmd = cmd;
+    APP.newPointData.comm = comm;
+    
+    modal.remove();
+    APP.editorIsAdd = true;
+    APP.map.setCursor('crosshair');
+    byId('editorAddText').textContent = 'Нажмите на карту';
     showToast('Нажмите на карту для установки точки', 'info');
 }
 
 function stopEditorAdd() {
     APP.editorIsAdd = false;
     APP.map.setCursor('grab');
+    byId('editorAddText').textContent = 'Добавить новую точку';
 }
 
 function stopEditorDrawing() {
@@ -1323,6 +1837,7 @@ function stopEditorDrawing() {
     }
     APP.editorIsDrawing = false;
     APP.editorActivePoint = null;
+    byId('editorAddText').textContent = 'Добавить новую точку';
 }
 
 function addEditorPoint(coords, data = null) {
@@ -1352,6 +1867,7 @@ function addEditorPoint(coords, data = null) {
         APP.map.geoObjects.add(line);
     }
     APP.editorPoints.push({ ...p, placemark, line });
+    showEditorSaveButton(true);
     return APP.editorPoints[APP.editorPoints.length - 1];
 }
 
@@ -1369,9 +1885,10 @@ function openEditPointModal(p) {
             <div style="padding: 0 20px 20px; display: flex; flex-direction: column; gap: 12px;">
                 <div>
                     <label style="font-size: 12px; color: rgba(255,255,255,0.5);">Категория</label>
-                    <select id="editPointColor" class="input" style="margin-top: 4px;">
-                        ${Object.entries(COLORS).map(([k, v]) => `<option value="${k}" ${k === p.color ? 'selected' : ''}>${v.label}</option>`).join('')}
-                    </select>
+                    <div style="display:flex;gap:8px;margin-top:4px;align-items:center;">
+                        <div id="editPointColorIndicator" style="width:40px;height:40px;border-radius:50%;background:${COLORS[p.color]?.hex || '#FFD700'};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);"></div>
+                        <button class="btn-item-action" onclick="openEditorColorPicker()" style="flex:1;">Выбрать цвет</button>
+                    </div>
                 </div>
                 <div>
                     <label style="font-size: 12px; color: rgba(255,255,255,0.5);">Команда</label>
@@ -1390,14 +1907,30 @@ function openEditPointModal(p) {
         </div>
     `;
     document.body.appendChild(modal);
-    
-    const colorSel = modal.querySelector('#editPointColor');
+
     const cmdSel = modal.querySelector('#editPointCmd');
-    colorSel.addEventListener('change', () => {
-        p.color = colorSel.value;
-        cmdSel.innerHTML = (COMMAND_SETS[p.color] || []).map(cmd => `<option value="${cmd}">${cmd}</option>`).join('');
+    cmdSel.addEventListener('change', () => {
         p.cmd = cmdSel.value;
-        updateEditorPointIcon(p);
+    });
+}
+
+function openEditorColorPicker() {
+    openEditorColorDropdown((hex, name) => {
+        APP.editorActivePoint.color = name;
+        APP.editorActivePoint.cmd = (COMMAND_SETS[name] || [])[0] || '';
+        
+        // Обновляем индикатор цвета
+        const indicator = document.getElementById('editPointColorIndicator');
+        if (indicator) indicator.style.background = hex;
+        
+        // Обновляем список команд
+        const cmdSel = document.getElementById('editPointCmd');
+        if (cmdSel) {
+            cmdSel.innerHTML = (COMMAND_SETS[name] || []).map(cmd => `<option value="${cmd}">${cmd}</option>`).join('');
+            APP.editorActivePoint.cmd = cmdSel.value;
+        }
+        
+        updateEditorPointIcon(APP.editorActivePoint);
     });
 }
 
@@ -1408,14 +1941,13 @@ function updateEditorPointIcon(p) {
 
 function updateEditorPoint() {
     const modal = document.querySelector('.modal-overlay');
-    const color = document.getElementById('editPointColor').value;
     const cmd = document.getElementById('editPointCmd').value;
     const comm = document.getElementById('editPointComm').value;
-    APP.editorActivePoint.color = color;
     APP.editorActivePoint.cmd = cmd;
     APP.editorActivePoint.comm = comm;
     updateEditorPointIcon(APP.editorActivePoint);
     modal.remove();
+    showEditorSaveButton(true);
     showToast('Точка обновлена', 'success');
 }
 
@@ -1425,7 +1957,8 @@ function startEditorPathEdit() {
     APP.editorIsDrawing = true;
     APP.editorActivePoint.line.editor.startDrawing();
     APP.editorActivePoint.pm.options.set('draggable', true);
-    showToast('Рисуйте путь на карте. Нажмите "Добавить точку" для завершения', 'info');
+    byId('editorAddText').textContent = 'Завершить рисование';
+    showToast('Рисуйте путь на карте. Нажмите "Завершить рисование" для окончания', 'info');
 }
 
 function deleteEditorPoint() {
@@ -1438,6 +1971,7 @@ function deleteEditorPoint() {
         APP.editorPoints.splice(idx, 1);
         APP.editorPoints.forEach((p, i) => { p.id = i + 1; });
         renderEditorPoints();
+        showEditorSaveButton(true);
     }
     modal.remove();
     showToast('Точка удалена', 'success');
@@ -1451,8 +1985,12 @@ async function saveEditorRoute() {
     const ok = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}`, 'PATCH', {
         files: { [APP.editorCurFile]: { content: JSON.stringify(data) } }
     });
-    if (ok) showToast('Сохранено', 'success');
-    else showToast('Ошибка сохранения', 'error');
+    if (ok) {
+        showToast('Сохранено', 'success');
+        showEditorSaveButton(false);
+    } else {
+        showToast('Ошибка сохранения', 'error');
+    }
 }
 
 // ============================================
@@ -1967,12 +2505,21 @@ async function initApp() {
             visible: false
         });
         APP.map.geoObjects.add(APP.userMarker);
-        
+
         initGeolocation();
+        
+        // Инициализация выпадающего списка цветов для редактора
+        initEditorColorDropdown();
 
         // Обработчик клика для редактора
         APP.map.events.add('click', (e) => {
-            if (APP.editorIsAdd) {
+            if (APP.editorIsAdd && APP.newPointData) {
+                const newPoint = addEditorPoint(e.get('coords'), APP.newPointData);
+                APP.newPointData = null;
+                stopEditorAdd();
+                showToast('Точка добавлена', 'success');
+            } else if (APP.editorIsAdd) {
+                // Если нет данных о точке (старый режим), создаём точку по умолчанию
                 const newPoint = addEditorPoint(e.get('coords'));
                 stopEditorAdd();
                 showToast('Точка добавлена', 'success');
