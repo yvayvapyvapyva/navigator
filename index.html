@@ -793,6 +793,10 @@ function getTokenFromUrl() {
     return prefix.length < 10 ? null : prefix + TOKEN_SUFFIX;
 }
 
+function getTokenParam() {
+    return new URLSearchParams(location.search).get('t') || '';
+}
+
 function buildInitFileContent() {
     const tg = getTelegramWebApp();
     const user = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
