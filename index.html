@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Route App Launcher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="assets/css/shared.css">
+    <link rel="stylesheet" href="assets/css/launcher.css">
+</head>
+<body>
+<div id="loadingScreen" class="loading-screen">ЗАГРУЗКА ДАННЫХ</div>
+
+<div id="routesScreen" class="screen" style="display:none;">
+    <div class="card">
+        <button class="btn btn-blue create-top-btn catalog-btn">Каталог публичных маршрутов</button>
+        <h1 id="routesTitle" class="routes-title">Список ваших маршрутов</h1>
+        <button id="createNewBtn" class="btn btn-green create-top-btn">Создать новый маршрут</button>
+        <div id="routesRow" class="routes-row">
+            <select id="routesSelect" class="routes-select routes-select-wide">
+                <option value="">Выберите маршрут</option>
+            </select>
+            <button id="routeSettingsBtn" class="route-settings-btn" aria-label="Настройки маршрута">⚙️</button>
+        </div>
+        <div id="selectedRouteLabel" class="selected-route-label" style="display:none;"></div>
+        <div id="openActions" class="actions" style="display:none;">
+            <button id="openEditorBtn" class="btn btn-green">Открыть маршрут в редакторе</button>
+            <button id="openNavigatorBtn" class="btn btn-green">Открыть маршрут в навигаторе</button>
+        </div>
+    </div>
+</div>
+
+<div id="routeSettingsModal" class="modal-overlay" style="display:none;">
+    <div class="modal-sheet">
+        <div class="modal-title">Действия с маршрутом</div>
+        <button id="renameRouteBtn" class="modal-btn">Переименовать маршрут</button>
+        <button id="copyLinkBtn" class="modal-btn">Копировать ссылку на маршрут</button>
+        <button id="deleteRouteBtn" class="modal-btn modal-btn-danger">Удалить маршрут</button>
+        <button id="closeSettingsBtn" class="modal-btn modal-btn-muted">Закрыть</button>
+    </div>
+</div>
+
+<div id="emptyScreen" class="screen" style="display:none;">
+    <div class="card small">
+        <button class="btn btn-blue create-top-btn catalog-btn">Каталог публичных маршрутов</button>
+        <h1>Маршрутов нет</h1>
+        <button id="emptyCreateBtn" class="btn btn-green">Создать новый маршрут</button>
+    </div>
+</div>
+
+<div id="createScreen" class="screen" style="display:none;">
+    <div class="card small">
+        <button id="backFromCreateBtn" class="btn btn-muted create-top-btn">Назад</button>
+        <h1>Новый маршрут</h1>
+        <input id="routeNameInput" class="input" type="text" placeholder="Введите название" oninput="this.value = this.value.replace(/[^a-zA-Z0-9_]/g, '')">
+        <div class="hint">Допустимы только английские буквы, цифры и знак нижнего подчеркивания.</div>
+        <button id="confirmCreateBtn" class="btn btn-green">Создать</button>
+    </div>
+</div>
+
+<button id="instructionBtn" class="btn btn-muted instruction-btn" type="button">ИНСТРУКЦИЯ..</button>
+<div id="instructionModal" class="instruction-modal" style="display:none;">
+    <div id="instructionText" class="instruction-text"></div>
+    <button id="instructionCloseBtn" class="btn btn-muted instruction-close" type="button">Закрыть</button>
+</div>
+
+<script src="assets/js/shared.js"></script>
+<script src="assets/js/telegram-time-report.js"></script>
+<script src="assets/js/launcher.js"></script>
+</body>
+</html>
