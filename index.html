@@ -1415,6 +1415,22 @@ async function loadNavigatorRoute(file, isCatalog = false) {
         } catch (e) { console.error('Ошибка загрузки gist:', e); }
     }
     if (!url) { showToast('Ошибка загрузки маршрута', 'error'); return; }
+    
+    // Закрываем каталог если он был открыт
+    byId('catalogModal').style.display = 'none';
+    
+    // Очищаем предыдущий маршрут с карты
+    if (APP.map && APP.navPoints) {
+        APP.navPoints.forEach(p => {
+            if (p.placemark) APP.map.geoObjects.remove(p.placemark);
+            if (p.line) APP.map.geoObjects.remove(p.line);
+            if (p.endPlacemark) APP.map.geoObjects.remove(p.endPlacemark);
+        });
+    }
+    APP.navPoints = [];
+    APP.navCurrentIndex = 0;
+    APP.navPreviewIndex = -1;
+    
     try {
         const res = await fetch(url);
         const raw = await res.json();
