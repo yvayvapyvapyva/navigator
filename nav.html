@@ -10,39 +10,31 @@
     <link rel="stylesheet" href="assets/css/nav.css">
 </head>
 <body>
-
 <div id="loading" class="loading-overlay">
     <div id="loadingText">ПОЛУЧЕНИЕ ДАННЫХ...</div>
     <div id="errorMsg">ОШИБКА: ПАРАМЕТР МАРШРУТА НЕ НАЙДЕН</div>
 </div>
-
 <div id="wakeOverlay" class="wake-overlay" style="display:none;">
-    <button id="wakeBtn" class="wake-btn" type="button">Нажмите что бы не выключался экран</button>
+    <button id="wakeBtn" class="wake-btn" type="button">Нажмите чтобы не выключался экран</button>
 </div>
-
 <video id="v" playsinline muted loop></video>
 <div id="map"></div>
-
 <div class="top-ui-wrapper">
     <div id="routeHeaderBtn" onclick="toggleGistInfo();">Загрузка...</div>
     <div id="cacheStatus">Офлайн-кэш: 0%</div>
 </div>
-
 <div id="gistInfoOverlay">
     <div class="overlay-title">О маршруте</div>
     <div id="gistDesc" class="info-value">Нет описания</div>
 </div>
-
 <div id="commentOverlay" onclick="this.style.display='none'">
     <div class="overlay-title">Комментарий</div>
     <div id="commentText" class="info-value">...</div>
 </div>
-
 <div id="pointsMenu">
     <div class="menu-header">Список точек</div>
     <div id="pointsList" class="scroll-list"></div>
 </div>
-
 <div class="bottom-ui-wrapper">
     <div id="navHud">
         <div class="hud-header">
@@ -64,7 +56,6 @@
             </div>
         </div>
     </div>
-
     <div id="selectionHud">
         <div class="hud-header">
             <span class="hud-index" id="selIndex">0</span>
@@ -80,12 +71,11 @@
             </button>
         </div>
     </div>
-
     <div class="control-stack">
         <div style="position: relative;">
             <div id="telemetryPanel" onclick="toggleSettings(); event.stopPropagation();">
                 <div class="tel-item"><span class="tel-label">КМ/Ч</span><span class="tel-value" id="telSpeed">0</span></div>
-                <div style="height:1px; width:50%; background:rgba(255,255,255,0.1); margin:4px 0;"></div>
+                <div style="height:1px;width:50%;background:rgba(255,255,255,0.1);margin:4px 0;"></div>
                 <div class="tel-item"><span class="tel-label">АЗ</span><span class="tel-value" id="telAz">0°</span></div>
             </div>
             <div id="settingsOverlay" onclick="event.stopPropagation()">
@@ -95,10 +85,9 @@
             </div>
         </div>
         <div id="listBtn" class="map-btn" onclick="togglePointsMenu();"><svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg></div>
-        <div id="locateBtn" class="map-btn" onclick="autoCenter=!autoCenter; this.classList.toggle('active', autoCenter); wake();"><svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 7.48 7.94 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg></div>
+        <div id="locateBtn" class="map-btn" onclick="autoCenter=!autoCenter;this.classList.toggle('active',autoCenter);wake();"><svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 7.48 7.94 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg></div>
     </div>
 </div>
-
 <script src="assets/js/shared.js"></script>
 <script src="assets/js/telegram-time-report.js"></script>
 <script src="assets/js/nav.js"></script>
