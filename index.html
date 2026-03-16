@@ -911,12 +911,12 @@ function showToast(text, type = 'info', duration = 2000) {
 async function openMenu() {
     // Обновляем список маршрутов при открытии меню
     if (APP.gistId) {
-        await fetchRoutes();
+        APP.routes = await fetchRoutes();
     } else if (APP.token) {
         const id = await findUserGist();
         if (id) {
             APP.gistId = id;
-            await fetchRoutes();
+            APP.routes = await fetchRoutes();
         }
     }
     renderRoutesList();
@@ -1002,16 +1002,34 @@ function toggleAutoCenter() {
 // API GITHUB GISTS
 // ============================================
 async function findUserGist() {
+    console.log('Поиск gist для пользователя ID:', APP.user.id);
     let allGists = [], page = 1, perPage = 100;
     while (true) {
         const gists = await apiRequest(APP.token, `https://api.github.com/gists?per_page=${perPage}&page=${page}&t=${Date.now()}`);
+        console.log(`Страница ${page}: получено gists:`, gists ? gists.length : 0);
         if (!gists || gists.length === 0) break;
         allGists = allGists.concat(gists);
         if (gists.length < perPage) break;
         page++;
     }
+    console.log('Всего gists загружено:', allGists.length);
     if (!allGists) return null;
-    const existing = allGists.find((g) => (g.description || '').includes(`[${APP.user.id}]`));
+    
+    // Ищем gist с описанием, содержащим [USER_ID]
+    const existing = allGists.find((g) => {
+        const desc = g.description || '';
+        const match = desc.includes(`[${APP.user.id}]`);
+        console.log(`Gist ${g.id}: description="${desc}", match=${match}`);
+        return match;
+    });
+    
+    if (existing) {
+        console.log('Найден gist:', existing.id, 'description:', existing.description);
+    } else {
+        console.log('Gist не найден. Доступные gists:');
+        allGists.forEach(g => console.log(`  - ${g.id}: "${g.description || 'без описания'}"`));
+    }
+    
     return existing ? existing.id : null;
 }
 
@@ -1030,10 +1048,20 @@ async function ensureUserGist() {
 }
 
 async function fetchRoutes() {
-    if (!APP.gistId) return [];
+    if (!APP.gistId) {
+        console.log('fetchRoutes: gistId не установлен');
+        return [];
+    }
+    console.log('Загрузка маршрутов из gist:', APP.gistId);
     const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
-    if (!gist) return [];
-    return Object.keys(gist.files || {}).filter((fn) => fn.endsWith('.json')).sort((a, b) => a.localeCompare(b));
+    if (!gist) {
+        console.log('fetchRoutes: не удалось загрузить gist');
+        return [];
+    }
+    console.log('Gist файлы:', Object.keys(gist.files || {}));
+    const routes = Object.keys(gist.files || {}).filter((fn) => fn.endsWith('.json')).sort((a, b) => a.localeCompare(b));
+    console.log('Найдено маршрутов:', routes.length, routes);
+    return routes;
 }
 
 async function fetchAllGists(username) {
@@ -1907,13 +1935,19 @@ async function initApp() {
         if (tg.requestFullscreen) { try { tg.requestFullscreen(); } catch (e) {} }
         if (tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
     }
-    
+
     APP.token = getTokenFromUrl();
-    
+    console.log('=== ИНИЦИАЛИЗАЦИЯ ===');
+    console.log('Токен:', APP.token ? 'получен (' + APP.token.length + ' символов)' : 'НЕ ПОЛУЧЕН');
+    console.log('User ID:', APP.user.id);
+    console.log('User Name:', APP.user.name);
+    console.log('URL params:', location.search);
+
     // Обработка start_param для прямого запуска навигатора
     const urlParams = new URLSearchParams(location.search);
     const startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || urlParams.get('startapp');
     const hasTParam = urlParams.has('t');
+    console.log('hasTParam:', hasTParam, 'startParam:', startParam);
     
     // Инициализация карты
     ymaps.ready(() => {
@@ -1956,10 +1990,11 @@ async function initApp() {
             findUserGist().then(id => {
                 if (id) {
                     APP.gistId = id;
-                    fetchRoutes().then(() => {
+                    fetchRoutes().then((routes) => {
+                        APP.routes = routes; // Сохраняем маршруты в APP.routes
                         renderRoutesList();
                         console.log('Маршруты загружены:', APP.routes.length);
-                        
+
                         // Приветственное сообщение с количеством маршрутов
                         const userName = APP.user.name || 'Пользователь';
                         const routesCount = APP.routes.length;
@@ -1972,7 +2007,7 @@ async function initApp() {
                     APP.routes = [];
                     renderRoutesList();
                     console.log('Gist не найден, создайте первый маршрут');
-                    
+
                     // Приветственное сообщение для нового пользователя
                     const userName = APP.user.name || 'Пользователь';
                     showToast(`Здравствуйте, ${userName}!\nУ вас маршрутов: 0`, 'info', 2000);
