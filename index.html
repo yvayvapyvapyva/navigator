@@ -293,7 +293,7 @@
     /* HUD выбора точки */
     #selectionHud {
         position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
-        left: 16px; right: 88px; z-index: 9001;
+        left: 16px; right: 88px; z-index: 9100;
         background: var(--dark-panel);
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
@@ -1460,17 +1460,22 @@ function renderNavigatorPoints() {
         const isPreview = (i === APP.navPreviewIndex);
         const hasComm = p.comm && p.comm.trim() !== '';
         const showPath = isCurrent || isPreview;
-        const placemark = new ymaps.Placemark([p.lat, p.lon], {}, {
+        const placemark = new ymaps.Placemark([p.lat, p.lon], {
+            pointIndex: i
+        }, {
             iconLayout: 'default#image',
             iconImageHref: getNavIconSvg(p.hex, p.id, p.az, false, isCurrent, hasComm),
             iconImageSize: [40, 40],
             iconImageOffset: [-20, -20],
             zIndex: (isCurrent || isPreview) ? 1000 : 500
         });
-        placemark.events.add('click', function() {
-            if (i !== APP.navCurrentIndex) {
-                APP.navPreviewIndex = i;
-                showNavSelection(i);
+        placemark.events.add('click', function(e) {
+            const index = e.get('target').properties.get('pointIndex');
+            console.log('Клик по точке:', index, 'текущая:', APP.navCurrentIndex);
+            if (index !== APP.navCurrentIndex) {
+                APP.navPreviewIndex = index;
+                console.log('Открываем выбор точки:', index);
+                showNavSelection(index);
             }
         });
         let line = null, endPlacemark = null;
@@ -1520,23 +1525,40 @@ function updateNavHud() {
 }
 
 function showNavSelection(i) {
+    console.log('showNavSelection вызвана с индексом:', i);
     const p = APP.navPoints[i];
-    byId('navHud').classList.remove('active');
-    byId('selectionHud').classList.add('active');
+    if (!p) {
+        console.error('Точка с индексом', i, 'не найдена');
+        return;
+    }
+    
+    const navHud = byId('navHud');
+    const selectionHud = byId('selectionHud');
+    
+    console.log('navHud:', navHud, 'selectionHud:', selectionHud);
+    
+    navHud.classList.remove('active');
+    navHud.style.display = 'none';
+    
+    selectionHud.classList.add('active');
+    selectionHud.style.display = 'flex';
+    
+    console.log('navHud классы:', navHud.classList, 'selectionHud классы:', selectionHud.classList);
+    
     byId('selIndex').textContent = i + 1;
     byId('selCmd').textContent = p.cmd;
-    
+
     // Надёжное назначение обработчиков
     const confirmBtn = byId('selConfirmBtn');
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
     newConfirmBtn.onclick = () => { setNavTarget(i); closeNavSelection(); };
-    
+
     const speakBtn = byId('selSpeakBtn');
     const newSpeakBtn = speakBtn.cloneNode(true);
     speakBtn.parentNode.replaceChild(newSpeakBtn, speakBtn);
     newSpeakBtn.onclick = (ev) => { ev.stopPropagation(); playNavCommand(p.cmd); };
-    
+
     const hasComm = p.comm && p.comm.trim() !== '';
     const commentBtn = byId('selCommentBtn');
     commentBtn.style.display = hasComm ? 'flex' : 'none';
@@ -1545,15 +1567,21 @@ function showNavSelection(i) {
         commentBtn.parentNode.replaceChild(newCommentBtn, commentBtn);
         newCommentBtn.onclick = (ev) => { ev.stopPropagation(); showNavComment(p.comm); };
     }
-    
+
     renderNavigatorPoints();
 }
 
 function closeNavSelection() {
-    byId('selectionHud').classList.remove('active');
+    const selectionHud = byId('selectionHud');
+    const navHud = byId('navHud');
+    
+    selectionHud.classList.remove('active');
+    selectionHud.style.display = 'none';
+    
     APP.navPreviewIndex = -1;
     if (APP.navCurrentIndex >= 0) {
-        byId('navHud').classList.add('active');
+        navHud.classList.add('active');
+        navHud.style.display = 'flex';
         renderNavigatorPoints();
     }
 }
