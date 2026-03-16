@@ -8,8 +8,9 @@ const state = {
   selected: null,
   map: null,
   userMarker: null,
-  autoCenter: false,
-  lastPos: null
+  autoCenter: true,
+  lastPos: null,
+  lastAz: 0
 };
 
 const TIME_REPORT_CFG = {
@@ -79,11 +80,12 @@ function closeMenu() {
 }
 
 // === Карта и геолокация ===
-function getUserLocSvg() {
+function getUserLocSvg(azimuth = 0) {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-      <circle cx="20" cy="20" r="10" fill="#FF3B30" stroke="white" stroke-width="3"/>
-      <circle cx="20" cy="20" r="11" fill="none" stroke="#FF3B30" stroke-width="1" opacity="0.3"/>
+      <g transform="rotate(${azimuth}, 20, 20)">
+        <path d="M20,4 L32,34 L20,28 L8,34 Z" fill="#FF3B30" stroke="white" stroke-width="2"/>
+      </g>
     </svg>
   `);
 }
@@ -106,10 +108,10 @@ function initMap() {
       controls: []
     });
 
-    // Маркер текущего местоположения
+    // Маркер текущего местоположения (красная стрелка)
     state.userMarker = new ymaps.Placemark([0, 0], {}, {
       iconLayout: 'default#image',
-      iconImageHref: getUserLocSvg(),
+      iconImageHref: getUserLocSvg(0),
       iconImageSize: [40, 40],
       iconImageOffset: [-20, -20],
       zIndex: 5000,
@@ -120,6 +122,9 @@ function initMap() {
     // Геолокация
     initGeolocation();
 
+    // Привязка включена по умолчанию - активируем кнопку
+    ui.locateBtn.classList.add('active');
+
     // Скрываем загрузочный экран
     hideLoading();
 
@@ -128,16 +133,45 @@ function initMap() {
   });
 }
 
+// === Меню ===
+function openMenu() {
+  ui.sideMenu.classList.add('visible');
+  ui.menuOverlay.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMenu() {
+  ui.sideMenu.classList.remove('visible');
+  ui.menuOverlay.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+function calcAzimuth(p1, p2) {
+  if (!p1 || !p2) return 0;
+  const [la1, lo1] = p1.map(v => v * Math.PI / 180);
+  const [la2, lo2] = p2.map(v => v * Math.PI / 180);
+  const y = Math.sin(lo2 - lo1) * Math.cos(la2);
+  const x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(lo2 - lo1);
+  return Math.round((Math.atan2(y, x) * 180 / Math.PI + 360) % 360);
+}
+
 function initGeolocation() {
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition(
       (position) => {
         const coords = [position.coords.latitude, position.coords.longitude];
+        
+        // Вычисляем азимут при движении
+        if (state.lastPos && position.coords.speed && position.coords.speed > 0) {
+          state.lastAz = calcAzimuth(state.lastPos, coords);
+        }
         state.lastPos = coords;
         
         if (state.userMarker) {
           state.userMarker.geometry.setCoordinates(coords);
           state.userMarker.options.set('visible', true);
+          // Поворачиваем стрелку по азимуту
+          state.userMarker.options.set('iconImageHref', getUserLocSvg(state.lastAz));
         }
 
         // Обновляем скорость
