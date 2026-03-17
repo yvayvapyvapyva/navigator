@@ -1573,6 +1573,10 @@ function hideNavigatorUI() {
     APP.navMode = false;
 }
 
+function hideMenuButton() {
+    byId('menuBtn').style.display = 'none';
+}
+
 function toggleNavGistInfo() {
     const overlay = byId('navGistInfoOverlay');
     overlay.classList.toggle('visible');
@@ -1583,12 +1587,13 @@ async function loadNavigatorRoute(file, isCatalog = false) {
     const cacheStatus = byId('cacheStatus');
     cacheStatus.style.display = 'block';
     cacheStatus.textContent = 'Загрузка маршрута...';
-    
+
     let url = null;
     let gistDescription = 'Описание отсутствует';
     let actualFileName = file;
 
     if (isCatalog) {
+        // Загрузка публичного маршрута из каталога (без токена)
         try {
             const gistList = await fetchAllGists('yvayvapyvapyva');
             console.log('Найдено gist:', gistList.length);
@@ -1618,18 +1623,21 @@ async function loadNavigatorRoute(file, isCatalog = false) {
             }
         } catch (e) { console.error('Ошибка поиска gist:', e); }
     } else {
-        if (!APP.gistId) { showToast('Сначала создайте маршрут', 'error'); return; }
+        // Загрузка личного маршрута (требуется токен)
+        if (!APP.gistId) {
+            showToast('Сначала создайте маршрут', 'error');
+            return;
+        }
         try {
             const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
             if (gist && gist.files[file]) {
                 url = gist.files[file].raw_url;
                 gistDescription = gist.description || 'Описание отсутствует';
-                // Используем точное имя файла из gist (с учётом регистра)
                 actualFileName = file.replace('.json', '');
             }
         } catch (e) { console.error('Ошибка загрузки gist:', e); }
     }
-    
+
     // Проверка: если URL не получен, показываем подробную ошибку
     if (!url) {
         if (isCatalog) {
@@ -2201,13 +2209,25 @@ async function initApp() {
             renderRoutesList();
         }
         
+        // Показываем кнопку меню (если не скрыта)
+        byId('menuBtn').style.display = 'flex';
+
         // Если есть route - запускаем навигатор (из каталога)
-        if (routeParam && hasTParam) {
-            openNavigatorWithRoute(routeParam, routeParam.includes('-'));
+        if (routeParam && routeParam.includes('-')) {
+            // Маршрут из каталога (с ID владельца)
+            openNavigatorWithRoute(routeParam, true);
+            hideMenuButton();
+        }
+        else if (routeParam) {
+            // Личный маршрут (требуется токен)
+            if (hasTParam) {
+                openNavigatorWithRoute(routeParam, false);
+            }
         }
         // Если есть start_param - запускаем навигатор (из Telegram)
-        else if (startParam && hasTParam) {
-            openNavigatorWithRoute(startParam, startParam.includes('-'));
+        else if (startParam && startParam.includes('-')) {
+            openNavigatorWithRoute(startParam, true);
+            hideMenuButton();
         }
     });
     
