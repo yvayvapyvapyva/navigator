@@ -1033,13 +1033,8 @@ const APP = {
     navMode: false,
     navGistDesc: 'Описание отсутствует',
 
-    // Catalog
-    catalogData: {
-        "7292595756-m_1": "Экзаменационный маршрут Мещера 1",
-        "7292595756-Razvoroty_perek_1": "Развороты на перекрестках Мещера",
-        "7292595756-Ev_m1": "Э.В. Мещера 1",
-        "7292595756-Ev_k1": "Э.В. Кузнечиха 1"
-    }
+    // Catalog (загружается из katalog.txt)
+    catalogData: null
 };
 
 const tg = getTelegramWebApp();
@@ -1540,20 +1535,34 @@ function openNavigatorWithRoute(file, isCatalog = false) {
 // ============================================
 function loadCatalog() {
     const list = byId('catalogList');
-    if (!list || !APP.catalogData) return;
+    if (!list) return;
 
-    list.innerHTML = Object.entries(APP.catalogData).map(([key, label]) => `
-        <div class="route-item" data-key="${key}">
-            <span class="route-item-name">${label}</span>
-        </div>
-    `).join('');
+    // Загружаем данные каталога из файла katalog.txt
+    fetch('katalog.txt')
+        .then(response => response.json())
+        .then(data => {
+            APP.catalogData = data;
+            if (!data || Object.keys(data).length === 0) {
+                list.innerHTML = '<div style="padding:14px;text-align:center;color:rgba(255,255,255,0.5);font-size:13px;">Каталог пуст</div>';
+                return;
+            }
 
-    list.querySelectorAll('.route-item').forEach((item) => {
-        const key = item.dataset.key;
-        item.addEventListener('click', () => {
-            openNavigatorWithRoute(key, true);
+            list.innerHTML = Object.entries(data).map(([key, label]) => `
+                <div class="route-item" data-key="${key}">
+                    <span class="route-item-name">${label}</span>
+                </div>
+            `).join('');
+
+            list.querySelectorAll('.route-item').forEach((item) => {
+                const key = item.dataset.key;
+                item.addEventListener('click', () => {
+                    openNavigatorWithRoute(key, true);
+                });
+            });
+        })
+        .catch(() => {
+            list.innerHTML = '<div style="padding:14px;text-align:center;color:rgba(255,255,255,0.5);font-size:13px;">Не удалось загрузить каталог</div>';
         });
-    });
 }
 
 function loadInstruction() {
