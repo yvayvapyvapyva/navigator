@@ -192,8 +192,8 @@ const initGeolocation = () => {
                     gpsRecordingPoint = addP(coords, {
                         id: points.length + 1,
                         color: 'Gold',
-                        cmd: '',
-                        comm: 'Записано по GPS',
+                        cmd: 'Выполняем разгон до максимальной скорости',
+                        comm: '',
                         pts: [coords]
                     }, false);
                     lastGpsPoint = { lat: coords[0], lon: coords[1] };
