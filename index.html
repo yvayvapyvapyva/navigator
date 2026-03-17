@@ -1363,7 +1363,7 @@ function renderRoutesList() {
         item.addEventListener('click', (e) => {
             if (!e.target.closest('.route-item-btn')) {
                 APP.selectedRoute = file;
-                openNavigatorWithRoute(file);
+                openNavigatorWithRoute(file, false);
             }
         });
         // Клик на шестерёнку - открытие меню действий
@@ -2116,9 +2116,8 @@ async function initApp() {
     // Обработка start_param для прямого запуска навигатора
     const urlParams = new URLSearchParams(location.search);
     const startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || urlParams.get('startapp');
-    const routeParam = urlParams.get('route'); // Параметр route для запуска навигатора
     const hasTParam = urlParams.has('t');
-    console.log('hasTParam:', hasTParam, 'startParam:', startParam, 'routeParam:', routeParam);
+    console.log('hasTParam:', hasTParam, 'startParam:', startParam);
 
     // Обработчики кликов для Wake Lock (дублирование на случай если первый вызов не сработал)
     document.addEventListener('click', wakeFromUser);
@@ -2212,20 +2211,8 @@ async function initApp() {
         // Показываем кнопку меню (если не скрыта)
         byId('menuBtn').style.display = 'flex';
 
-        // Если есть route - запускаем навигатор (из каталога)
-        if (routeParam && routeParam.includes('-')) {
-            // Маршрут из каталога (с ID владельца)
-            openNavigatorWithRoute(routeParam, true);
-            hideMenuButton();
-        }
-        else if (routeParam) {
-            // Личный маршрут (требуется токен)
-            if (hasTParam) {
-                openNavigatorWithRoute(routeParam, false);
-            }
-        }
         // Если есть start_param - запускаем навигатор (из Telegram)
-        else if (startParam && startParam.includes('-')) {
+        if (startParam && startParam.includes('-')) {
             openNavigatorWithRoute(startParam, true);
             hideMenuButton();
         }
@@ -2248,7 +2235,7 @@ async function initApp() {
     });
     byId('openNavigatorBtn').addEventListener('click', () => {
         closeRouteActions();
-        setTimeout(() => openNavigatorWithRoute(APP.selectedRoute), 100);
+        setTimeout(() => openNavigatorWithRoute(APP.selectedRoute, false), 100);
     });
     byId('renameRouteBtn').addEventListener('click', renameRoute);
     byId('copyLinkBtn').addEventListener('click', copyRouteLink);
