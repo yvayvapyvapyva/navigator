@@ -138,12 +138,6 @@
         -webkit-overflow-scrolling: touch;
     }
     .side-menu.visible { transform: translateY(0); }
-    .side-menu .menu-tabs-wrapper {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        overflow: hidden;
-    }
 
     /* Ручка для свайпа */
     .menu-drag-handle {
@@ -184,13 +178,11 @@
 
     /* Кнопка внизу экрана */
     .menu-bottom-btn {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
         padding: 16px 20px;
-        background: linear-gradient(180deg, rgba(25,27,35,0), rgba(25,27,35,0.95) 20%, rgba(25,27,35,0.95));
+        background: linear-gradient(180deg, rgba(25,27,35,0), rgba(25,27,35,0.95));
         border-top: 1px solid var(--border);
+        flex-shrink: 0;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
     }
     .menu-bottom-btn .menu-btn {
         margin-bottom: 0;
@@ -242,40 +234,45 @@
     /* Контент вкладок */
     .menu-tab-content {
         display: none;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+    }
+    .menu-tab-content.active { 
+        display: flex; 
+    }
+    
+    /* Вкладка "Ваши маршруты" - прокручиваемый список */
+    #tab-routes {
+        overflow: hidden;
+    }
+    #tab-routes .routes-list-wrapper {
         flex: 1;
         overflow-y: auto;
-        position: relative;
+        padding: 0 20px 16px;
     }
-    .menu-tab-content.active { display: block; }
-
-    /* Кнопка внизу экрана - только для вкладки маршрутов */
-    .menu-bottom-btn {
-        padding: 16px 20px;
-        background: linear-gradient(180deg, rgba(25,27,35,0), rgba(25,27,35,0.95));
-        border-top: 1px solid var(--border);
-        flex-shrink: 0;
-        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    #tab-routes .routes-list {
+        display: flex; 
+        flex-direction: column; 
+        gap: 8px;
     }
-    .menu-bottom-btn .menu-btn {
-        margin-bottom: 0;
-        width: 100%;
+    
+    /* Вкладка "Каталог" - прокручиваемый список */
+    #tab-catalog .catalog-list-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 20px 16px;
+    }
+    #tab-catalog .routes-list {
+        display: flex; 
+        flex-direction: column; 
+        gap: 8px;
     }
     
     /* Скрываем кнопку на всех вкладках кроме "Ваши маршруты" */
     #tab-catalog .menu-bottom-btn,
     #tab-instruction .menu-bottom-btn {
         display: none;
-    }
-
-    /* Список маршрутов в меню */
-    .routes-list-wrapper {
-        flex: 1;
-        overflow-y: auto;
-        padding: 0 20px 16px;
-    }
-    .routes-list {
-        display: flex; flex-direction: column; gap: 8px;
-        padding-bottom: 8px;
     }
     .route-item {
         display: flex; align-items: center; justify-content: space-between;
@@ -759,17 +756,19 @@
     
     <!-- Вкладка: Каталог -->
     <div class="menu-tab-content" id="tab-catalog">
-        <div class="menu-section">
+        <div class="menu-section" style="padding: 16px 20px;">
             <div class="menu-section-title">Публичные маршруты</div>
-            <div id="catalogList" class="routes-list" style="max-height: 60vh;"></div>
+        </div>
+        <div class="catalog-list-wrapper">
+            <div id="catalogList" class="routes-list"></div>
         </div>
     </div>
-    
+
     <!-- Вкладка: Инструкция -->
     <div class="menu-tab-content" id="tab-instruction">
-        <div class="menu-section">
-            <div class="menu-section-title">О приложении</div>
-            <div id="instructionText" class="instruction-text" style="padding: 16px 20px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.8);"></div>
+        <div class="instruction-content" style="padding: 16px 20px; overflow-y: auto;">
+            <div class="menu-section-title" style="margin-bottom: 16px;">О приложении</div>
+            <div id="instructionText" class="instruction-text" style="font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.8);"></div>
         </div>
     </div>
     </div>
