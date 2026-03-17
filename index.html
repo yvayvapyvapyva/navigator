@@ -147,15 +147,22 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        cursor: grab;
+        cursor: pointer;
         touch-action: none;
+        transition: transform 0.2s;
+    }
+    .menu-drag-handle:active {
+        transform: scale(0.95);
     }
     .menu-drag-handle::before {
         content: '';
-        width: 40px;
-        height: 5px;
-        background: rgba(255,255,255,0.3);
-        border-radius: 3px;
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='rgba(255,255,255,0.5)' d='M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z'/%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
     }
 
     .menu-header {
@@ -1033,6 +1040,11 @@ function closeMenu() {
     byId('menuOverlay').classList.remove('visible');
     document.body.style.overflow = '';
     
+    // Принудительно сбрасываем transform
+    const menu = byId('sideMenu');
+    menu.style.transition = '';
+    menu.style.transform = '';
+    
     // Отключаем свайпы Telegram при закрытом меню
     const tg = getTelegramWebApp();
     if (tg && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
@@ -1052,6 +1064,9 @@ function initMenuSwipe() {
         e.preventDefault();
         closeMenu();
     });
+    
+    // Клик по ручке закрывает меню
+    handle.addEventListener('click', closeMenu);
     
     // Предотвращаем стандартное поведение на ручке
     handle.addEventListener('touchmove', (e) => {
@@ -1146,7 +1161,8 @@ function initMenuSwipe() {
         menuIsDragging = false;
         const deltaY = menuTouchCurrentY - menuTouchStartY;
         
-        if (deltaY > 50) {
+        // Закрываем меню если свайпнули вниз больше чем на 100px
+        if (deltaY > 100) {
             closeMenu();
         } else {
             menu.style.transition = 'transform 0.3s cubic-bezier(0.2,0.8,0.2,1)';
