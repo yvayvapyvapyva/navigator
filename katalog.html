@@ -93,24 +93,6 @@
       transform: translateY(0);
       background: rgba(120, 128, 145, 0.5);
     }
-
-    .admin-btn {
-      width: auto;
-      margin: 0;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      background: rgba(90, 150, 255, 0.35);
-      border-color: rgba(120, 180, 255, 0.5);
-    }
-
-    .admin-fixed {
-      position: fixed;
-      left: 50%;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
-      transform: translateX(-50%);
-      z-index: 12000;
-    }
   </style>
 </head>
 <body>
@@ -121,7 +103,6 @@
       <div id="routeList" class="list" aria-label="Список маршрутов"></div>
     </div>
   </div>
-  <button class="route-btn admin-btn admin-fixed" type="button" onclick="contactAdmin()">Связаться с администратором</button>
 
   <script>
     const routeCatalog = {
@@ -143,16 +124,6 @@
       url.searchParams.set('route', routeKey);
       if (token) url.searchParams.set('t', token);
       return url.toString();
-    }
-
-    function contactAdmin() {
-      const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-      const link = 'https://t.me/Eliseev_I_A';
-      if (tg && tg.openTelegramLink) {
-        tg.openTelegramLink(link);
-      } else {
-        window.location.href = link;
-      }
     }
 
     function renderRoutes() {
