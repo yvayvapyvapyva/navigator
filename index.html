@@ -2208,13 +2208,16 @@ async function initApp() {
             renderRoutesList();
         }
         
-        // Показываем кнопку меню (если не скрыта)
-        byId('menuBtn').style.display = 'flex';
+        // Показываем кнопку меню (если есть токен)
+        if (hasTParam) {
+            byId('menuBtn').style.display = 'flex';
+        } else {
+            hideMenuButton();
+        }
 
-        // Если есть start_param - запускаем навигатор (из Telegram)
+        // Если есть start_param - запускаем навигатор
         if (startParam && startParam.includes('-')) {
             openNavigatorWithRoute(startParam, true);
-            hideMenuButton();
         }
     });
     
