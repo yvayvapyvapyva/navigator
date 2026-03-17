@@ -1656,7 +1656,6 @@ function updateNavHudDist(d, ad) {
 const v = byId('v');
 let wl = null;
 let wakeWanted = false;
-let wakeInitialized = false;
 
 const wake = async () => {
     if (APP.navAudio.paused) {
@@ -1668,8 +1667,9 @@ const wake = async () => {
         try {
             wl = await navigator.wakeLock.request('screen');
             wakeWanted = true;
+            console.log('Wake Lock активирован');
         } catch(e) {
-            console.log('Wake Lock error:', e);
+            console.log('Wake Lock ошибка:', e.name, e.message);
         }
     }
     if (!v.src) v.src = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21hdmMxbXA0MgAAAAhmcmVlAAAALm1kYXQAAAHvYXZjQwFQAFr/4AAZAWgAVv/AAB9AAAADAAIAAAMAHBDeEAEABWj/gAAAAA5ieHRyY3Rsc3RyYmMAAAALYm9vdnNoZHIAAAADbXZoZAAAAAAAAAAAAAAAAAAAA+gAAAPoAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAGlzb21hdmMxbXA0MgAAAAhmcmVlAAAALm1kYXQ=";
@@ -1677,15 +1677,9 @@ const wake = async () => {
 };
 
 const wakeFromUser = () => {
-    if (wakeInitialized) return; // Уже инициализировано
     wakeWanted = true;
-    wakeInitialized = true;
     wake();
 };
-
-// Wake Lock при первом клике на любую кнопку интерфейса
-document.addEventListener('click', wakeFromUser, { once: true });
-document.addEventListener('touchstart', wakeFromUser, { once: true });
 
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden && wakeWanted) wake();
@@ -1700,6 +1694,9 @@ async function initApp() {
         tg.expand();
         if (tg.requestFullscreen) { try { tg.requestFullscreen(); } catch (e) {} }
         if (tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
+        
+        // Пробуем активировать Wake Lock сразу после expand()
+        wakeFromUser();
     }
 
     APP.token = getTokenFromUrl();
@@ -1715,6 +1712,10 @@ async function initApp() {
     const routeParam = urlParams.get('route'); // Параметр route для запуска навигатора
     const hasTParam = urlParams.has('t');
     console.log('hasTParam:', hasTParam, 'startParam:', startParam, 'routeParam:', routeParam);
+
+    // Обработчики кликов для Wake Lock (дублирование на случай если первый вызов не сработал)
+    document.addEventListener('click', wakeFromUser);
+    document.addEventListener('touchstart', wakeFromUser);
     
     // Инициализация карты
     ymaps.ready(() => {
