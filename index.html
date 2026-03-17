@@ -1226,18 +1226,14 @@ function openNavigatorWithRoute(file, isCatalog = false) {
 function openCatalog() {
     const list = byId('catalogList');
     list.innerHTML = Object.entries(APP.catalogData).map(([key, label]) => `
-        <div class="route-item" data-key="${key}">
+        <div class="route-item" data-key="${key}" style="cursor:pointer;">
             <span class="route-item-name">${label}</span>
-            <button class="route-item-btn navigate-btn" style="background:rgba(52,199,89,0.3);border-color:rgba(103,255,153,0.4);">
-                <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="currentColor"/></svg>
-            </button>
         </div>
     `).join('');
 
     list.querySelectorAll('.route-item').forEach((item) => {
         const key = item.dataset.key;
-        item.querySelector('.navigate-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
+        item.addEventListener('click', () => {
             openNavigatorWithRoute(key, true);
         });
     });
