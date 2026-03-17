@@ -156,6 +156,17 @@
         backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
         z-index: 9600;
     }
+    /* Модальное окно вверху экрана */
+    .modal-overlay.top-aligned {
+        align-items: flex-start;
+        padding-top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 20px);
+        box-sizing: border-box;
+    }
+    .modal-overlay.top-aligned .modal-sheet {
+        margin: 0 16px 20px;
+        border-radius: 20px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
     .modal-sheet {
         width: min(92vw, 500px); margin: 0 16px 20px;
         background: linear-gradient(180deg, rgba(30,32,40,0.95), rgba(20,22,30,0.95));
@@ -605,7 +616,7 @@
 </div>
 
 <!-- Модальное окно создания маршрута -->
-<div id="createModal" class="modal-overlay" style="display:none;">
+<div id="createModal" class="modal-overlay top-aligned" style="display:none;">
     <div class="modal-sheet">
         <div class="modal-title">Новый маршрут</div>
         <input id="routeNameInput" class="input" type="text" placeholder="Введите название" oninput="this.value = this.value.replace(/[^a-zA-Z0-9_]/g, '')">
