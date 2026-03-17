@@ -419,6 +419,24 @@
     .action-icon-btn svg { fill: #f3f4f6; width: 20px; height: 20px; }
     .action-icon-btn.comm-btn svg { fill: #d1d5db; }
     
+    /* Кнопки навигации (стрелки) */
+    .nav-arrow-btn {
+        width: 40px; height: 40px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.15s, transform 0.15s;
+    }
+    .nav-arrow-btn svg { fill: #f3f4f6; }
+    .nav-arrow-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
+    .nav-arrow-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .nav-arrow-btn:disabled:active { transform: none; background: rgba(255,255,255,0.12); }
+
     /* HUD выбора точки */
     #selectionHud {
         position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
@@ -435,17 +453,26 @@
     }
     #selectionHud.active { display: flex; }
     #selectionHud .hud-actions {
-        width: 100%; display: flex; padding-top: 8px; gap: 10px; align-items: center;
+        width: 100%;
+        display: flex;
+        padding-top: 8px;
+        gap: 8px;
+        align-items: center;
     }
     #selConfirmBtn {
-        flex: 1; padding: 14px; border-radius: 12px;
+        padding: 14px;
+        border-radius: 12px;
         border: 1px solid var(--border);
         background: var(--dark-panel);
-        color: var(--btn-txt); font-size: 15px; font-weight: 700;
+        color: var(--btn-txt);
+        font-size: 15px;
+        font-weight: 700;
         cursor: pointer;
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
         transition: transform 0.15s;
+        min-width: 80px;
+        flex-shrink: 0;
     }
     #selConfirmBtn:active { transform: scale(0.95); }
 
@@ -797,13 +824,22 @@
         <span class="hud-index" id="selIndex">0</span>
         <div class="hud-cmd" id="selCmd">Точка маршрута</div>
     </div>
+    
     <div class="hud-actions">
-        <button id="selConfirmBtn">Выбрать</button>
-        <button id="selSpeakBtn" class="action-icon-btn">
-            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        <button id="selPrevBtn" class="nav-arrow-btn" title="Предыдущая точка">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/></svg>
         </button>
-        <button id="selCommentBtn" class="action-icon-btn comm-btn" style="display:none">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        <div style="display:flex; gap:8px; flex:1; justify-content:center; align-items:center;">
+            <button id="selConfirmBtn">Выбрать</button>
+            <button id="selSpeakBtn" class="action-icon-btn">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+            </button>
+            <button id="selCommentBtn" class="action-icon-btn comm-btn" style="display:none">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </button>
+        </div>
+        <button id="selNextBtn" class="nav-arrow-btn" title="Следующая точка">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg>
         </button>
     </div>
 </div>
@@ -1303,14 +1339,14 @@ function getNavIconSvg(col, txt, az, isEnd, isCurr = false, hasComm = false) {
     const key = `${col}-${txt}-${az}-${isEnd}-${isCurr}-${hasComm}`;
     if (APP.navIconCache.has(key)) return APP.navIconCache.get(key);
     const s = isEnd ? 34 : 40, c = s / 2;
-    const strk = isCurr ? '#00FF00' : (isEnd ? '#FFFFFF' : '#000000');
+    const strk = isCurr ? '#00FF00' : '#000000';
     const textColor = hasComm ? '#FF9500' : '#000000';
     const svg = `
         <svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}">
             <g transform="rotate(${az},${c},${c})">
-                <polygon points="${c},2 ${c+10},${s-5} ${c},${s-14} ${c-10},${s-5}" fill="${col}" stroke="${strk}" stroke-width="${isCurr ? 2 : 1.5}"/>
+                <polygon points="${c},2 ${c+10},${s-5} ${c},${s-14} ${c-10},${s-5}" fill="${col}" stroke="${strk}" stroke-width="1.5"/>
             </g>
-            <circle cx="${c}" cy="${c}" r="${isEnd ? 7 : 9}" fill="${col}" stroke="${strk}" stroke-width="${isCurr ? 2 : 1.5}"/>
+            <circle cx="${c}" cy="${c}" r="${isEnd ? 7 : 9}" fill="${col}" stroke="${strk}" stroke-width="1.5"/>
             <text x="${c}" y="${c+0.5}" font-size="${isEnd ? 8 : 9}" font-family="Arial" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="${textColor}" stroke="white" stroke-width="2" style="paint-order:stroke fill">${txt}</text>
         </svg>
     `;
@@ -1461,14 +1497,20 @@ function renderNavigatorPoints() {
         });
     }
     APP.navPoints = APP.navPoints.map((p, i) => {
-        // Скрываем точки до текущей цели
-        if (i < APP.navCurrentIndex) {
-            return { ...p, placemark: null, line: null, endPlacemark: null, hidden: true };
-        }
         const isCurrent = (i === APP.navCurrentIndex);
         const isPreview = (i === APP.navPreviewIndex);
+        const isPassed = (i < APP.navCurrentIndex);
         const hasComm = p.comm && p.comm.trim() !== '';
+
+        // Показываем все точки при просмотре (preview >= 0), иначе скрываем пройденные
+        const showPoint = !isPassed || (APP.navPreviewIndex >= 0);
+        // Показываем путь только у текущей и просматриваемой точки
         const showPath = isCurrent || isPreview;
+
+        if (!showPoint) {
+            return { ...p, placemark: null, line: null, endPlacemark: null, hidden: true };
+        }
+        
         const placemark = new ymaps.Placemark([p.lat, p.lon], {
             pointIndex: i
         }, {
@@ -1476,7 +1518,8 @@ function renderNavigatorPoints() {
             iconImageHref: getNavIconSvg(p.hex, p.id, p.az, false, isCurrent, hasComm),
             iconImageSize: [40, 40],
             iconImageOffset: [-20, -20],
-            zIndex: (isCurrent || isPreview) ? 1000 : 500
+            zIndex: (isCurrent || isPreview) ? 1000 : (isPassed ? 600 : 500),
+            opacity: isPassed ? 0.5 : 1
         });
         placemark.events.add('click', function(e) {
             const index = e.get('target').properties.get('pointIndex');
@@ -1491,8 +1534,8 @@ function renderNavigatorPoints() {
         if (showPath && p.pts && p.pts.length >= 2) {
             line = new ymaps.Polyline(p.pts, {}, {
                 strokeColor: p.hex,
-                strokeWidth: isCurrent ? 4 : 3,
-                strokeOpacity: isCurrent ? 1 : 0.6,
+                strokeWidth: isCurrent ? 4 : (isPreview ? 3 : 2),
+                strokeOpacity: isCurrent ? 1 : (isPreview ? 0.8 : 0.4),
                 outline: true,
                 outlineColor: '#000000',
                 outlineWidth: 1.5
@@ -1504,8 +1547,9 @@ function renderNavigatorPoints() {
                 iconImageHref: getNavIconSvg(p.hex, p.id, calcAzimuth(prev, last), true, isCurrent, hasComm),
                 iconImageSize: [34, 34],
                 iconImageOffset: [-17, -17],
-                zIndex: isCurrent ? 950 : 900,
-                interactive: false
+                zIndex: isCurrent ? 950 : (isPreview ? 900 : 800),
+                interactive: false,
+                opacity: isPassed ? 0.5 : 1
             });
         }
         if (APP.map) {
@@ -1540,20 +1584,16 @@ function showNavSelection(i) {
         console.error('Точка с индексом', i, 'не найдена');
         return;
     }
-    
+
     const navHud = byId('navHud');
     const selectionHud = byId('selectionHud');
-    
-    console.log('navHud:', navHud, 'selectionHud:', selectionHud);
-    
+
     navHud.classList.remove('active');
     navHud.style.display = 'none';
-    
+
     selectionHud.classList.add('active');
     selectionHud.style.display = 'flex';
-    
-    console.log('navHud классы:', navHud.classList, 'selectionHud классы:', selectionHud.classList);
-    
+
     byId('selIndex').textContent = i + 1;
     byId('selCmd').textContent = p.cmd;
 
@@ -1576,9 +1616,78 @@ function showNavSelection(i) {
         commentBtn.parentNode.replaceChild(newCommentBtn, commentBtn);
         newCommentBtn.onclick = (ev) => { ev.stopPropagation(); showNavComment(p.comm); };
     }
-
-    renderNavigatorPoints();
     
+    // Кнопки навигации
+    const prevBtn = byId('selPrevBtn');
+    const nextBtn = byId('selNextBtn');
+    const newPrevBtn = prevBtn.cloneNode(true);
+    const newNextBtn = nextBtn.cloneNode(true);
+    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+    
+    // Блокируем кнопки только если нет соседних точек
+    newPrevBtn.disabled = (i <= 0);
+    newNextBtn.disabled = (i >= APP.navPoints.length - 1);
+    
+    newPrevBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        if (i > 0) showNavSelection(i - 1);
+    };
+    
+    newNextBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        if (i < APP.navPoints.length - 1) showNavSelection(i + 1);
+    };
+
+    // Подсветка точки на карте
+    APP.navPreviewIndex = i;
+    
+    // Центрирование и масштабирование карты для показа всего пути точки
+    if (p.pts && p.pts.length >= 2) {
+        // Находим минимальные и максимальные координаты для определения границ
+        let minLat = p.pts[0][0], maxLat = p.pts[0][0];
+        let minLon = p.pts[0][1], maxLon = p.pts[0][1];
+        
+        for (let pt of p.pts) {
+            if (pt[0] < minLat) minLat = pt[0];
+            if (pt[0] > maxLat) maxLat = pt[0];
+            if (pt[1] < minLon) minLon = pt[1];
+            if (pt[1] > maxLon) maxLon = pt[1];
+        }
+        
+        // Вычисляем размер области с отступами
+        const padding = 0.00001; // Отступ ~1 метр
+        const centerLat = (minLat + maxLat + padding * 2) / 2 - padding;
+        const centerLon = (minLon + maxLon + padding * 2) / 2 - padding;
+        
+        // Вычисляем размер области
+        const latDiff = maxLat - minLat + padding * 2;
+        const lonDiff = maxLon - minLon + padding * 2;
+        const maxDiff = Math.max(latDiff, lonDiff);
+        
+        // Подбираем зум в зависимости от размера области
+        let zoom = 17;
+        if (maxDiff > 0.05) zoom = 13;
+        else if (maxDiff > 0.02) zoom = 14;
+        else if (maxDiff > 0.01) zoom = 15;
+        else if (maxDiff > 0.005) zoom = 16;
+        else if (maxDiff > 0.002) zoom = 17;
+        else if (maxDiff > 0.001) zoom = 18;
+        else if (maxDiff > 0.0005) zoom = 19;
+        else zoom = 20;
+        
+        console.log('Путь точки:', p.pts.length, 'координат, размер:', maxDiff.toFixed(6), 'зум:', zoom);
+        
+        // Сначала устанавливаем зум и центр
+        APP.map.setCenter([centerLat, centerLon], zoom);
+    } else if (p.lat && p.lon) {
+        // Если пути нет, просто центрируем на точке
+        APP.map.setCenter([p.lat, p.lon], 17);
+    }
+    
+    // Затем перерисовываем точки
+    renderNavigatorPoints();
+
     // Добавляем обработчик клика вне панели для закрытия
     setTimeout(() => {
         document.addEventListener('click', closeNavSelectionOutside);
@@ -1599,15 +1708,18 @@ function closeNavSelection() {
 
     selectionHud.classList.remove('active');
     selectionHud.style.display = 'none';
-    
+
     // Удаляем обработчик клика вне панели
     document.removeEventListener('click', closeNavSelectionOutside);
 
     APP.navPreviewIndex = -1;
+    
+    // Перерисовываем точки, чтобы скрыть пройденные
+    renderNavigatorPoints();
+    
     if (APP.navCurrentIndex >= 0) {
         navHud.classList.add('active');
         navHud.style.display = 'flex';
-        renderNavigatorPoints();
     }
 }
 
@@ -1634,7 +1746,7 @@ function renderNavList() {
             <div class="point-item ${isCurrent ? 'active' : ''}" onclick="setNavTarget(${i}); toggleNavPointsList();" style="${isPassed ? 'opacity:0.4;' : ''}">
                 <div class="point-badge" style="${isCurrent ? 'background:#00FF00;color:black' : (isPassed ? 'background:rgba(255,255,255,0.2)' : '')}">${i + 1}</div>
                 <div class="point-content">
-                    <div class="point-name" style="${isPassed ? 'text-decoration:line-through;' : ''}">${p.cmd}</div>
+                    <div class="point-name">${p.cmd}</div>
                 </div>
                 ${!isPassed && hasComm ? `
                 <button class="action-icon-btn comm-btn" onclick="event.stopPropagation(); showNavComment('${commSafe}'); toggleNavPointsList();">
