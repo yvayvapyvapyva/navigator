@@ -56,6 +56,55 @@
     }
     #menuBtn svg { fill: currentColor; width: 20px; height: 20px; }
     #menuBtn:active { transform: translateX(-50%) scale(0.95); background: rgba(30,32,40,0.9); }
+    
+    /* Кнопка списка точек (слева от меню на одном уровне) */
+    #navListBtn {
+        position: absolute;
+        top: calc(16px + env(safe-area-inset-top) + 50px);
+        left: 16px;
+        z-index: 9005;
+        pointer-events: auto;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        color: var(--btn-txt);
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+    }
+    #navListBtn svg { fill: currentColor; width: 24px; height: 24px; }
+    #navListBtn:active { transform: scale(0.95); background: rgba(30,32,40,0.9); }
+    
+    /* Кнопка геолокации (справа от меню на одном уровне) */
+    #navLocateBtn {
+        position: absolute;
+        top: calc(16px + env(safe-area-inset-top) + 50px);
+        right: 16px;
+        z-index: 9005;
+        pointer-events: auto;
+        background: var(--dark-panel);
+        backdrop-filter: var(--panel-blur);
+        -webkit-backdrop-filter: var(--panel-blur);
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        color: var(--btn-txt);
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+    }
+    #navLocateBtn svg { fill: currentColor; width: 24px; height: 24px; }
+    #navLocateBtn:active { transform: scale(0.95); background: rgba(30,32,40,0.9); }
+    #navLocateBtn.active { background: rgba(52,199,89,0.42); border-color: rgba(103,255,153,0.45); }
     /* Загрузочный экран */
     .loading-overlay {
         position: fixed; inset: 0; background: rgba(8,10,14,0.95);
@@ -567,6 +616,16 @@
     <span>Меню</span>
 </button>
 
+<!-- Кнопка списка точек - слева от меню -->
+<button id="navListBtn" onclick="toggleNavPointsList()" style="display:none;">
+    <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+</button>
+
+<!-- Кнопка геолокации - справа от меню -->
+<button id="navLocateBtn" onclick="toggleAutoCenter()" style="display:none;">
+    <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+</button>
+
 <!-- Оверлей информации о маршруте (навигатор) -->
 <div id="navGistInfoOverlay" onclick="this.classList.remove('visible')">
     <div class="overlay-title">О маршруте</div>
@@ -736,12 +795,6 @@
         <div style="height:1px; width:50%; background:rgba(255,255,255,0.1); margin:4px 0;"></div>
         <div class="tel-item"><span class="tel-label">АЗ</span><span class="tel-value" id="telAz">0°</span></div>
     </div>
-    <button id="navListBtn" class="map-btn" onclick="toggleNavPointsList()">
-        <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
-    </button>
-    <button id="navLocateBtn" class="map-btn" onclick="toggleAutoCenter()">
-        <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 7.48 7.94 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
-    </button>
 </div>
 
 <!-- Список точек навигатора -->
@@ -1251,11 +1304,11 @@ function getNavIconSvg(col, txt, az, isEnd, isCurr = false, hasComm = false) {
 function showNavigatorUI() {
     byId('navHud').style.display = 'flex';
     byId('telemetryPanel').style.display = 'flex';
-    byId('navListBtn').style.display = 'flex';
-    byId('navLocateBtn').style.display = 'flex';
+    byId('navListBtn').style.display = 'block';
+    byId('navLocateBtn').style.display = 'block';
     byId('cacheStatus').style.display = 'block';
     byId('navRouteHeaderBtn').classList.add('visible');
-    
+
     // Сбрасываем привязку к местоположению в выключенное состояние
     APP.autoCenter = false;
     byId('navLocateBtn').classList.remove('active');
