@@ -518,7 +518,21 @@
     }
     .action-icon-btn svg { fill: #f3f4f6; width: 20px; height: 20px; }
     .action-icon-btn.comm-btn svg { fill: #d1d5db; }
-    
+    #navSelectBtn {
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(52,199,89,0.42);
+        border-color: rgba(103,255,153,0.45);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: transform 0.15s, background 0.15s;
+    }
+    #navSelectBtn:active { transform: scale(0.95); }
+
     /* Кнопки навигации (стрелки) */
     .nav-arrow-btn {
         width: 40px; height: 40px;
@@ -536,45 +550,6 @@
     .nav-arrow-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
     .nav-arrow-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .nav-arrow-btn:disabled:active { transform: none; background: rgba(255,255,255,0.12); }
-
-    /* HUD выбора точки */
-    #selectionHud {
-        position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
-        left: 16px; right: 88px; z-index: 9100;
-        background: var(--dark-panel);
-        backdrop-filter: var(--panel-blur);
-        -webkit-backdrop-filter: var(--panel-blur);
-        border-radius: 20px; padding: 16px;
-        color: var(--btn-txt);
-        border: 1px solid var(--border);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.22);
-        display: none; flex-direction: column; gap: 8px;
-        pointer-events: auto;
-    }
-    #selectionHud.active { display: flex; }
-    #selectionHud .hud-actions {
-        width: 100%;
-        display: flex;
-        padding-top: 8px;
-        gap: 8px;
-        align-items: center;
-    }
-    #selConfirmBtn {
-        padding: 14px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: var(--dark-panel);
-        color: var(--btn-txt);
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        backdrop-filter: var(--panel-blur);
-        -webkit-backdrop-filter: var(--panel-blur);
-        transition: transform 0.15s;
-        min-width: 80px;
-        flex-shrink: 0;
-    }
-    #selConfirmBtn:active { transform: scale(0.95); }
 
     /* Телеметрия (под кнопкой геолокации) */
     #telemetryPanel {
@@ -859,7 +834,7 @@
             <button id="navCommentCloseBtn" style="width:20px; height:20px; border-radius:6px; background:rgba(255,149,0,0.3); border:1px solid rgba(255,149,0,0.5); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; line-height:1; flex-shrink:0;">×</button>
         </div>
     </div>
-    
+
     <div class="hud-header">
         <span class="hud-index" id="hudIndex">1</span>
         <div class="hud-cmd" id="hudCmd">Маршрут не выбран</div>
@@ -882,59 +857,11 @@
             <button id="navSpeakBtn" class="action-icon-btn">
                 <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
             </button>
+            <button id="navSelectBtn" style="display:none;" title="Выбрать точку">Выбрать</button>
         </div>
         <button id="navNextBtn" class="nav-arrow-btn" title="Следующая точка">
             <svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg>
         </button>
-    </div>
-    
-    <!-- Комментарий точки -->
-    <div id="navCommentBlock" style="display:none; margin-top:8px; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; border:1px solid rgba(255,255,255,0.1);">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
-            <span style="font-size:10px; color:rgba(255,255,255,0.5); text-transform:uppercase; font-weight:700;">Комментарий</span>
-            <button id="navCommentCloseBtn" style="width:20px; height:20px; border-radius:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; line-height:1;">×</button>
-        </div>
-        <div id="navCommentText" style="font-size:12px; line-height:1.5; color:#e5e7eb; white-space:pre-wrap;"></div>
-    </div>
-</div>
-
-<!-- HUD выбора точки -->
-<div id="selectionHud" class="nav-hud" style="display:none;">
-    <!-- Комментарий точки -->
-    <div id="selCommentBlock" style="display:none; margin-bottom:10px; padding:10px; background:rgba(255,149,0,0.15); border-radius:10px; border:1px solid rgba(255,149,0,0.4);">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-            <div id="selCommentText" style="font-size:12px; line-height:1.5; color:#e5e7eb; white-space:pre-wrap; flex:1;"></div>
-            <button id="selCommentCloseBtn" style="width:20px; height:20px; border-radius:6px; background:rgba(255,149,0,0.3); border:1px solid rgba(255,149,0,0.5); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; line-height:1; flex-shrink:0;">×</button>
-        </div>
-    </div>
-    
-    <div class="hud-header">
-        <span class="hud-index" id="selIndex">0</span>
-        <div class="hud-cmd" id="selCmd">Точка маршрута</div>
-    </div>
-
-    <div class="hud-actions">
-        <button id="selPrevBtn" class="nav-arrow-btn" title="Предыдущая точка">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/></svg>
-        </button>
-        <div style="display:flex; gap:8px; flex:1; justify-content:center; align-items:center;">
-            <button id="selConfirmBtn">Выбрать</button>
-            <button id="selSpeakBtn" class="action-icon-btn">
-                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-            </button>
-        </div>
-        <button id="selNextBtn" class="nav-arrow-btn" title="Следующая точка">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg>
-        </button>
-    </div>
-    
-    <!-- Комментарий точки -->
-    <div id="selCommentBlock" style="display:none; margin-top:8px; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; border:1px solid rgba(255,255,255,0.1);">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
-            <span style="font-size:10px; color:rgba(255,255,255,0.5); text-transform:uppercase; font-weight:700;">Комментарий</span>
-            <button id="selCommentCloseBtn" style="width:20px; height:20px; border-radius:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; line-height:1;">×</button>
-        </div>
-        <div id="selCommentText" style="font-size:12px; line-height:1.5; color:#e5e7eb; white-space:pre-wrap;"></div>
     </div>
 </div>
 
@@ -1635,7 +1562,6 @@ function showNavigatorUI() {
 
 function hideNavigatorUI() {
     byId('navHud').style.display = 'none';
-    byId('selectionHud').style.display = 'none';
     byId('telemetryPanel').style.display = 'none';
     byId('navListBtn').style.display = 'none';
     byId('navLocateBtn').style.display = 'none';
@@ -1818,9 +1744,9 @@ function renderNavigatorPoints() {
             const index = e.get('target').properties.get('pointIndex');
             console.log('Клик по точке:', index, 'текущая:', APP.navCurrentIndex);
             if (index !== APP.navCurrentIndex) {
-                APP.navPreviewIndex = index;
-                console.log('Открываем выбор точки:', index);
-                showNavSelection(index);
+                showPreview(index);
+            } else {
+                closeNavSelection();
             }
         });
         let line = null, endPlacemark = null;
@@ -1856,13 +1782,29 @@ function renderNavigatorPoints() {
     updateNavHud();
 }
 
+// Режимы отображения HUD: 'active' - активная точка, 'preview' - предпросмотр
 function updateNavHud() {
-    const t = APP.navPoints[APP.navCurrentIndex];
+    const isPreview = APP.navPreviewIndex >= 0;
+    const idx = isPreview ? APP.navPreviewIndex : APP.navCurrentIndex;
+    const t = APP.navPoints[idx];
     if (!t) return;
-    byId('hudIndex').textContent = APP.navCurrentIndex + 1;
+
+    byId('hudIndex').textContent = idx + 1;
     byId('hudCmd').textContent = t.cmd;
     byId('hudTargetAz').textContent = `${Math.round(t.az)}°`;
     byId('navSpeakBtn').onclick = () => playNavCommand(t.cmd);
+
+    // Показываем/скрываем кнопку "Выбрать" и статистику
+    const selectBtn = byId('navSelectBtn');
+    const hudStats = document.querySelector('.hud-stats');
+    if (isPreview) {
+        selectBtn.style.display = 'flex';
+        selectBtn.onclick = () => { setNavTarget(idx); };
+        hudStats.style.display = 'none';
+    } else {
+        selectBtn.style.display = 'none';
+        hudStats.style.display = 'flex';
+    }
 
     // Обновляем состояние кнопок навигации
     const prevBtn = byId('navPrevBtn');
@@ -1872,31 +1814,17 @@ function updateNavHud() {
     prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
     nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
 
-    newPrevBtn.disabled = (APP.navCurrentIndex <= 0);
-    newNextBtn.disabled = (APP.navCurrentIndex >= APP.navPoints.length - 1);
+    newPrevBtn.disabled = (idx <= 0);
+    newNextBtn.disabled = (idx >= APP.navPoints.length - 1);
 
     newPrevBtn.onclick = (ev) => {
         ev.stopPropagation();
-        if (APP.navCurrentIndex > 0) {
-            const prevIndex = APP.navCurrentIndex - 1;
-            // Если это текущая точка (невозможно, но для безопасности)
-            if (prevIndex === APP.navCurrentIndex) {
-                return;
-            }
-            showNavSelection(prevIndex);
-        }
+        if (idx > 0) showPreview(idx - 1);
     };
 
     newNextBtn.onclick = (ev) => {
         ev.stopPropagation();
-        if (APP.navCurrentIndex < APP.navPoints.length - 1) {
-            const nextIndex = APP.navCurrentIndex + 1;
-            // Если это текущая точка (невозможно, но для безопасности)
-            if (nextIndex === APP.navCurrentIndex) {
-                return;
-            }
-            showNavSelection(nextIndex);
-        }
+        if (idx < APP.navPoints.length - 1) showPreview(idx + 1);
     };
 
     // Показываем комментарий если он есть
@@ -1915,10 +1843,7 @@ function updateNavHud() {
     const closeCommentBtn = byId('navCommentCloseBtn');
     const newCloseCommentBtn = closeCommentBtn.cloneNode(true);
     closeCommentBtn.parentNode.replaceChild(newCloseCommentBtn, closeCommentBtn);
-    newCloseCommentBtn.onclick = (ev) => {
-        ev.stopPropagation();
-        commentBlock.style.display = 'none';
-    };
+    newCloseCommentBtn.onclick = (ev) => { ev.stopPropagation(); commentBlock.style.display = 'none'; };
 }
 
 function updateNavHudDist(d, ad) {
@@ -1929,127 +1854,40 @@ function updateNavHudDist(d, ad) {
     byId('hudTargetAz').classList.toggle('in-range', ad <= APP.navConfig.AZ_TOLERANCE);
 }
 
-function showNavSelection(i) {
-    console.log('showNavSelection вызвана с индексом:', i);
+function showPreview(i) {
+    console.log('showPreview вызвана с индексом:', i);
     const p = APP.navPoints[i];
     if (!p) {
         console.error('Точка с индексом', i, 'не найдена');
         return;
     }
 
-    // Если выбрана текущая точка, показываем панель активной точки
-    if (i === APP.navCurrentIndex) {
-        closeNavSelection();
-        return;
-    }
+    // Закрываем список точек если открыт
+    byId('navPointsMenu').style.display = 'none';
 
-    const navHud = byId('navHud');
-    const selectionHud = byId('selectionHud');
-
-    navHud.classList.remove('active');
-    navHud.style.display = 'none';
-
-    selectionHud.classList.add('active');
-    selectionHud.style.display = 'flex';
-
-    byId('selIndex').textContent = i + 1;
-    byId('selCmd').textContent = p.cmd;
-
-    // Надёжное назначение обработчиков
-    const confirmBtn = byId('selConfirmBtn');
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    newConfirmBtn.onclick = () => { setNavTarget(i); closeNavSelection(); };
-
-    const speakBtn = byId('selSpeakBtn');
-    const newSpeakBtn = speakBtn.cloneNode(true);
-    speakBtn.parentNode.replaceChild(newSpeakBtn, speakBtn);
-    newSpeakBtn.onclick = (ev) => { ev.stopPropagation(); playNavCommand(p.cmd); };
-
-    // Показываем комментарий если он есть
-    const commentBlock = byId('selCommentBlock');
-    const commentText = byId('selCommentText');
-    const hasComm = p.comm && p.comm.trim() !== '';
-
-    if (hasComm) {
-        commentText.textContent = p.comm;
-        commentBlock.style.display = 'block';
-    } else {
-        commentBlock.style.display = 'none';
-    }
-
-    // Кнопка закрытия комментария
-    const closeCommentBtn = byId('selCommentCloseBtn');
-    const newCloseCommentBtn = closeCommentBtn.cloneNode(true);
-    closeCommentBtn.parentNode.replaceChild(newCloseCommentBtn, closeCommentBtn);
-    newCloseCommentBtn.onclick = (ev) => {
-        ev.stopPropagation();
-        commentBlock.style.display = 'none';
-    };
-
-    // Кнопки навигации
-    const prevBtn = byId('selPrevBtn');
-    const nextBtn = byId('selNextBtn');
-    const newPrevBtn = prevBtn.cloneNode(true);
-    const newNextBtn = nextBtn.cloneNode(true);
-    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-
-    // Блокируем кнопки только если нет соседних точек
-    newPrevBtn.disabled = (i <= 0);
-    newNextBtn.disabled = (i >= APP.navPoints.length - 1);
-
-    newPrevBtn.onclick = (ev) => {
-        ev.stopPropagation();
-        if (i > 0) {
-            const prevIndex = i - 1;
-            if (prevIndex === APP.navCurrentIndex) {
-                closeNavSelection();
-            } else {
-                showNavSelection(prevIndex);
-            }
-        }
-    };
-
-    newNextBtn.onclick = (ev) => {
-        ev.stopPropagation();
-        if (i < APP.navPoints.length - 1) {
-            const nextIndex = i + 1;
-            if (nextIndex === APP.navCurrentIndex) {
-                closeNavSelection();
-            } else {
-                showNavSelection(nextIndex);
-            }
-        }
-    };
-
-    // Подсветка точки на карте
     APP.navPreviewIndex = i;
-    
+    updateNavHud();
+    renderNavigatorPoints();
+
     // Центрирование и масштабирование карты для показа всего пути точки
     if (p.pts && p.pts.length >= 2) {
-        // Находим минимальные и максимальные координаты для определения границ
         let minLat = p.pts[0][0], maxLat = p.pts[0][0];
         let minLon = p.pts[0][1], maxLon = p.pts[0][1];
-        
+
         for (let pt of p.pts) {
             if (pt[0] < minLat) minLat = pt[0];
             if (pt[0] > maxLat) maxLat = pt[0];
             if (pt[1] < minLon) minLon = pt[1];
             if (pt[1] > maxLon) maxLon = pt[1];
         }
-        
-        // Вычисляем центр
+
         const centerLat = (minLat + maxLat) / 2;
         const centerLon = (minLon + maxLon) / 2;
-        
-        // Вычисляем размер области с отступами
-        const padding = 0.00001; // Отступ ~1 метр
+        const padding = 0.00001;
         const latDiff = maxLat - minLat + padding * 2;
         const lonDiff = maxLon - minLon + padding * 2;
         const maxDiff = Math.max(latDiff, lonDiff);
-        
-        // Подбираем зум в зависимости от размера области
+
         let zoom = 17;
         if (maxDiff > 0.05) zoom = 13;
         else if (maxDiff > 0.02) zoom = 14;
@@ -2059,10 +1897,7 @@ function showNavSelection(i) {
         else if (maxDiff > 0.001) zoom = 18;
         else if (maxDiff > 0.0005) zoom = 19;
         else zoom = 20;
-        
-        console.log('Путь точки:', p.pts.length, 'координат, размер:', maxDiff.toFixed(6), 'зум:', zoom);
-        
-        // Плавное перемещение к центру пути точки
+
         APP.map.panTo([centerLat, centerLon], {
             flying: true,
             duration: 500,
@@ -2071,45 +1906,7 @@ function showNavSelection(i) {
             }
         });
     } else if (p.lat && p.lon) {
-        // Если пути нет, просто центрируем на точке
         APP.map.setCenter([p.lat, p.lon], 17);
-    }
-    
-    // Затем перерисовываем точки
-    renderNavigatorPoints();
-
-    // Добавляем обработчик клика вне панели для закрытия
-    setTimeout(() => {
-        document.addEventListener('click', closeNavSelectionOutside);
-    }, 100);
-}
-
-function closeNavSelectionOutside(event) {
-    const selectionHud = byId('selectionHud');
-    // Если клик не по панели selectionHud
-    if (!selectionHud.contains(event.target)) {
-        closeNavSelection();
-    }
-}
-
-function closeNavSelection() {
-    const selectionHud = byId('selectionHud');
-    const navHud = byId('navHud');
-
-    selectionHud.classList.remove('active');
-    selectionHud.style.display = 'none';
-
-    // Удаляем обработчик клика вне панели
-    document.removeEventListener('click', closeNavSelectionOutside);
-
-    APP.navPreviewIndex = -1;
-    
-    // Перерисовываем точки, чтобы скрыть пройденные
-    renderNavigatorPoints();
-    
-    if (APP.navCurrentIndex >= 0) {
-        navHud.classList.add('active');
-        navHud.style.display = 'flex';
     }
 }
 
@@ -2118,8 +1915,13 @@ function setNavTarget(i) {
     APP.navPreviewIndex = -1;
     renderNavigatorPoints();
     updateNavHud();
-    // Закрываем меню списка если открыто
     byId('navPointsMenu').style.display = 'none';
+}
+
+function closeNavSelection() {
+    APP.navPreviewIndex = -1;
+    renderNavigatorPoints();
+    updateNavHud();
 }
 
 function renderNavList() {
@@ -2132,7 +1934,7 @@ function renderNavList() {
         const cmdSafe = p.cmd.replace(/'/g, "\\'");
         const hasComm = p.comm && p.comm.trim() !== '';
         return `
-            <div class="point-item ${isCurrent ? 'active' : ''}" onclick="setNavTarget(${i});" style="${isPassed ? 'opacity:0.4;' : ''}">
+            <div class="point-item ${isCurrent ? 'active' : ''}" onclick="showPreview(${i});" style="${isPassed ? 'opacity:0.4;' : ''}">
                 <div class="point-badge" style="${isCurrent ? 'background:#00FF00;color:black' : (isPassed ? 'background:rgba(255,255,255,0.2)' : '')}">${i + 1}</div>
                 <div class="point-content">
                     <div class="point-name" style="display:flex; align-items:center; gap:6px;">
@@ -2345,11 +2147,8 @@ async function initApp() {
             if (APP.navMode) {
                 // В режиме навигатора закрываем оверлеи при клике на карту
                 byId('navGistInfoOverlay').classList.remove('visible');
-                // Закрываем панель выбора точки
-                const selectionHud = byId('selectionHud');
-                if (selectionHud.style.display === 'flex') {
-                    closeNavSelection();
-                }
+                // Закрываем панель предпросмотра точки
+                closeNavSelection();
                 // Закрываем список точек
                 const navPointsMenu = byId('navPointsMenu');
                 if (navPointsMenu.style.display === 'flex') {
