@@ -1655,12 +1655,12 @@ function showNavSelection(i) {
             if (pt[1] > maxLon) maxLon = pt[1];
         }
         
+        // Вычисляем центр
+        const centerLat = (minLat + maxLat) / 2;
+        const centerLon = (minLon + maxLon) / 2;
+        
         // Вычисляем размер области с отступами
         const padding = 0.00001; // Отступ ~1 метр
-        const centerLat = (minLat + maxLat + padding * 2) / 2 - padding;
-        const centerLon = (minLon + maxLon + padding * 2) / 2 - padding;
-        
-        // Вычисляем размер области
         const latDiff = maxLat - minLat + padding * 2;
         const lonDiff = maxLon - minLon + padding * 2;
         const maxDiff = Math.max(latDiff, lonDiff);
@@ -1678,8 +1678,14 @@ function showNavSelection(i) {
         
         console.log('Путь точки:', p.pts.length, 'координат, размер:', maxDiff.toFixed(6), 'зум:', zoom);
         
-        // Сначала устанавливаем зум и центр
-        APP.map.setCenter([centerLat, centerLon], zoom);
+        // Плавное перемещение к центру пути точки
+        APP.map.panTo([centerLat, centerLon], {
+            flying: true,
+            duration: 500,
+            callback: function() {
+                APP.map.setZoom(zoom, { duration: 300 });
+            }
+        });
     } else if (p.lat && p.lon) {
         // Если пути нет, просто центрируем на точке
         APP.map.setCenter([p.lat, p.lon], 17);
