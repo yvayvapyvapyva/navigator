@@ -84,7 +84,31 @@ const applySnapshot = (snapshot) => {
     setActivePoint(null);
     updateSaveState();
 };
-ymaps.ready(() => {
+
+// Получение текущей геопозиции для центрирования карты
+let initialCenter = [56.3399, 43.9332]; // Координаты по умолчанию (Нижний Новгород)
+
+function initMapWithGeolocation() {
+    return new Promise((resolve) => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    initialCenter = [position.coords.latitude, position.coords.longitude];
+                    resolve(initialCenter);
+                },
+                () => {
+                    // Ошибка или отказ в доступе — используем координаты по умолчанию
+                    resolve(initialCenter);
+                },
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+            );
+        } else {
+            resolve(initialCenter);
+        }
+    });
+}
+
+ymaps.ready(async () => {
     if (tg) tg.expand();
     if (tg && tg.requestFullscreen) {
         try { tg.requestFullscreen(); } catch (e) {}
@@ -92,9 +116,13 @@ ymaps.ready(() => {
     if (tg && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
     if (tg && tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
     $('userIdBadge').textContent = `ID: ${USER_ID}`;
-    map = new ymaps.Map("map", { center: [56.3399, 43.9332], zoom: 17, type: 'yandex#satellite', controls: [] });
+    
+    // Сначала получаем геопозицию, затем инициализируем карту
+    const center = await initMapWithGeolocation();
+    map = new ymaps.Map("map", { center: center, zoom: 17, type: 'yandex#satellite', controls: [] });
     userLocPlacemark = new ymaps.Placemark([0,0], {}, { iconLayout: 'default#image', iconImageHref: getUserLocSvg(), iconImageSize: [24,24], iconImageOffset: [-12,-12], zIndex: 5000, visible: false });
-    map.geoObjects.add(userLocPlacemark); initGeolocation();
+    map.geoObjects.add(userLocPlacemark);
+    initGeolocation();
     map.events.add('click', e => {
         if(isAdd && tempNewPointData) {
             const newPoint = addP(e.get('coords'), { ...tempNewPointData });
