@@ -763,6 +763,14 @@
 
 <!-- HUD текущей точки -->
 <div id="navHud" class="nav-hud">
+    <!-- Комментарий точки -->
+    <div id="navCommentBlock" style="display:none; margin-bottom:10px; padding:10px; background:rgba(255,149,0,0.15); border-radius:10px; border:1px solid rgba(255,149,0,0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div id="navCommentText" style="font-size:12px; line-height:1.5; color:#e5e7eb; white-space:pre-wrap; flex:1;"></div>
+            <button id="navCommentCloseBtn" style="width:20px; height:20px; border-radius:6px; background:rgba(255,149,0,0.3); border:1px solid rgba(255,149,0,0.5); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; line-height:1; flex-shrink:0;">×</button>
+        </div>
+    </div>
+    
     <div class="hud-header">
         <span class="hud-index" id="hudIndex">1</span>
         <div class="hud-cmd" id="hudCmd">Маршрут не выбран</div>
@@ -797,11 +805,19 @@
 
 <!-- HUD выбора точки -->
 <div id="selectionHud" class="nav-hud" style="display:none;">
+    <!-- Комментарий точки -->
+    <div id="selCommentBlock" style="display:none; margin-bottom:10px; padding:10px; background:rgba(255,149,0,0.15); border-radius:10px; border:1px solid rgba(255,149,0,0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div id="selCommentText" style="font-size:12px; line-height:1.5; color:#e5e7eb; white-space:pre-wrap; flex:1;"></div>
+            <button id="selCommentCloseBtn" style="width:20px; height:20px; border-radius:6px; background:rgba(255,149,0,0.3); border:1px solid rgba(255,149,0,0.5); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; line-height:1; flex-shrink:0;">×</button>
+        </div>
+    </div>
+    
     <div class="hud-header">
         <span class="hud-index" id="selIndex">0</span>
         <div class="hud-cmd" id="selCmd">Точка маршрута</div>
     </div>
-    
+
     <div class="hud-actions">
         <button id="selPrevBtn" class="nav-arrow-btn" title="Предыдущая точка">
             <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/></svg>
