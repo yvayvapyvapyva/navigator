@@ -19,7 +19,8 @@ let historyStack = [], historyIndex = -1, lastSavedSnapshot = "[]", toastTimer =
 let gpsRecordMode = false;
 let gpsRecordWatchId = null;
 let lastGpsPoint = null;
-const GPS_MIN_DISTANCE = 5; // Минимальное расстояние между точками (метры)
+let gpsRecordingPoint = null; // Текущая точка, которую записываем
+const GPS_MIN_DISTANCE = 5; // Минимальное расстояние между точками пути (метры)
 
 const showToast = (text, type = 'info', duration = 2200) => {
     const el = $('toast');
@@ -185,27 +186,40 @@ const initGeolocation = () => {
             // Если активен режим записи по GPS
             if (gpsRecordMode && gpsRecordWatchId) {
                 const currentCoords = p.coords;
-                // Пропускаем, если lastGpsPoint ещё не установлен (первая точка создана в toggleGpsRecordMode)
-                if (!lastGpsPoint) return;
                 
+                // Если точка ещё не создана, создаём её
+                if (!gpsRecordingPoint) {
+                    gpsRecordingPoint = addP(coords, {
+                        id: points.length + 1,
+                        color: 'Gold',
+                        cmd: '',
+                        comm: 'Записано по GPS',
+                        pts: [coords]
+                    }, false);
+                    lastGpsPoint = { lat: coords[0], lon: coords[1] };
+                    // Запускаем редактор для рисования пути
+                    gpsRecordingPoint.line.editor.startDrawing();
+                    gpsRecordingPoint.pm.options.set('draggable', true);
+                    showToast('Запись пути началась', 'success', 1500);
+                    return;
+                }
+                
+                // Проверяем расстояние от последней точки
                 const dist = getDistanceFromLatLonInM(
                     lastGpsPoint.lat, lastGpsPoint.lon,
                     currentCoords.latitude, currentCoords.longitude
                 );
-                // Добавляем точку только если прошли минимальное расстояние
+                // Добавляем точку к пути только если прошли минимальное расстояние
                 if (dist < GPS_MIN_DISTANCE) return;
                 
-                // Создаём новую точку пути
-                const newPoint = addP(coords, {
-                    id: points.length + 1,
-                    color: 'Gold',
-                    cmd: '',
-                    comm: '',
-                    pts: [coords]
-                }, false);
+                // Добавляем новую точку к пути текущей метки
+                const pts = gpsRecordingPoint.line.geometry.getCoordinates();
+                pts.push(coords);
+                gpsRecordingPoint.line.geometry.setCoordinates(pts);
+                gpsRecordingPoint.pts = pts.map(pt => [f6(pt[0]), f6(pt[1])]);
+                
                 lastGpsPoint = { lat: currentCoords.latitude, lon: currentCoords.longitude };
                 map.setCenter(coords);
-                showToast(`Точка ${newPoint.id}`, 'info', 800);
             }
         }, null, { enableHighAccuracy: true, maximumAge: 5000 });
     }
@@ -481,35 +495,26 @@ function toggleGpsRecordMode() {
             return;
         }
         gpsRecordMode = true;
-        gpsRecordWatchId = true; // Флаг активной записи
+        gpsRecordWatchId = true;
         lastGpsPoint = null;
+        gpsRecordingPoint = null;
         $('gpsRecordBtn').classList.add('active');
         $('gpsRecordText').textContent = 'Остановить запись';
         $('addText').textContent = 'Завершить запись';
         $('addMarkerBtn').classList.add('active');
-        showToast('Запись по GPS запущена. Двигайтесь для записи точек.', 'info', 3000);
-        
-        // Создаём первую точку сразу при запуске (если есть текущая позиция)
-        if (userLocPlacemark && userLocPlacemark.geometry.getCoordinates()) {
-            const coords = userLocPlacemark.geometry.getCoordinates();
-            if (coords[0] !== 0 || coords[1] !== 0) {
-                const newPoint = addP(coords, {
-                    id: points.length + 1,
-                    color: 'Gold',
-                    cmd: '',
-                    comm: '',
-                    pts: [coords]
-                }, false);
-                lastGpsPoint = { lat: coords[0], lon: coords[1] };
-                showToast(`Точка ${newPoint.id} создана`, 'success', 1500);
-            }
-        }
+        showToast('Запись по GPS запущена. Двигайтесь для записи пути.', 'info', 3000);
     }
 }
 
 function stopGpsRecordMode() {
     gpsRecordMode = false;
     gpsRecordWatchId = null;
+    // Завершаем рисование пути точки
+    if (gpsRecordingPoint) {
+        gpsRecordingPoint.line.editor.stopEditing();
+        gpsRecordingPoint.pm.options.set('draggable', false);
+        gpsRecordingPoint = null;
+    }
     lastGpsPoint = null;
     $('gpsRecordBtn').classList.remove('active');
     $('gpsRecordText').textContent = 'Запись по GPS';
