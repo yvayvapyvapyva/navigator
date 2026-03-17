@@ -90,3 +90,37 @@
         .settings-tool-btn-danger { background: linear-gradient(180deg, rgba(255, 95, 87, 0.42), rgba(190, 47, 40, 0.36)); border-color: rgba(255, 127, 120, 0.5); }
         .settings-tool-btn-green { background: linear-gradient(180deg, rgba(52,199,89,0.42), rgba(30,144,63,0.36)); border-color: rgba(103,255,153,0.45); }
         .settings-tool-btn-wide { border-radius: 14px; font-size: 14px; font-weight: 700; text-align: center; }
+        
+        /* Кнопка записи по GPS */
+        .gps-record-btn {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 70px);
+            right: 15px;
+            z-index: 2000;
+            background: linear-gradient(180deg, rgba(20,20,20,0.85), rgba(10,10,10,0.8));
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            backdrop-filter: blur(22px) saturate(140%);
+            -webkit-backdrop-filter: blur(22px) saturate(140%);
+            pointer-events: auto;
+            transition: transform 0.18s, background 0.18s;
+        }
+        .gps-record-btn:active { transform: scale(0.97); }
+        .gps-record-btn.active {
+            background: rgba(255, 59, 48, 0.85);
+            border-color: rgba(255, 127, 120, 0.8);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 10px 25px rgba(255,59,48,0.3); }
+            50% { box-shadow: 0 10px 35px rgba(255,59,48,0.6); }
+        }
