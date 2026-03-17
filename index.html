@@ -268,10 +268,13 @@
     }
 
     /* Список маршрутов в меню */
+    .routes-list-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 20px;
+    }
     .routes-list {
         display: flex; flex-direction: column; gap: 8px;
-        overflow-y: auto; margin-bottom: 12px;
-        flex: 1;
     }
     .route-item {
         display: flex; align-items: center; justify-content: space-between;
@@ -742,8 +745,7 @@
     
     <!-- Вкладка: Ваши маршруты -->
     <div class="menu-tab-content active" id="tab-routes">
-        <div class="menu-section">
-            <div class="menu-section-title">Маршруты</div>
+        <div class="routes-list-wrapper">
             <div id="routesList" class="routes-list"></div>
         </div>
         <div class="menu-bottom-btn">
