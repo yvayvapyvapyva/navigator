@@ -369,17 +369,25 @@
 
     /* HUD - информационная панель */
     .nav-hud {
-        position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
-        left: 16px; right: 88px; z-index: 9000;
+        position: absolute;
+        bottom: calc(24px + env(safe-area-inset-bottom));
+        left: 16px;
+        right: 16px;
+        z-index: 9000;
         background: var(--dark-panel);
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
-        border-radius: 20px; padding: 16px;
+        border-radius: 20px;
+        padding: 16px;
         color: var(--btn-txt);
         border: 1px solid var(--border);
         box-shadow: 0 12px 24px rgba(0,0,0,0.22);
-        display: none; flex-direction: column; gap: 8px;
+        display: none;
+        flex-direction: column;
+        gap: 8px;
         pointer-events: auto;
+        width: calc(100% - 32px);
+        box-sizing: border-box;
     }
     .nav-hud.active { display: flex; }
     
@@ -524,8 +532,7 @@
         position: absolute;
         top: calc(16px + env(safe-area-inset-top) + 116px);
         left: 16px;
-        width: calc(100vw - 32px);
-        max-width: 400px;
+        width: calc(100% - 32px);
         background: var(--dark-panel);
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
