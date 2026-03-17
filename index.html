@@ -521,17 +521,22 @@
     
     /* Список точек навигатора */
     #navPointsMenu {
-        position: absolute; bottom: 100px; left: 16px; right: 80px;
+        position: absolute;
+        top: calc(16px + env(safe-area-inset-top) + 116px);
+        left: 16px;
+        width: calc(100vw - 32px);
+        max-width: 400px;
         background: var(--dark-panel);
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
-        border-radius: 24px;
+        border-radius: 14px;
         border: 1px solid var(--border);
         z-index: 9700;
         box-shadow: 0 20px 40px rgba(0,0,0,0.35);
         pointer-events: auto;
-        height: 75vh;
-        display: none; flex-direction: column;
+        max-height: 60vh;
+        display: none;
+        flex-direction: column;
         overflow: hidden;
     }
     #navPointsMenu .menu-header {
@@ -1623,27 +1628,10 @@ function renderNavList() {
 
 function toggleNavPointsList() {
     const menu = byId('navPointsMenu');
-    const isVisible = menu.style.display === 'flex';
-    menu.style.display = isVisible ? 'none' : 'flex';
-    if (!isVisible) {
+    menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    if (menu.style.display === 'flex') {
         renderNavList();
         byId('navSettingsOverlay').classList.remove('visible');
-        // Добавляем обработчик клика вне окна для закрытия
-        setTimeout(() => {
-            document.addEventListener('click', closeNavPointsListOutside);
-        }, 100);
-    } else {
-        document.removeEventListener('click', closeNavPointsListOutside);
-    }
-}
-
-function closeNavPointsListOutside(event) {
-    const menu = byId('navPointsMenu');
-    const listBtn = byId('navListBtn');
-    // Если клик не по меню и не по кнопке списка
-    if (!menu.contains(event.target) && !listBtn.contains(event.target)) {
-        menu.style.display = 'none';
-        document.removeEventListener('click', closeNavPointsListOutside);
     }
 }
 
