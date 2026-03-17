@@ -440,25 +440,24 @@
         transition: transform 0.15s;
     }
     #selConfirmBtn:active { transform: scale(0.95); }
-    
-    /* Контрольная стопка справа */
-    .control-stack {
-        position: absolute; bottom: calc(24px + env(safe-area-inset-bottom));
-        right: 16px; z-index: 9000;
-        display: flex; flex-direction: column; gap: 12px;
-        width: 56px; pointer-events: none;
-    }
-    
-    /* Телеметрия */
+
+    /* Телеметрия (под кнопкой геолокации) */
     #telemetryPanel {
+        position: absolute;
+        top: calc(16px + env(safe-area-inset-top) + 116px);
+        right: 16px;
+        z-index: 9005;
         pointer-events: auto;
         background: var(--dark-panel);
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
-        border-radius: 18px; padding: 10px 0;
+        border-radius: 14px;
+        padding: 10px 14px;
         color: white;
-        display: none; flex-direction: column;
+        display: none;
+        flex-direction: column;
         align-items: center;
+        gap: 6px;
         border: 1px solid var(--border);
         cursor: pointer;
         box-shadow: 0 10px 25px rgba(0,0,0,0.22);
@@ -467,8 +466,9 @@
     #telemetryPanel.visible { display: flex; }
     #telemetryPanel:active { transform: scale(0.95); }
     .tel-item { display: flex; flex-direction: column; align-items: center; }
-    .tel-label { font-size: 8px; color: #aaa; font-weight: 700; text-transform: uppercase; }
-    .tel-value { font-size: 15px; font-weight: 800; }
+    .tel-label { font-size: 9px; color: #aaa; font-weight: 700; text-transform: uppercase; }
+    .tel-value { font-size: 14px; font-weight: 800; }
+    .tel-divider { height: 1px; width: 100%; background: rgba(255,255,255,0.15); margin: 4px 0; }
     
     /* Кнопки управления */
     .map-btn {
@@ -487,17 +487,25 @@
     .map-btn.active { background: rgba(255,255,255,0.22); }
     .map-btn svg { fill: white; width: 26px; }
     
-    /* Настройки навигатора */
+    /* Настройки навигатора (рядом с телеметрией) */
     #navSettingsOverlay {
-        position: absolute; bottom: 0; right: 72px; z-index: 9700;
+        position: absolute;
+        top: calc(16px + env(safe-area-inset-top) + 116px);
+        right: calc(16px + 80px);
+        z-index: 9700;
         background: linear-gradient(180deg, rgba(30,32,40,0.9), rgba(20,22,30,0.9));
-        border-radius: 20px;
-        display: none; flex-direction: column;
-        width: 220px; padding: 14px; gap: 12px;
-        pointer-events: auto; color: #f3f4f6;
+        border-radius: 14px;
+        display: none;
+        flex-direction: column;
+        width: 200px;
+        padding: 12px;
+        gap: 10px;
+        pointer-events: auto;
+        color: #f3f4f6;
         border: 1px solid var(--border);
         backdrop-filter: var(--panel-blur);
         -webkit-backdrop-filter: var(--panel-blur);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
     }
     #navSettingsOverlay.visible { display: flex; }
     .settings-row {
@@ -788,13 +796,11 @@
     </div>
 </div>
 
-<!-- Контрольная стопка -->
-<div class="control-stack">
-    <div id="telemetryPanel" onclick="toggleNavSettings(); event.stopPropagation();">
-        <div class="tel-item"><span class="tel-label">КМ/Ч</span><span class="tel-value" id="telSpeed">0</span></div>
-        <div style="height:1px; width:50%; background:rgba(255,255,255,0.1); margin:4px 0;"></div>
-        <div class="tel-item"><span class="tel-label">АЗ</span><span class="tel-value" id="telAz">0°</span></div>
-    </div>
+<!-- Телеметрия (под кнопкой геолокации) -->
+<div id="telemetryPanel" onclick="toggleNavSettings(); event.stopPropagation();">
+    <div class="tel-item"><span class="tel-label">КМ/Ч</span><span class="tel-value" id="telSpeed">0</span></div>
+    <div class="tel-divider"></div>
+    <div class="tel-item"><span class="tel-label">АЗ</span><span class="tel-value" id="telAz">0°</span></div>
 </div>
 
 <!-- Список точек навигатора -->
@@ -1321,7 +1327,7 @@ function hideNavigatorUI() {
     byId('navListBtn').style.display = 'none';
     byId('navLocateBtn').style.display = 'none';
     byId('navPointsMenu').style.display = 'none';
-    byId('navSettingsOverlay').style.display = 'none';
+    byId('navSettingsOverlay').classList.remove('visible');
     byId('cacheStatus').style.display = 'none';
     byId('commentOverlay').style.display = 'none';
     byId('navRouteHeaderBtn').classList.remove('visible');
@@ -1617,10 +1623,27 @@ function renderNavList() {
 
 function toggleNavPointsList() {
     const menu = byId('navPointsMenu');
-    menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-    if (menu.style.display === 'flex') {
+    const isVisible = menu.style.display === 'flex';
+    menu.style.display = isVisible ? 'none' : 'flex';
+    if (!isVisible) {
         renderNavList();
         byId('navSettingsOverlay').classList.remove('visible');
+        // Добавляем обработчик клика вне окна для закрытия
+        setTimeout(() => {
+            document.addEventListener('click', closeNavPointsListOutside);
+        }, 100);
+    } else {
+        document.removeEventListener('click', closeNavPointsListOutside);
+    }
+}
+
+function closeNavPointsListOutside(event) {
+    const menu = byId('navPointsMenu');
+    const listBtn = byId('navListBtn');
+    // Если клик не по меню и не по кнопке списка
+    if (!menu.contains(event.target) && !listBtn.contains(event.target)) {
+        menu.style.display = 'none';
+        document.removeEventListener('click', closeNavPointsListOutside);
     }
 }
 
