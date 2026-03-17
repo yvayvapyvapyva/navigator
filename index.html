@@ -1181,41 +1181,6 @@ function initMenuSwipe() {
         }
         menu.style.transition = '';
     });
-    
-    // Обработчики для всего меню (свайп по любой области)
-    menu.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.menu-drag-handle')) return;
-        // Разрешаем скролл контента
-        if (e.target.closest('.menu-tab-content')) return;
-        menuIsDragging = true;
-        menuTouchStartY = e.touches[0].clientY;
-        menu.style.transition = 'none';
-    }, { passive: true });
-    
-    menu.addEventListener('touchmove', (e) => {
-        if (!menuIsDragging) return;
-        menuTouchCurrentY = e.touches[0].clientY;
-        const deltaY = menuTouchCurrentY - menuTouchStartY;
-        if (deltaY > 0) {
-            e.preventDefault();
-            menu.style.transform = `translateY(${deltaY}px)`;
-        }
-    }, { passive: false });
-    
-    menu.addEventListener('touchend', (e) => {
-        if (!menuIsDragging) return;
-        menuIsDragging = false;
-        const deltaY = menuTouchCurrentY - menuTouchStartY;
-        
-        // Закрываем меню если свайпнули вниз больше чем на 100px
-        if (deltaY > 100) {
-            closeMenu();
-        } else {
-            menu.style.transition = 'transform 0.3s cubic-bezier(0.2,0.8,0.2,1)';
-            menu.style.transform = 'translateY(0)';
-        }
-        menu.style.transition = '';
-    });
 }
 
 // Переключение вкладок меню
@@ -1236,10 +1201,16 @@ function switchMenuTab(tabName) {
 // Инициализация переключения вкладок
 function initMenuTabs() {
     document.querySelectorAll('.menu-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
+        tab.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
             const tabName = tab.dataset.tab;
             switchMenuTab(tabName);
         });
+        // Предотвращаем свайп по вкладкам
+        tab.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
     });
 }
 
