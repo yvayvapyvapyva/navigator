@@ -1578,15 +1578,31 @@ function showNavSelection(i) {
     }
 
     renderNavigatorPoints();
+    
+    // Добавляем обработчик клика вне панели для закрытия
+    setTimeout(() => {
+        document.addEventListener('click', closeNavSelectionOutside);
+    }, 100);
+}
+
+function closeNavSelectionOutside(event) {
+    const selectionHud = byId('selectionHud');
+    // Если клик не по панели selectionHud
+    if (!selectionHud.contains(event.target)) {
+        closeNavSelection();
+    }
 }
 
 function closeNavSelection() {
     const selectionHud = byId('selectionHud');
     const navHud = byId('navHud');
-    
+
     selectionHud.classList.remove('active');
     selectionHud.style.display = 'none';
     
+    // Удаляем обработчик клика вне панели
+    document.removeEventListener('click', closeNavSelectionOutside);
+
     APP.navPreviewIndex = -1;
     if (APP.navCurrentIndex >= 0) {
         navHud.classList.add('active');
