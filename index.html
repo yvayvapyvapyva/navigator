@@ -1774,7 +1774,7 @@ function renderNavList() {
         const cmdSafe = p.cmd.replace(/'/g, "\\'");
         const hasComm = p.comm && p.comm.trim() !== '';
         return `
-            <div class="point-item ${isCurrent ? 'active' : ''}" onclick="setNavTarget(${i}); toggleNavPointsList();" style="${isPassed ? 'opacity:0.4;' : ''}">
+            <div class="point-item ${isCurrent ? 'active' : ''}" onclick="setNavTarget(${i});" style="${isPassed ? 'opacity:0.4;' : ''}">
                 <div class="point-badge" style="${isCurrent ? 'background:#00FF00;color:black' : (isPassed ? 'background:rgba(255,255,255,0.2)' : '')}">${i + 1}</div>
                 <div class="point-content">
                     <div class="point-name" style="display:flex; align-items:center; gap:6px;">
@@ -1973,6 +1973,16 @@ async function initApp() {
             if (APP.navMode) {
                 // В режиме навигатора закрываем оверлеи при клике на карту
                 byId('navGistInfoOverlay').classList.remove('visible');
+                // Закрываем панель выбора точки
+                const selectionHud = byId('selectionHud');
+                if (selectionHud.style.display === 'flex') {
+                    closeNavSelection();
+                }
+                // Закрываем список точек
+                const navPointsMenu = byId('navPointsMenu');
+                if (navPointsMenu.style.display === 'flex') {
+                    navPointsMenu.style.display = 'none';
+                }
             }
         });
         
