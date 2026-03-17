@@ -230,7 +230,6 @@ const getRouteFromUrl = () => {
     const normalized = raw.endsWith('.json') ? raw : `${raw}.json`;
     return normalized;
 };
-const getTokenParam = () => new URLSearchParams(window.location.search).get('t') || '';
 const handleInitialAuth = async () => {
     // Ищем существующий гист, но не создаём новый
     userGistId = await findUserGist();
@@ -412,7 +411,7 @@ const renameActiveRoute = async () => {
 
 const deleteActiveRoute = async () => { if(curFile && confirm(`Удалить маршрут ${curFile.replace('.json','')}?`) && await api(`https://api.github.com/gists/${userGistId}`, 'PATCH', { files: { [curFile]: null } })) { clearRouteObjects(); curFile = null; seedHistory(); lastSavedSnapshot = "[]"; refreshFileList(); showToast("Маршрут удален", 'success'); } };
 const shareActiveRoute = () => { if(!curFile) return; const link = `t.me/e_ia_bot/nav?startapp=${USER_ID}-${curFile.replace('.json','')}`, el = document.createElement('textarea'); el.value = link; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); showToast("Ссылка скопирована", 'success'); };
-const launchNavigatorWithCurrentRoute = () => { if(!curFile) return; const routeName = curFile.replace('.json',''); const t = getTokenParam(); window.location.href = `index.html?startapp=${encodeURIComponent(`${USER_ID}-${routeName}`)}&t=${encodeURIComponent(t)}`; };
+const launchNavigatorWithCurrentRoute = () => { if(!curFile) return; const routeName = curFile.replace('.json',''); const token = getTokenFromUrl(); if(!token) { showToast('Ошибка: токен не найден', 'error'); return; } const t = token.slice(0, 10); window.location.href = `index.html?startapp=${encodeURIComponent(`${USER_ID}-${routeName}`)}&t=${encodeURIComponent(t)}`; };
 const openSettingsModal = () => { refreshFileList(); toggleM('settingsModal'); };
 const onSettingsRouteSelect = async (e) => {
     const fn = e.target.value || '';
