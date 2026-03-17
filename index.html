@@ -1737,8 +1737,9 @@ async function initApp() {
     // Обработка start_param для прямого запуска навигатора
     const urlParams = new URLSearchParams(location.search);
     const startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || urlParams.get('startapp');
+    const routeParam = urlParams.get('route'); // Параметр route для запуска навигатора
     const hasTParam = urlParams.has('t');
-    console.log('hasTParam:', hasTParam, 'startParam:', startParam);
+    console.log('hasTParam:', hasTParam, 'startParam:', startParam, 'routeParam:', routeParam);
     
     // Инициализация карты
     ymaps.ready(() => {
@@ -1809,8 +1810,12 @@ async function initApp() {
             renderRoutesList();
         }
         
-        // Если есть start_param - запускаем навигатор
-        if (startParam && hasTParam) {
+        // Если есть route - запускаем навигатор (из каталога)
+        if (routeParam && hasTParam) {
+            openNavigatorWithRoute(routeParam, routeParam.includes('-'));
+        }
+        // Если есть start_param - запускаем навигатор (из Telegram)
+        else if (startParam && hasTParam) {
             openNavigatorWithRoute(startParam, startParam.includes('-'));
         }
     });

@@ -139,7 +139,7 @@
 
     function buildRouteUrl(routeKey) {
       const token = getTokenParam();
-      const url = new URL('nav.html', window.location.href);
+      const url = new URL('index.html', window.location.href);
       url.searchParams.set('route', routeKey);
       if (token) url.searchParams.set('t', token);
       return url.toString();
