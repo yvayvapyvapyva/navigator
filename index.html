@@ -121,6 +121,7 @@
         position: fixed; inset: 0; background: rgba(0,0,0,0.6);
         backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
         z-index: 9500; display: none; opacity: 0; transition: opacity 0.25s;
+        touch-action: none;
     }
     .menu-overlay.visible { display: block; opacity: 1; }
 
@@ -133,6 +134,8 @@
         display: flex; flex-direction: column;
         box-shadow: 0 -12px 40px rgba(0,0,0,0.4);
         max-height: calc(100vh - env(safe-area-inset-bottom));
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
     }
     .side-menu.visible { transform: translateY(0); }
 
@@ -675,7 +678,7 @@
 <div id="cacheStatus">Ожидание...</div>
 
 <!-- Боковое меню (выезжает снизу) -->
-<div id="menuOverlay" class="menu-overlay" onclick="closeMenu()"></div>
+<div id="menuOverlay" class="menu-overlay"></div>
 <div id="sideMenu" class="side-menu">
     <!-- Ручка для свайпа -->
     <div class="menu-drag-handle" id="menuDragHandle"></div>
@@ -1019,22 +1022,43 @@ function openMenu() {
     byId('sideMenu').classList.add('visible');
     byId('menuOverlay').classList.add('visible');
     document.body.style.overflow = 'hidden';
+    
+    // Включаем свайпы Telegram при открытом меню
+    const tg = getTelegramWebApp();
+    if (tg && tg.enableVerticalSwipes) tg.enableVerticalSwipes();
 }
 
 function closeMenu() {
     byId('sideMenu').classList.remove('visible');
     byId('menuOverlay').classList.remove('visible');
     document.body.style.overflow = '';
+    
+    // Отключаем свайпы Telegram при закрытом меню
+    const tg = getTelegramWebApp();
+    if (tg && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
 }
 
 // Обработка свайпа для закрытия меню
 function initMenuSwipe() {
     const menu = byId('sideMenu');
     const handle = byId('menuDragHandle');
+    const overlay = byId('menuOverlay');
     
     if (!menu || !handle) return;
     
-    // Обработчики для ручки свайпа
+    // Клик по оверлею закрывает меню
+    overlay.addEventListener('click', closeMenu);
+    overlay.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        closeMenu();
+    });
+    
+    // Предотвращаем стандартное поведение на ручке
+    handle.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+    
+    // Обработчики для ручки свайпа (touch)
     handle.addEventListener('touchstart', (e) => {
         menuIsDragging = true;
         menuTouchStartY = e.touches[0].clientY;
@@ -1055,7 +1079,7 @@ function initMenuSwipe() {
         menuIsDragging = false;
         const deltaY = menuTouchCurrentY - menuTouchStartY;
         
-        if (deltaY > 100) {
+        if (deltaY > 50) {
             // Свайп вниз - закрываем меню
             closeMenu();
         } else {
@@ -1066,35 +1090,65 @@ function initMenuSwipe() {
         menu.style.transition = '';
     });
     
+    // Mouse события для ручки (десктоп/Telegram Desktop)
+    handle.addEventListener('mousedown', (e) => {
+        menuIsDragging = true;
+        menuTouchStartY = e.clientY;
+        menu.style.transition = 'none';
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!menuIsDragging) return;
+        menuTouchCurrentY = e.clientY;
+        const deltaY = menuTouchCurrentY - menuTouchStartY;
+        if (deltaY > 0) {
+            menu.style.transform = `translateY(${deltaY}px)`;
+        }
+    });
+    
+    document.addEventListener('mouseup', (e) => {
+        if (!menuIsDragging) return;
+        menuIsDragging = false;
+        const deltaY = menuTouchCurrentY - menuTouchStartY;
+        
+        if (deltaY > 50) {
+            closeMenu();
+        } else {
+            menu.style.transition = 'transform 0.3s cubic-bezier(0.2,0.8,0.2,1)';
+            menu.style.transform = 'translateY(0)';
+        }
+        menu.style.transition = '';
+    });
+    
     // Обработчики для всего меню (свайп по любой области)
     menu.addEventListener('touchstart', (e) => {
         if (e.target.closest('.menu-drag-handle')) return;
+        // Разрешаем скролл контента
+        if (e.target.closest('.menu-tab-content')) return;
         menuIsDragging = true;
         menuTouchStartY = e.touches[0].clientY;
+        menu.style.transition = 'none';
     }, { passive: true });
     
     menu.addEventListener('touchmove', (e) => {
         if (!menuIsDragging) return;
-        const scrollTop = menu.querySelector('.menu-tab-content.active')?.scrollTop || 0;
-        if (scrollTop === 0) {
-            menuTouchCurrentY = e.touches[0].clientY;
-            const deltaY = menuTouchCurrentY - menuTouchStartY;
-            if (deltaY > 0) {
-                menu.style.transform = `translateY(${deltaY}px)`;
-            }
+        menuTouchCurrentY = e.touches[0].clientY;
+        const deltaY = menuTouchCurrentY - menuTouchStartY;
+        if (deltaY > 0) {
+            e.preventDefault();
+            menu.style.transform = `translateY(${deltaY}px)`;
         }
-    }, { passive: true });
+    }, { passive: false });
     
     menu.addEventListener('touchend', (e) => {
         if (!menuIsDragging) return;
         menuIsDragging = false;
         const deltaY = menuTouchCurrentY - menuTouchStartY;
         
-        if (deltaY > 100) {
-            // Свайп вниз - закрываем меню
+        if (deltaY > 50) {
             closeMenu();
         } else {
-            // Возвращаем меню на место
             menu.style.transition = 'transform 0.3s cubic-bezier(0.2,0.8,0.2,1)';
             menu.style.transform = 'translateY(0)';
         }
@@ -2096,7 +2150,9 @@ async function initApp() {
         tg.expand();
         if (tg.requestFullscreen) { try { tg.requestFullscreen(); } catch (e) {} }
         if (tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
-        
+        // Отключаем вертикальные свайпы Telegram только когда меню закрыто
+        if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+
         // Пробуем активировать Wake Lock сразу после expand()
         wakeFromUser();
     }
