@@ -1261,29 +1261,32 @@ function initGeolocation() {
         navigator.geolocation.watchPosition(
             (position) => {
                 const coords = [position.coords.latitude, position.coords.longitude];
-                if (APP.lastPos && position.coords.speed && position.coords.speed > 0) {
+                const speed = (position.coords.speed || 0) * 3.6; // конвертируем в км/ч
+                
+                // Обновляем азимут только если скорость выше порога
+                if (APP.lastPos && speed >= APP.navConfig.SPEED_THRESHOLD) {
                     APP.lastAz = calcAzimuth(APP.lastPos, coords);
                 }
                 APP.lastPos = coords;
-                APP.currentSpeed = (position.coords.speed || 0) * 3.6;
-                
+                APP.currentSpeed = speed;
+
                 if (APP.userMarker) {
                     APP.userMarker.geometry.setCoordinates(coords);
                     APP.userMarker.options.set('visible', true);
                     APP.userMarker.options.set('iconImageHref', getUserLocSvg(APP.lastAz));
                 }
-                
+
                 // Обновляем телеметрию
                 const telSpeed = byId('telSpeed');
                 const telAz = byId('telAz');
                 if (telSpeed) telSpeed.textContent = Math.round(APP.currentSpeed);
                 if (telAz) telAz.textContent = `${Math.round(APP.lastAz)}°`;
-                
+
                 // Автоцентрирование в режиме навигатора
                 if (APP.autoCenter && APP.map) {
                     APP.map.setCenter(coords);
                 }
-                
+
                 // Проверка триггеров навигатора
                 if (APP.navCurrentIndex >= 0) {
                     navCheckTriggers();
