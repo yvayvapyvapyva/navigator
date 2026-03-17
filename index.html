@@ -607,30 +607,7 @@
         color: #fff; word-wrap: break-word;
     }
     .point-actions { display: flex; gap: 6px; align-items: center; }
-    
-    /* Оверлей комментария */
-    #commentOverlay {
-        position: absolute; top: 80px; left: 50%;
-        transform: translateX(-50%);
-        width: 85%; max-width: 320px;
-        background: var(--dark-panel);
-        backdrop-filter: var(--panel-blur);
-        -webkit-backdrop-filter: var(--panel-blur);
-        border-radius: 20px;
-        border: 1px solid var(--border);
-        padding: 16px; color: var(--btn-txt);
-        z-index: 9700;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        pointer-events: auto; text-align: center;
-        display: none; flex-direction: column; gap: 8px;
-    }
-    .overlay-title {
-        font-size: 11px; font-weight: 800;
-        color: rgba(255,255,255,0.5);
-        text-transform: uppercase; margin-bottom: 4px;
-    }
-    .info-value { font-size: 14px; font-weight: 400; line-height: 1.4; }
-    
+
     /* Cache status */
     #cacheStatus {
         position: absolute; top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 10px);
@@ -681,12 +658,6 @@
 
 <!-- Cache status -->
 <div id="cacheStatus">Офлайн-кэш: 0%</div>
-
-<!-- Оверлей комментария -->
-<div id="commentOverlay" onclick="this.style.display='none'">
-    <div class="overlay-title">Комментарий</div>
-    <div id="commentText" class="info-value">...</div>
-</div>
 
 <!-- Боковое меню -->
 <div id="menuOverlay" class="menu-overlay" onclick="closeMenu()"></div>
@@ -808,13 +779,19 @@
             </div>
         </div>
         <div class="hud-side-actions">
-            <button id="navCommentBtn" class="action-icon-btn comm-btn" style="display:none">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-            </button>
             <button id="navSpeakBtn" class="action-icon-btn">
                 <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
             </button>
         </div>
+    </div>
+    
+    <!-- Комментарий точки -->
+    <div id="navCommentBlock" style="display:none; margin-top:8px; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; border:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
+            <span style="font-size:10px; color:rgba(255,255,255,0.5); text-transform:uppercase; font-weight:700;">Комментарий</span>
+            <button id="navCommentCloseBtn" style="width:20px; height:20px; border-radius:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; line-height:1;">×</button>
+        </div>
+        <div id="navCommentText" style="font-size:12px; line-height:1.5; color:#e5e7eb; white-space:pre-wrap;"></div>
     </div>
 </div>
 
@@ -834,13 +811,19 @@
             <button id="selSpeakBtn" class="action-icon-btn">
                 <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
             </button>
-            <button id="selCommentBtn" class="action-icon-btn comm-btn" style="display:none">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-            </button>
         </div>
         <button id="selNextBtn" class="nav-arrow-btn" title="Следующая точка">
             <svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg>
         </button>
+    </div>
+    
+    <!-- Комментарий точки -->
+    <div id="selCommentBlock" style="display:none; margin-top:8px; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; border:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
+            <span style="font-size:10px; color:rgba(255,255,255,0.5); text-transform:uppercase; font-weight:700;">Комментарий</span>
+            <button id="selCommentCloseBtn" style="width:20px; height:20px; border-radius:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; line-height:1;">×</button>
+        </div>
+        <div id="selCommentText" style="font-size:12px; line-height:1.5; color:#e5e7eb; white-space:pre-wrap;"></div>
     </div>
 </div>
 
@@ -1377,7 +1360,6 @@ function hideNavigatorUI() {
     byId('navPointsMenu').style.display = 'none';
     byId('navSettingsOverlay').classList.remove('visible');
     byId('cacheStatus').style.display = 'none';
-    byId('commentOverlay').style.display = 'none';
     byId('navRouteHeaderBtn').classList.remove('visible');
     byId('navGistInfoOverlay').classList.remove('visible');
     APP.navMode = false;
@@ -1569,12 +1551,28 @@ function updateNavHud() {
     byId('hudIndex').textContent = APP.navCurrentIndex + 1;
     byId('hudCmd').textContent = t.cmd;
     byId('hudTargetAz').textContent = `${Math.round(t.az)}°`;
-    const hasComm = t.comm && t.comm.trim() !== '';
-    byId('navCommentBtn').style.display = hasComm ? 'flex' : 'none';
     byId('navSpeakBtn').onclick = () => playNavCommand(t.cmd);
+    
+    // Показываем комментарий если он есть
+    const commentBlock = byId('navCommentBlock');
+    const commentText = byId('navCommentText');
+    const hasComm = t.comm && t.comm.trim() !== '';
+    
     if (hasComm) {
-        byId('navCommentBtn').onclick = () => showNavComment(t.comm);
+        commentText.textContent = t.comm;
+        commentBlock.style.display = 'block';
+    } else {
+        commentBlock.style.display = 'none';
     }
+    
+    // Кнопка закрытия комментария
+    const closeCommentBtn = byId('navCommentCloseBtn');
+    const newCloseCommentBtn = closeCommentBtn.cloneNode(true);
+    closeCommentBtn.parentNode.replaceChild(newCloseCommentBtn, closeCommentBtn);
+    newCloseCommentBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        commentBlock.style.display = 'none';
+    };
 }
 
 function showNavSelection(i) {
@@ -1608,14 +1606,26 @@ function showNavSelection(i) {
     speakBtn.parentNode.replaceChild(newSpeakBtn, speakBtn);
     newSpeakBtn.onclick = (ev) => { ev.stopPropagation(); playNavCommand(p.cmd); };
 
+    // Показываем комментарий если он есть
+    const commentBlock = byId('selCommentBlock');
+    const commentText = byId('selCommentText');
     const hasComm = p.comm && p.comm.trim() !== '';
-    const commentBtn = byId('selCommentBtn');
-    commentBtn.style.display = hasComm ? 'flex' : 'none';
+    
     if (hasComm) {
-        const newCommentBtn = commentBtn.cloneNode(true);
-        commentBtn.parentNode.replaceChild(newCommentBtn, commentBtn);
-        newCommentBtn.onclick = (ev) => { ev.stopPropagation(); showNavComment(p.comm); };
+        commentText.textContent = p.comm;
+        commentBlock.style.display = 'block';
+    } else {
+        commentBlock.style.display = 'none';
     }
+
+    // Кнопка закрытия комментария
+    const closeCommentBtn = byId('selCommentCloseBtn');
+    const newCloseCommentBtn = closeCommentBtn.cloneNode(true);
+    closeCommentBtn.parentNode.replaceChild(newCloseCommentBtn, closeCommentBtn);
+    newCloseCommentBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        commentBlock.style.display = 'none';
+    };
     
     // Кнопки навигации
     const prevBtn = byId('selPrevBtn');
@@ -1745,19 +1755,17 @@ function renderNavList() {
         // Пройденные точки показываем серыми
         const isPassed = i < APP.navCurrentIndex;
         const isCurrent = i === APP.navCurrentIndex;
-        const hasComm = p.comm && p.comm.trim() !== '';
         const cmdSafe = p.cmd.replace(/'/g, "\\'");
-        const commSafe = p.comm ? p.comm.replace(/'/g, "\\'") : '';
+        const hasComm = p.comm && p.comm.trim() !== '';
         return `
             <div class="point-item ${isCurrent ? 'active' : ''}" onclick="setNavTarget(${i}); toggleNavPointsList();" style="${isPassed ? 'opacity:0.4;' : ''}">
                 <div class="point-badge" style="${isCurrent ? 'background:#00FF00;color:black' : (isPassed ? 'background:rgba(255,255,255,0.2)' : '')}">${i + 1}</div>
                 <div class="point-content">
-                    <div class="point-name">${p.cmd}</div>
+                    <div class="point-name" style="display:flex; align-items:center; gap:6px;">
+                        ${p.cmd}
+                        ${hasComm ? '<span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; background:rgba(255,149,0,0.9); border-radius:50%; color:#fff; font-size:13px; font-weight:800; flex-shrink:0;">i</span>' : ''}
+                    </div>
                 </div>
-                ${hasComm ? `
-                <button class="action-icon-btn comm-btn" onclick="event.stopPropagation(); showNavComment('${commSafe}'); toggleNavPointsList();">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="#d1d5db"/></svg>
-                </button>` : ''}
                 <button class="action-icon-btn" onclick="event.stopPropagation(); playNavCommand('${cmdSafe}');">
                     <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" fill="#f3f4f6"/></svg>
                 </button>
@@ -1779,12 +1787,6 @@ function toggleNavSettings() {
     const overlay = byId('navSettingsOverlay');
     overlay.classList.toggle('visible');
     byId('navPointsMenu').style.display = 'none';
-}
-
-function showNavComment(txt) {
-    const overlay = byId('commentOverlay');
-    byId('commentText').textContent = txt;
-    overlay.style.display = 'flex';
 }
 
 async function preloadNavAudio() {
@@ -1955,7 +1957,6 @@ async function initApp() {
             if (APP.navMode) {
                 // В режиме навигатора закрываем оверлеи при клике на карту
                 byId('navGistInfoOverlay').classList.remove('visible');
-                byId('commentOverlay').style.display = 'none';
             }
         });
         
