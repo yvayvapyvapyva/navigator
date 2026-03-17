@@ -535,23 +535,6 @@
         padding: 2px 8px; border-radius: 6px;
         display: none; pointer-events: auto;
     }
-    
-    /* Wake overlay */
-    #wakeOverlay {
-        position: fixed; inset: 0; z-index: 9998;
-        display: none; align-items: center; justify-content: center;
-        background: rgba(8,10,14,0.72);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-    }
-    .wake-btn {
-        max-width: 90vw; padding: 18px 22px; border-radius: 18px;
-        border: 1px solid var(--border);
-        background: var(--dark-panel);
-        color: var(--btn-txt); font-size: 16px; font-weight: 800;
-        text-align: center; cursor: pointer;
-        box-shadow: 0 16px 30px rgba(0,0,0,0.3);
-    }
     </style>
 </head>
 <body>
@@ -559,10 +542,6 @@
 <div id="loading" class="loading-overlay">
     <div id="loadingText">ЗАГРУЗКА...</div>
     <div id="errorMsg" style="color: #FF3B30; display: none; margin-top: 10px;"></div>
-</div>
-
-<div id="wakeOverlay">
-    <button id="wakeBtn" class="wake-btn" type="button">Нажмите, чтобы экран не выключался</button>
 </div>
 
 <video id="v" playsinline muted loop></video>
@@ -1677,6 +1656,7 @@ function updateNavHudDist(d, ad) {
 const v = byId('v');
 let wl = null;
 let wakeWanted = false;
+let wakeInitialized = false;
 
 const wake = async () => {
     if (APP.navAudio.paused) {
@@ -1688,25 +1668,24 @@ const wake = async () => {
         try {
             wl = await navigator.wakeLock.request('screen');
             wakeWanted = true;
-            byId('wakeOverlay').style.display = 'none';
         } catch(e) {
-            if (wakeWanted) byId('wakeOverlay').style.display = 'flex';
+            console.log('Wake Lock error:', e);
         }
-    } else if (wakeWanted) {
-        byId('wakeOverlay').style.display = 'flex';
     }
     if (!v.src) v.src = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21hdmMxbXA0MgAAAAhmcmVlAAAALm1kYXQAAAHvYXZjQwFQAFr/4AAZAWgAVv/AAB9AAAADAAIAAAMAHBDeEAEABWj/gAAAAA5ieHRyY3Rsc3RyYmMAAAALYm9vdnNoZHIAAAADbXZoZAAAAAAAAAAAAAAAAAAAA+gAAAPoAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAGlzb21hdmMxbXA0MgAAAAhmcmVlAAAALm1kYXQ=";
     v.play().catch(()=>{});
 };
 
 const wakeFromUser = () => {
+    if (wakeInitialized) return; // Уже инициализировано
     wakeWanted = true;
+    wakeInitialized = true;
     wake();
 };
 
-['touchstart', 'click'].forEach(e => document.addEventListener(e, wakeFromUser));
-
-byId('wakeBtn').addEventListener('click', wakeFromUser);
+// Wake Lock при первом клике на любую кнопку интерфейса
+document.addEventListener('click', wakeFromUser, { once: true });
+document.addEventListener('touchstart', wakeFromUser, { once: true });
 
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden && wakeWanted) wake();
