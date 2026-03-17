@@ -492,17 +492,22 @@
         font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px;
     }
     .hud-cmd { font-size: 16px; font-weight: 700; flex: 1; }
-    
-    .hud-main-content { display: flex; align-items: center; gap: 10px; }
-    .hud-stats {
-        display: flex; align-items: center; gap: 16px; flex: 1;
-        padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);
+
+    .hud-actions {
+        width: 100%;
+        display: flex;
+        padding-top: 8px;
+        gap: 8px;
+        align-items: center;
+        border-top: 1px solid rgba(255,255,255,0.1);
     }
+    .hud-stats {
+        display: flex; align-items: center; gap: 16px;
+    }
+    .hud-stats .stat-item { display: flex; flex-direction: column; align-items: center; }
     .stat-label { font-size: 9px; color: #aaa; text-transform: uppercase; font-weight: 700; }
     .stat-value { font-size: 14px; font-weight: 700; }
     .stat-value.in-range { color: var(--target-lime); }
-    
-    .hud-side-actions { display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
     
     .action-icon-btn {
         width: 36px; height: 36px; border-radius: 12px;
@@ -859,7 +864,10 @@
         <span class="hud-index" id="hudIndex">1</span>
         <div class="hud-cmd" id="hudCmd">Маршрут не выбран</div>
     </div>
-    <div class="hud-main-content">
+    <div class="hud-actions">
+        <button id="navPrevBtn" class="nav-arrow-btn" title="Предыдущая точка">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/></svg>
+        </button>
         <div class="hud-stats">
             <div class="stat-item">
                 <span class="stat-label">Дист</span>
@@ -870,11 +878,14 @@
                 <br><span class="stat-value" id="hudTargetAz">---</span>
             </div>
         </div>
-        <div class="hud-side-actions">
+        <div style="display:flex; gap:8px; flex:1; justify-content:center; align-items:center;">
             <button id="navSpeakBtn" class="action-icon-btn">
                 <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
             </button>
         </div>
+        <button id="navNextBtn" class="nav-arrow-btn" title="Следующая точка">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg>
+        </button>
     </div>
     
     <!-- Комментарий точки -->
@@ -1852,19 +1863,54 @@ function updateNavHud() {
     byId('hudCmd').textContent = t.cmd;
     byId('hudTargetAz').textContent = `${Math.round(t.az)}°`;
     byId('navSpeakBtn').onclick = () => playNavCommand(t.cmd);
-    
+
+    // Обновляем состояние кнопок навигации
+    const prevBtn = byId('navPrevBtn');
+    const nextBtn = byId('navNextBtn');
+    const newPrevBtn = prevBtn.cloneNode(true);
+    const newNextBtn = nextBtn.cloneNode(true);
+    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+
+    newPrevBtn.disabled = (APP.navCurrentIndex <= 0);
+    newNextBtn.disabled = (APP.navCurrentIndex >= APP.navPoints.length - 1);
+
+    newPrevBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        if (APP.navCurrentIndex > 0) {
+            const prevIndex = APP.navCurrentIndex - 1;
+            // Если это текущая точка (невозможно, но для безопасности)
+            if (prevIndex === APP.navCurrentIndex) {
+                return;
+            }
+            showNavSelection(prevIndex);
+        }
+    };
+
+    newNextBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        if (APP.navCurrentIndex < APP.navPoints.length - 1) {
+            const nextIndex = APP.navCurrentIndex + 1;
+            // Если это текущая точка (невозможно, но для безопасности)
+            if (nextIndex === APP.navCurrentIndex) {
+                return;
+            }
+            showNavSelection(nextIndex);
+        }
+    };
+
     // Показываем комментарий если он есть
     const commentBlock = byId('navCommentBlock');
     const commentText = byId('navCommentText');
     const hasComm = t.comm && t.comm.trim() !== '';
-    
+
     if (hasComm) {
         commentText.textContent = t.comm;
         commentBlock.style.display = 'block';
     } else {
         commentBlock.style.display = 'none';
     }
-    
+
     // Кнопка закрытия комментария
     const closeCommentBtn = byId('navCommentCloseBtn');
     const newCloseCommentBtn = closeCommentBtn.cloneNode(true);
@@ -1875,11 +1921,25 @@ function updateNavHud() {
     };
 }
 
+function updateNavHudDist(d, ad) {
+    const t = APP.navPoints[APP.navCurrentIndex];
+    if (!t) return;
+    byId('hudDist').textContent = `${Math.round(d)}м`;
+    byId('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
+    byId('hudTargetAz').classList.toggle('in-range', ad <= APP.navConfig.AZ_TOLERANCE);
+}
+
 function showNavSelection(i) {
     console.log('showNavSelection вызвана с индексом:', i);
     const p = APP.navPoints[i];
     if (!p) {
         console.error('Точка с индексом', i, 'не найдена');
+        return;
+    }
+
+    // Если выбрана текущая точка, показываем панель активной точки
+    if (i === APP.navCurrentIndex) {
+        closeNavSelection();
         return;
     }
 
@@ -1910,7 +1970,7 @@ function showNavSelection(i) {
     const commentBlock = byId('selCommentBlock');
     const commentText = byId('selCommentText');
     const hasComm = p.comm && p.comm.trim() !== '';
-    
+
     if (hasComm) {
         commentText.textContent = p.comm;
         commentBlock.style.display = 'block';
@@ -1926,7 +1986,7 @@ function showNavSelection(i) {
         ev.stopPropagation();
         commentBlock.style.display = 'none';
     };
-    
+
     // Кнопки навигации
     const prevBtn = byId('selPrevBtn');
     const nextBtn = byId('selNextBtn');
@@ -1934,19 +1994,33 @@ function showNavSelection(i) {
     const newNextBtn = nextBtn.cloneNode(true);
     prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
     nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-    
+
     // Блокируем кнопки только если нет соседних точек
     newPrevBtn.disabled = (i <= 0);
     newNextBtn.disabled = (i >= APP.navPoints.length - 1);
-    
+
     newPrevBtn.onclick = (ev) => {
         ev.stopPropagation();
-        if (i > 0) showNavSelection(i - 1);
+        if (i > 0) {
+            const prevIndex = i - 1;
+            if (prevIndex === APP.navCurrentIndex) {
+                closeNavSelection();
+            } else {
+                showNavSelection(prevIndex);
+            }
+        }
     };
-    
+
     newNextBtn.onclick = (ev) => {
         ev.stopPropagation();
-        if (i < APP.navPoints.length - 1) showNavSelection(i + 1);
+        if (i < APP.navPoints.length - 1) {
+            const nextIndex = i + 1;
+            if (nextIndex === APP.navCurrentIndex) {
+                closeNavSelection();
+            } else {
+                showNavSelection(nextIndex);
+            }
+        }
     };
 
     // Подсветка точки на карте
@@ -2168,14 +2242,6 @@ function navCheckTriggers() {
             renderNavigatorPoints();
         }
     }
-}
-
-function updateNavHudDist(d, ad) {
-    const t = APP.navPoints[APP.navCurrentIndex];
-    if (!t) return;
-    byId('hudDist').textContent = `${Math.round(d)}м`;
-    byId('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
-    byId('hudTargetAz').classList.toggle('in-range', ad <= APP.navConfig.AZ_TOLERANCE);
 }
 
 // ============================================
