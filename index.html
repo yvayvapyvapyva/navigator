@@ -1721,8 +1721,9 @@ function renderNavigatorPoints() {
         const isPassed = (i < APP.navCurrentIndex);
         const hasComm = p.comm && p.comm.trim() !== '';
 
-        // Показываем все точки при просмотре (preview >= 0), иначе скрываем пройденные
-        const showPoint = !isPassed || (APP.navPreviewIndex >= 0);
+        // В режиме предпросмотра показываем только просматриваемую точку
+        // В обычном режиме показываем все точки кроме пройденных
+        const showPoint = APP.navPreviewIndex >= 0 ? isPreview : (!isPassed || isCurrent);
         // Показываем путь только у текущей и просматриваемой точки
         const showPath = isCurrent || isPreview;
 
