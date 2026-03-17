@@ -1243,6 +1243,10 @@ function showNavigatorUI() {
     byId('navLocateBtn').style.display = 'flex';
     byId('cacheStatus').style.display = 'block';
     byId('navRouteHeaderBtn').classList.add('visible');
+    
+    // Сбрасываем привязку к местоположению в выключенное состояние
+    APP.autoCenter = false;
+    byId('navLocateBtn').classList.remove('active');
 }
 
 function hideNavigatorUI() {
