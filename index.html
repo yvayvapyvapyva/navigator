@@ -171,6 +171,42 @@
     .menu-btn-green { background: rgba(52,199,89,0.42); border-color: rgba(103,255,153,0.45); }
     .menu-btn-blue { background: rgba(61,160,255,0.48); border-color: rgba(90,180,255,0.5); }
     
+    /* Вкладки меню */
+    .menu-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        background: rgba(30,32,40,0.5);
+    }
+    .menu-tab {
+        flex: 1;
+        padding: 14px 12px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: rgba(255,255,255,0.6);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .menu-tab.active {
+        color: #fff;
+        border-bottom-color: rgba(52,199,89,0.8);
+        background: rgba(52,199,89,0.1);
+    }
+    .menu-tab:active { transform: scale(0.98); }
+    
+    /* Контент вкладок */
+    .menu-tab-content {
+        display: none;
+        flex: 1;
+        overflow-y: auto;
+        max-height: calc(100vh - 200px);
+    }
+    .menu-tab-content.active { display: block; }
+
     /* Список маршрутов в меню */
     .routes-list {
         display: flex; flex-direction: column; gap: 8px;
@@ -257,36 +293,6 @@
     .modal-btn-muted { background: rgba(40,40,45,0.3); }
     .modal-divider { height: 1px; background: var(--border); margin: 8px 0; }
 
-    /* Инструкция */
-    .instruction-modal {
-        position: fixed; inset: 0; z-index: 9600; display: none;
-        align-items: flex-end; justify-content: center;
-        background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-    }
-    .instruction-content {
-        width: min(92vw, 600px); margin: 0 16px 20px;
-        background: linear-gradient(180deg, rgba(30,32,40,0.95), rgba(20,22,30,0.95));
-        border: 1px solid var(--border); border-radius: 20px 20px 0 0;
-        display: flex; flex-direction: column; max-height: 85vh;
-    }
-    .instruction-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 16px 20px; border-bottom: 1px solid var(--border);
-    }
-    .instruction-title { font-size: 18px; font-weight: 800; }
-    .instruction-close {
-        width: 32px; height: 32px; border-radius: 10px;
-        background: rgba(255,255,255,0.1); border: 1px solid var(--border);
-        color: var(--btn-txt); font-size: 20px;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer;
-    }
-    .instruction-text {
-        padding: 20px; font-size: 14px; line-height: 1.6;
-        color: var(--btn-txt); overflow-y: auto; white-space: pre-wrap;
-    }
-    
     /* Toast уведомления */
     .toast {
         position: fixed; top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 10px);
@@ -657,7 +663,7 @@
 </div>
 
 <!-- Cache status -->
-<div id="cacheStatus">Офлайн-кэш: 0%</div>
+<div id="cacheStatus">Ожидание...</div>
 
 <!-- Боковое меню -->
 <div id="menuOverlay" class="menu-overlay" onclick="closeMenu()"></div>
@@ -667,29 +673,39 @@
         <button class="menu-close" onclick="closeMenu()">✕</button>
     </div>
     
-    <div class="menu-section">
-        <div class="menu-section-title">Маршруты</div>
-        <div id="routesList" class="routes-list"></div>
-        <button id="createNewBtn" class="menu-btn menu-btn-green">
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
-            Создать новый маршрут
-        </button>
+    <!-- Вкладки меню -->
+    <div class="menu-tabs">
+        <button class="menu-tab active" data-tab="routes">Ваши маршруты</button>
+        <button class="menu-tab" data-tab="catalog">Каталог</button>
+        <button class="menu-tab" data-tab="instruction">Инструкция</button>
     </div>
     
-    <div class="menu-section">
-        <div class="menu-section-title">Каталог</div>
-        <button id="openCatalogBtn" class="menu-btn menu-btn-blue">
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="currentColor" stroke="currentColor" stroke-width="2"/></svg>
-            Публичные маршруты
-        </button>
+    <!-- Вкладка: Ваши маршруты -->
+    <div class="menu-tab-content active" id="tab-routes">
+        <div class="menu-section">
+            <div class="menu-section-title">Маршруты</div>
+            <div id="routesList" class="routes-list"></div>
+            <button id="createNewBtn" class="menu-btn menu-btn-green">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
+                Создать новый маршрут
+            </button>
+        </div>
     </div>
     
-    <div class="menu-section">
-        <div class="menu-section-title">Действия</div>
-        <button id="instructionBtn" class="menu-btn">
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/></svg>
-            Инструкция
-        </button>
+    <!-- Вкладка: Каталог -->
+    <div class="menu-tab-content" id="tab-catalog">
+        <div class="menu-section">
+            <div class="menu-section-title">Публичные маршруты</div>
+            <div id="catalogList" class="routes-list" style="max-height: 60vh;"></div>
+        </div>
+    </div>
+    
+    <!-- Вкладка: Инструкция -->
+    <div class="menu-tab-content" id="tab-instruction">
+        <div class="menu-section">
+            <div class="menu-section-title">О приложении</div>
+            <div id="instructionText" class="instruction-text" style="padding: 16px 20px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.8);"></div>
+        </div>
     </div>
 </div>
 
@@ -732,28 +748,6 @@
             Удалить маршрут
         </button>
         <button id="closeActionsBtn" class="modal-btn modal-btn-muted">Закрыть</button>
-    </div>
-</div>
-
-<!-- Модальное окно инструкции -->
-<div id="instructionModal" class="instruction-modal" style="display:none;">
-    <div class="instruction-content">
-        <div class="instruction-header">
-            <span class="instruction-title">Инструкция</span>
-            <button id="instructionCloseBtn" class="instruction-close">✕</button>
-        </div>
-        <div id="instructionText" class="instruction-text"></div>
-    </div>
-</div>
-
-<!-- Модальное окно каталога -->
-<div id="catalogModal" class="modal-overlay" style="display:none;">
-    <div class="modal-sheet">
-        <div class="modal-header">
-            <h3>Каталог публичных маршрутов</h3>
-            <button class="close-circle" onclick="document.getElementById('catalogModal').style.display='none'">✕</button>
-        </div>
-        <div id="catalogList" class="routes-list" style="max-height: 60vh;"></div>
     </div>
 </div>
 
@@ -1009,6 +1003,8 @@ function showToast(text, type = 'info', duration = 2000) {
 function openMenu() {
     // Маршруты уже загружены при инициализации, просто отображаем их
     renderRoutesList();
+    // Активируем первую вкладку
+    switchMenuTab('routes');
     byId('sideMenu').classList.add('visible');
     byId('menuOverlay').classList.add('visible');
 }
@@ -1016,6 +1012,31 @@ function openMenu() {
 function closeMenu() {
     byId('sideMenu').classList.remove('visible');
     byId('menuOverlay').classList.remove('visible');
+}
+
+// Переключение вкладок меню
+function switchMenuTab(tabName) {
+    // Убираем активный класс со всех вкладок
+    document.querySelectorAll('.menu-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.menu-tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Активируем нужную вкладку
+    const activeTab = document.querySelector(`.menu-tab[data-tab="${tabName}"]`);
+    const activeContent = document.getElementById(`tab-${tabName}`);
+    if (activeTab && activeContent) {
+        activeTab.classList.add('active');
+        activeContent.classList.add('active');
+    }
+}
+
+// Инициализация переключения вкладок
+function initMenuTabs() {
+    document.querySelectorAll('.menu-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            switchMenuTab(tabName);
+        });
+    });
 }
 
 // ============================================
@@ -1158,14 +1179,21 @@ async function fetchAllGists(username) {
     while (true) {
         try {
             const res = await fetch(`https://api.github.com/users/${username}/gists?per_page=${perPage}&page=${page}`);
-            if (!res.ok) break;
+            if (!res.ok) {
+                console.error('fetchAllGists: HTTP ошибка, статус', res.status);
+                break;
+            }
             const data = await res.json();
             if (data.length === 0) break;
             allGists = allGists.concat(data);
             if (data.length < perPage) break;
             page++;
-        } catch (e) { break; }
+        } catch (e) {
+            console.error('fetchAllGists: ошибка при загрузке страницы', page, e);
+            break;
+        }
     }
+    console.log('fetchAllGists: всего загружено gist:', allGists.length);
     return allGists;
 }
 
@@ -1306,14 +1334,15 @@ function openEditorWithRoute(file) {
 function openNavigatorWithRoute(file, isCatalog = false) {
     APP.selectedRoute = file;
     loadNavigatorRoute(file, isCatalog);
-    closeMenu();
 }
 
 // ============================================
 // КАТАЛОГ
 // ============================================
-function openCatalog() {
+function loadCatalog() {
     const list = byId('catalogList');
+    if (!list || !APP.catalogData) return;
+    
     list.innerHTML = Object.entries(APP.catalogData).map(([key, label]) => `
         <div class="route-item" data-key="${key}" style="cursor:pointer;">
             <span class="route-item-name">${label}</span>
@@ -1326,9 +1355,21 @@ function openCatalog() {
             openNavigatorWithRoute(key, true);
         });
     });
+}
 
-    byId('catalogModal').style.display = 'flex';
-    closeMenu();
+function loadInstruction() {
+    const instrText = byId('instructionText');
+    if (!instrText) return;
+    
+    // Загружаем инструкцию из файла
+    fetch('instr.txt')
+        .then(response => response.text())
+        .then(text => {
+            instrText.textContent = text;
+        })
+        .catch(() => {
+            instrText.textContent = 'Инструкция недоступна';
+        });
 }
 
 // ============================================
@@ -1387,25 +1428,42 @@ function toggleNavGistInfo() {
 }
 
 async function loadNavigatorRoute(file, isCatalog = false) {
+    // Показываем статус загрузки
+    const cacheStatus = byId('cacheStatus');
+    cacheStatus.style.display = 'block';
+    cacheStatus.textContent = 'Загрузка маршрута...';
+    
     let url = null;
     let gistDescription = 'Описание отсутствует';
-    let actualFileName = file; // Имя файла без .json для отображения
+    let actualFileName = file;
 
     if (isCatalog) {
         try {
             const gistList = await fetchAllGists('yvayvapyvapyva');
+            console.log('Найдено gist:', gistList.length);
             const parts = file.split('-');
             const targetId = parts[0];
             const routeName = parts.slice(1).join('-');
             const targetFileName = routeName + '.json';
+            console.log('Поиск gist для ID:', targetId, 'файл:', targetFileName);
             const targetGist = gistList.find(g => g.description && g.description.includes(`[${targetId}]`));
             if (targetGist) {
+                console.log('Gist найден:', targetGist.id, 'files:', Object.keys(targetGist.files));
                 gistDescription = targetGist.description || 'Описание отсутствует';
-                const fileObj = Object.values(targetGist.files).find(f => f.filename.toLowerCase() === targetFileName.toLowerCase());
+                const fileObj = Object.values(targetGist.files).find(f => f.filename && f.filename.toLowerCase() === targetFileName.toLowerCase());
                 if (fileObj) {
-                    url = fileObj.raw_url;
-                    actualFileName = fileObj.filename.replace('.json', '');
+                    console.log('Файл найден:', fileObj.filename, 'URL:', fileObj.raw_url);
+                    if (fileObj.raw_url) {
+                        url = fileObj.raw_url;
+                        actualFileName = fileObj.filename.replace('.json', '');
+                    } else {
+                        console.error('Файл найден, но raw_url отсутствует:', fileObj);
+                    }
+                } else {
+                    console.error('Файл не найден в gist. Ожидался:', targetFileName, 'Доступны:', Object.values(targetGist.files).map(f => f.filename));
                 }
+            } else {
+                console.error('Gist не найден для ID:', targetId);
             }
         } catch (e) { console.error('Ошибка поиска gist:', e); }
     } else {
@@ -1420,10 +1478,20 @@ async function loadNavigatorRoute(file, isCatalog = false) {
             }
         } catch (e) { console.error('Ошибка загрузки gist:', e); }
     }
-    if (!url) { showToast('Ошибка загрузки маршрута', 'error'); return; }
     
-    // Закрываем каталог если он был открыт
-    byId('catalogModal').style.display = 'none';
+    // Проверка: если URL не получен, показываем подробную ошибку
+    if (!url) {
+        if (isCatalog) {
+            console.error('Каталог: не удалось получить URL маршрута', file);
+            showToast('Маршрут не найден в каталоге. Проверьте доступность маршрута.', 'error', 4000);
+        } else {
+            showToast('Ошибка загрузки маршрута', 'error');
+        }
+        return;
+    }
+    
+    // Закрываем боковое меню если оно открыто
+    closeMenu();
     
     // Очищаем предыдущий маршрут с карты
     if (APP.map && APP.navPoints) {
@@ -1467,9 +1535,7 @@ async function loadNavigatorRoute(file, isCatalog = false) {
         // Устанавливаем описание маршрута
         APP.navGistDesc = gistDescription;
         byId('navGistDesc').textContent = gistDescription;
-        
-        preloadNavAudio();
-        
+
         // Центрируем карту на всех точках маршрута
         if (APP.navPoints.length > 0 && APP.map) {
             setTimeout(() => {
@@ -1479,9 +1545,13 @@ async function loadNavigatorRoute(file, isCatalog = false) {
                 }
             }, 100);
         }
-        
-        showToast('Маршрут загружен', 'success');
+
+        // Запускаем кэширование аудио
+        byId('cacheStatus').textContent = 'Загрузка аудио...';
+        preloadNavAudio();
     } catch (e) {
+        byId('cacheStatus').textContent = 'Ошибка загрузки';
+        setTimeout(() => { byId('cacheStatus').style.display = 'none'; }, 2000);
         showToast('Ошибка данных: ' + e.message, 'error');
     }
 }
@@ -1806,25 +1876,39 @@ function toggleNavSettings() {
 }
 
 async function preloadNavAudio() {
-    if (!('caches' in window)) return;
+    const cacheStatus = byId('cacheStatus');
+    
+    if (!('caches' in window)) {
+        cacheStatus.textContent = 'Готов к работе';
+        setTimeout(() => { cacheStatus.style.display = 'none'; }, 1500);
+        return;
+    }
+    
     const cache = await caches.open('route-audio-v1');
     const uniquePaths = [...new Set(APP.navPoints.map(p => getAudioPath(p.cmd)).filter(p => p))];
+
+    if (uniquePaths.length === 0) {
+        cacheStatus.textContent = 'Готов к работе';
+        setTimeout(() => { cacheStatus.style.display = 'none'; }, 1500);
+        return;
+    }
+
     let loaded = 0;
-    const cacheStatus = byId('cacheStatus');
-    cacheStatus.style.display = 'block';
-    cacheStatus.textContent = `Кэширование: 0%`;
+    const total = uniquePaths.length;
+
     for (const path of uniquePaths) {
         try {
             const response = await fetch(path);
             if (response.ok) await cache.put(path, response);
         } catch (e) { console.warn("Failed to cache:", path); }
         loaded++;
-        cacheStatus.textContent = `Кэширование: ${Math.round((loaded / uniquePaths.length) * 100)}%`;
+        const percent = Math.round((loaded / total) * 100);
+        cacheStatus.textContent = `Аудио: ${percent}%`;
     }
+
     setTimeout(() => {
-        cacheStatus.textContent = "Готов к офлайну";
-        setTimeout(() => cacheStatus.style.display = 'none', 3000);
-    }, 1000);
+        cacheStatus.style.display = 'none';
+    }, 500);
 }
 
 function getAudioPath(text) {
@@ -1955,7 +2039,7 @@ async function initApp() {
             type: 'yandex#satellite',
             controls: []
         });
-        
+
         APP.userMarker = new ymaps.Placemark([0, 0], {}, {
             iconLayout: 'default#image',
             iconImageHref: getUserLocSvg(0),
@@ -1967,6 +2051,9 @@ async function initApp() {
         APP.map.geoObjects.add(APP.userMarker);
 
         initGeolocation();
+        
+        // Инициализация вкладок меню
+        initMenuTabs();
 
         // Обработчик клика для навигатора
         APP.map.events.add('click', (e) => {
@@ -1987,6 +2074,10 @@ async function initApp() {
         });
         
         byId('loading').classList.add('hidden');
+
+        // Загрузка каталога и инструкции при запуске
+        loadCatalog();
+        loadInstruction();
 
         // Поиск gist пользователя и загрузка маршрутов
         if (APP.token) {
@@ -2046,10 +2137,6 @@ async function initApp() {
         byId('createModal').style.display = 'none';
     });
     byId('confirmCreateBtn').addEventListener('click', createRoute);
-    byId('instructionBtn').addEventListener('click', openInstruction);
-    byId('instructionCloseBtn').addEventListener('click', () => {
-        byId('instructionModal').style.display = 'none';
-    });
     byId('openEditorBtn').addEventListener('click', () => {
         closeRouteActions();
         setTimeout(() => openEditorWithRoute(APP.selectedRoute), 100);
@@ -2062,7 +2149,6 @@ async function initApp() {
     byId('copyLinkBtn').addEventListener('click', copyRouteLink);
     byId('deleteRouteBtn').addEventListener('click', deleteRoute);
     byId('closeActionsBtn').addEventListener('click', closeRouteActions);
-    byId('openCatalogBtn').addEventListener('click', openCatalog);
     
     // Настройки навигатора
     byId('cfgTrigger').addEventListener('input', (e) => {
@@ -2074,18 +2160,6 @@ async function initApp() {
     byId('cfgAz').addEventListener('input', (e) => {
         APP.navConfig.AZ_TOLERANCE = Number(e.target.value);
     });
-}
-
-async function openInstruction() {
-    try {
-        const response = await fetch('instr.txt');
-        const text = await response.text();
-        byId('instructionText').textContent = text;
-    } catch (e) {
-        byId('instructionText').textContent = 'Не удалось загрузить инструкцию';
-    }
-    byId('instructionModal').style.display = 'flex';
-    closeMenu();
 }
 
 // Запуск
