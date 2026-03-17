@@ -116,7 +116,7 @@
     }
     .loading-overlay.hidden { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
     
-    /* Боковое меню */
+    /* Боковое меню (выезжает снизу) */
     .menu-overlay {
         position: fixed; inset: 0; background: rgba(0,0,0,0.6);
         backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -125,29 +125,38 @@
     .menu-overlay.visible { display: block; opacity: 1; }
 
     .side-menu {
-        position: fixed; top: calc(env(safe-area-inset-top) + var(--twa-header-height)); left: 0; width: 100%; height: 100%;
+        position: fixed; left: 0; width: 100%; height: 85vh;
+        bottom: 0;
         background: linear-gradient(180deg, rgba(25,27,35,0.95), rgba(18,20,28,0.95));
-        border-right: none; z-index: 9501;
-        transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
+        border-radius: 24px 24px 0 0; z-index: 9501;
+        transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
         display: flex; flex-direction: column;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+        box-shadow: 0 -12px 40px rgba(0,0,0,0.4);
+        max-height: calc(100vh - env(safe-area-inset-bottom));
     }
-    .side-menu.visible { transform: translateX(0); }
-    
-    .menu-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 20px; border-bottom: 1px solid var(--border);
-        background: rgba(30,32,40,0.5);
-        position: sticky; top: 0;
-    }
-    .menu-title { font-size: 20px; font-weight: 800; }
-    .menu-close {
-        width: 44px; height: 44px; border-radius: 12px;
-        background: rgba(255,255,255,0.1); border: 1px solid var(--border);
-        color: var(--btn-txt); font-size: 24px;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer;
+    .side-menu.visible { transform: translateY(0); }
+
+    /* Ручка для свайпа */
+    .menu-drag-handle {
+        width: 100%;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
+        cursor: grab;
+        touch-action: none;
+    }
+    .menu-drag-handle::before {
+        content: '';
+        width: 40px;
+        height: 5px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 3px;
+    }
+
+    .menu-header {
+        display: none;
     }
     
     .menu-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
@@ -665,14 +674,12 @@
 <!-- Cache status -->
 <div id="cacheStatus">Ожидание...</div>
 
-<!-- Боковое меню -->
+<!-- Боковое меню (выезжает снизу) -->
 <div id="menuOverlay" class="menu-overlay" onclick="closeMenu()"></div>
 <div id="sideMenu" class="side-menu">
-    <div class="menu-header">
-        <span class="menu-title">Меню</span>
-        <button class="menu-close" onclick="closeMenu()">✕</button>
-    </div>
-    
+    <!-- Ручка для свайпа -->
+    <div class="menu-drag-handle" id="menuDragHandle"></div>
+
     <!-- Вкладки меню -->
     <div class="menu-tabs">
         <button class="menu-tab active" data-tab="routes">Ваши маршруты</button>
@@ -1000,6 +1007,10 @@ function showToast(text, type = 'info', duration = 2000) {
 // ============================================
 // МЕНЮ
 // ============================================
+let menuTouchStartY = 0;
+let menuTouchCurrentY = 0;
+let menuIsDragging = false;
+
 function openMenu() {
     // Маршруты уже загружены при инициализации, просто отображаем их
     renderRoutesList();
@@ -1007,11 +1018,88 @@ function openMenu() {
     switchMenuTab('routes');
     byId('sideMenu').classList.add('visible');
     byId('menuOverlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeMenu() {
     byId('sideMenu').classList.remove('visible');
     byId('menuOverlay').classList.remove('visible');
+    document.body.style.overflow = '';
+}
+
+// Обработка свайпа для закрытия меню
+function initMenuSwipe() {
+    const menu = byId('sideMenu');
+    const handle = byId('menuDragHandle');
+    
+    if (!menu || !handle) return;
+    
+    // Обработчики для ручки свайпа
+    handle.addEventListener('touchstart', (e) => {
+        menuIsDragging = true;
+        menuTouchStartY = e.touches[0].clientY;
+        menu.style.transition = 'none';
+    }, { passive: true });
+    
+    handle.addEventListener('touchmove', (e) => {
+        if (!menuIsDragging) return;
+        menuTouchCurrentY = e.touches[0].clientY;
+        const deltaY = menuTouchCurrentY - menuTouchStartY;
+        if (deltaY > 0) {
+            menu.style.transform = `translateY(${deltaY}px)`;
+        }
+    }, { passive: true });
+    
+    handle.addEventListener('touchend', (e) => {
+        if (!menuIsDragging) return;
+        menuIsDragging = false;
+        const deltaY = menuTouchCurrentY - menuTouchStartY;
+        
+        if (deltaY > 100) {
+            // Свайп вниз - закрываем меню
+            closeMenu();
+        } else {
+            // Возвращаем меню на место
+            menu.style.transition = 'transform 0.3s cubic-bezier(0.2,0.8,0.2,1)';
+            menu.style.transform = 'translateY(0)';
+        }
+        menu.style.transition = '';
+    });
+    
+    // Обработчики для всего меню (свайп по любой области)
+    menu.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.menu-drag-handle')) return;
+        menuIsDragging = true;
+        menuTouchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    menu.addEventListener('touchmove', (e) => {
+        if (!menuIsDragging) return;
+        const scrollTop = menu.querySelector('.menu-tab-content.active')?.scrollTop || 0;
+        if (scrollTop === 0) {
+            menuTouchCurrentY = e.touches[0].clientY;
+            const deltaY = menuTouchCurrentY - menuTouchStartY;
+            if (deltaY > 0) {
+                menu.style.transform = `translateY(${deltaY}px)`;
+            }
+        }
+    }, { passive: true });
+    
+    menu.addEventListener('touchend', (e) => {
+        if (!menuIsDragging) return;
+        menuIsDragging = false;
+        const deltaY = menuTouchCurrentY - menuTouchStartY;
+        
+        if (deltaY > 100) {
+            // Свайп вниз - закрываем меню
+            closeMenu();
+        } else {
+            // Возвращаем меню на место
+            menu.style.transition = 'transform 0.3s cubic-bezier(0.2,0.8,0.2,1)';
+            menu.style.transform = 'translateY(0)';
+        }
+        menu.style.transition = '';
+    });
 }
 
 // Переключение вкладок меню
@@ -2054,6 +2142,9 @@ async function initApp() {
         
         // Инициализация вкладок меню
         initMenuTabs();
+        
+        // Инициализация свайпа для меню
+        initMenuSwipe();
 
         // Обработчик клика для навигатора
         APP.map.events.add('click', (e) => {
