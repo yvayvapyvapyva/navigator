@@ -471,8 +471,40 @@ const stopDrawingMode = () => {
 };
 const handleAddBtnClick = () => {
     if (gpsRecordMode) {
-        // Если активен режим GPS записи, останавливаем его
-        stopGpsRecordMode();
+        // Если активен режим GPS записи
+        if (!gpsRecordingPoint) {
+            // Первая точка ещё не создана — создаём её
+            if (!navigator.geolocation) {
+                showToast('Геолокация не поддерживается', 'error');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const coords = [position.coords.latitude, position.coords.longitude];
+                    gpsRecordingPoint = addP(coords, {
+                        id: points.length + 1,
+                        color: 'Gold',
+                        cmd: 'Выполняем разгон до максимальной скорости',
+                        comm: '',
+                        pts: [coords]
+                    }, false);
+                    lastGpsPoint = { lat: coords[0], lon: coords[1] };
+                    // Запускаем редактор для рисования пути
+                    gpsRecordingPoint.line.editor.startDrawing();
+                    gpsRecordingPoint.pm.options.set('draggable', true);
+                    $('addText').textContent = 'Завершить запись';
+                    showToast('Запись пути началась. Двигайтесь для записи.', 'success', 2000);
+                },
+                (error) => {
+                    showToast('Ошибка получения координат', 'error');
+                    console.error('GPS error:', error);
+                },
+                { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+            );
+        } else {
+            // Точка уже создана — останавливаем запись
+            stopGpsRecordMode();
+        }
     } else if (isDrawing) {
         stopDrawingMode();
     } else if (isAdd) {
@@ -499,9 +531,9 @@ function toggleGpsRecordMode() {
         gpsRecordingPoint = null;
         $('gpsRecordBtn').classList.add('active');
         $('gpsRecordText').textContent = 'Остановить запись';
-        $('addText').textContent = 'Завершить запись';
+        $('addText').textContent = 'Поставить первую точку';
         $('addMarkerBtn').classList.add('active');
-        showToast('Запись по GPS запущена. Двигайтесь для записи пути.', 'info', 3000);
+        showToast('Нажмите «Поставить первую точку» для начала записи', 'info', 3000);
     }
 }
 
