@@ -15,12 +15,23 @@
 <div id="toast">Готово</div>
 <div id="welcomeScreen"><div class="welcome-card"><h2 style="margin: 0 0 8px 0; font-weight:800;">Route Editor</h2><div id="userIdBadge" style="background:rgba(255,255,255,0.12);color:#d1d5db;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;margin-bottom:18px;border:1px solid rgba(255,255,255,0.2)">Загрузка...</div><div style="font-size:13px; color:#c7c9d1; margin-top:6px;">Авторизация через параметр URL <b>t</b>...</div></div></div>
 <div id="map"></div>
-<div class="top-controls" id="uiControls" style="display:none"><button id="listPointsBtn" class="btn-top" onclick="openPointsOrderModal()" style="visibility:hidden"><span id="routeLabelText">Маршрут</span></button><button class="btn-top" onclick="openSettingsModal()"><span class="btn-icon">⚙️</span></button></div>
-<div class="bottom-center-controls" id="bottomControls"><button id="addMarkerBtn" class="btn-add-main" onclick="handleAddBtnClick()" style="visibility:hidden"><span id="addText">Добавить новую точку</span></button></div>
-<!-- Кнопка включения режима записи по GPS -->
-<div class="gps-record-btn" id="gpsRecordBtn" onclick="toggleGpsRecordMode()" style="display:none;">
-    <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="currentColor"/></svg>
-    <span id="gpsRecordText">Запись по GPS</span>
+<div class="top-controls" id="uiControls" style="display:none">
+    <button id="listPointsBtn" class="btn-top" onclick="openPointsOrderModal()" style="visibility:hidden">
+        <span id="routeLabelText">Маршрут</span>
+    </button>
+    <div class="top-right-buttons">
+        <button class="btn-top btn-icon-only" onclick="openSettingsModal()">
+            <span class="btn-icon">⚙️</span>
+        </button>
+        <button class="btn-top btn-icon-only" id="gpsModeBtn" onclick="toggleGpsMode()" style="display:none;">
+            <span class="btn-icon">🌍</span>
+        </button>
+    </div>
+</div>
+<div class="bottom-center-controls" id="bottomControls">
+    <button id="addMarkerBtn" class="btn-add-main" onclick="handleAddBtnClick()" style="visibility:hidden">
+        <span id="addText">Добавить новую точку</span>
+    </button>
 </div>
 <div id="floatingSave" class="floating-save"><button id="saveStateBtn" class="btn-save-glass" onclick="saveGist()">Сохранить изменения</button></div>
 <div id="dropdownOverlay" class="dropdown-overlay" onclick="closeD()"></div>

@@ -6,12 +6,25 @@
         .welcome-card { background: linear-gradient(180deg, rgba(38,38,44,0.68), rgba(24,24,28,0.58)); width: 100%; max-width: 400px; padding: 32px; border-radius: 32px; box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14); text-align: center; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(20px) saturate(130%); -webkit-backdrop-filter: blur(20px) saturate(130%); }
         /* Смещение кнопок ниже (60px от верха вместо 20px) */
         .top-controls { position: absolute; top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 10px); left: 15px; right: 15px; z-index: 2000; display: flex; justify-content: space-between; pointer-events: none; gap: 10px; align-items: center; flex-wrap: nowrap; }
+        .top-right-buttons { display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
         
         .btn-top { background: linear-gradient(180deg, rgba(20,20,20,0.85), rgba(10,10,10,0.8)); color: #ffffff; padding: 14px 22px; border-radius: 30px; font-weight: 700; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 16px; backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%); pointer-events: auto; transition: transform 0.18s, box-shadow 0.18s, background 0.18s; height: 54px; box-sizing: border-box; }
         .btn-top .btn-icon { font-size: 20px; }
         .btn-top:active { transform: scale(0.97); box-shadow: 0 6px 14px rgba(0,0,0,0.12); }
+        .btn-top.btn-icon-only { padding: 14px 16px; width: 54px; justify-content: center; }
         #listPointsBtn { max-width: calc(100% - 84px); }
         #routeLabelText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 56vw; display: inline-block; }
+        
+        /* Кнопка GPS режима */
+        #gpsModeBtn.active {
+            background: rgba(255, 59, 48, 0.85);
+            border-color: rgba(255, 127, 120, 0.8);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 10px 25px rgba(255,59,48,0.3); }
+            50% { box-shadow: 0 10px 35px rgba(255,59,48,0.6); }
+        }
         .floating-save { position: absolute; top: env(safe-area-inset-top, 0px); left: 50%; transform: translateX(-50%); z-index: 2300; display: none; align-items: center; pointer-events: auto; }
         .btn-save-glass { background: var(--dark-panel); backdrop-filter: var(--panel-blur); -webkit-backdrop-filter: var(--panel-blur); padding: 10px 20px; border-radius: 100px; border: 1px solid var(--border); color: var(--btn-txt); font-size: 14px; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.22); text-align: center; cursor: pointer; transition: transform 0.18s, box-shadow 0.18s, background 0.18s; width: max-content; max-width: none; }
         .btn-save-glass:active { transform: scale(0.97); box-shadow: 0 6px 14px rgba(0,0,0,0.12); }

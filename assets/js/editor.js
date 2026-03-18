@@ -16,8 +16,6 @@ const COMMAND_SETS = { Gold: ["На перекрестке повернем на
 let map, points = [], cur = null, isAdd = false, isDrawing = false, curFile = null, userGistId = null, activeListPoint = null, modalMode = 'list', tempNewPointData = null, userLocPlacemark = null, activePoint = null, authToken = "", settingsRouteFiles = [];
 let historyStack = [], historyIndex = -1, lastSavedSnapshot = "[]", toastTimer = null;
 // Переменные для режима записи по GPS
-let gpsRecordMode = false;
-let gpsRecordWatchId = null;
 let lastGpsPoint = null;
 let gpsRecordingPoint = null; // Текущая точка, которую записываем
 const GPS_MIN_DISTANCE = 5; // Минимальное расстояние между точками пути (метры)
@@ -184,26 +182,9 @@ const initGeolocation = () => {
                 userLocPlacemark.options.set('visible', true);
             }
             // Если активен режим записи по GPS
-            if (gpsRecordMode && gpsRecordWatchId) {
+            if (gpsRecordingPoint) {
                 const currentCoords = p.coords;
-                
-                // Если точка ещё не создана, создаём её
-                if (!gpsRecordingPoint) {
-                    gpsRecordingPoint = addP(coords, {
-                        id: points.length + 1,
-                        color: 'Gold',
-                        cmd: 'Выполняем разгон до максимальной скорости',
-                        comm: '',
-                        pts: [coords]
-                    }, false);
-                    lastGpsPoint = { lat: coords[0], lon: coords[1] };
-                    // Запускаем редактор для рисования пути
-                    gpsRecordingPoint.line.editor.startDrawing();
-                    gpsRecordingPoint.pm.options.set('draggable', true);
-                    showToast('Запись пути началась', 'success', 1500);
-                    return;
-                }
-                
+
                 // Проверяем расстояние от последней точки
                 const dist = getDistanceFromLatLonInM(
                     lastGpsPoint.lat, lastGpsPoint.lon,
@@ -211,13 +192,13 @@ const initGeolocation = () => {
                 );
                 // Добавляем точку к пути только если прошли минимальное расстояние
                 if (dist < GPS_MIN_DISTANCE) return;
-                
+
                 // Добавляем новую точку к пути текущей метки
                 const pts = gpsRecordingPoint.line.geometry.getCoordinates();
                 pts.push(coords);
                 gpsRecordingPoint.line.geometry.setCoordinates(pts);
                 gpsRecordingPoint.pts = pts.map(pt => [f6(pt[0]), f6(pt[1])]);
-                
+
                 lastGpsPoint = { lat: currentCoords.latitude, lon: currentCoords.longitude };
                 map.setCenter(coords);
             }
@@ -323,7 +304,7 @@ const updateVisibility = () => {
     const act = curFile !== null;
     $('listPointsBtn').style.visibility = act ? 'visible' : 'hidden';
     $('addMarkerBtn').style.visibility = act ? 'visible' : 'hidden';
-    $('gpsRecordBtn').style.display = act ? 'flex' : 'none'; // Показываем кнопку GPS записи
+    $('gpsModeBtn').style.display = act ? 'flex' : 'none'; // Показываем кнопку GPS записи
     if(curFile) {
         const n = curFile.replace('.json','');
         if ($('fileActions')) $('fileActions').style.display = 'block';
@@ -470,41 +451,9 @@ const stopDrawingMode = () => {
     cur = null;
 };
 const handleAddBtnClick = () => {
-    if (gpsRecordMode) {
-        // Если активен режим GPS записи
-        if (!gpsRecordingPoint) {
-            // Первая точка ещё не создана — создаём её
-            if (!navigator.geolocation) {
-                showToast('Геолокация не поддерживается', 'error');
-                return;
-            }
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const coords = [position.coords.latitude, position.coords.longitude];
-                    gpsRecordingPoint = addP(coords, {
-                        id: points.length + 1,
-                        color: 'Gold',
-                        cmd: 'Выполняем разгон до максимальной скорости',
-                        comm: '',
-                        pts: [coords]
-                    }, false);
-                    lastGpsPoint = { lat: coords[0], lon: coords[1] };
-                    // Запускаем редактор для рисования пути
-                    gpsRecordingPoint.line.editor.startDrawing();
-                    gpsRecordingPoint.pm.options.set('draggable', true);
-                    $('addText').textContent = 'Завершить запись';
-                    showToast('Запись пути началась. Двигайтесь для записи.', 'success', 2000);
-                },
-                (error) => {
-                    showToast('Ошибка получения координат', 'error');
-                    console.error('GPS error:', error);
-                },
-                { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
-            );
-        } else {
-            // Точка уже создана — останавливаем запись
-            stopGpsRecordMode();
-        }
+    if (gpsRecordMode && gpsRecordingPoint) {
+        // Если активен режим GPS записи - завершаем запись
+        stopGpsRecordMode();
     } else if (isDrawing) {
         stopDrawingMode();
     } else if (isAdd) {
@@ -515,31 +464,41 @@ const handleAddBtnClick = () => {
 };
 
 // Режим записи пути по GPS
-function toggleGpsRecordMode() {
-    if (gpsRecordMode) {
+function toggleGpsMode() {
+    if (gpsRecordingPoint) {
         // Остановить запись
         stopGpsRecordMode();
     } else {
-        // Начать запись
+        // Начать запись - сразу ставим первую точку
         if (!navigator.geolocation) {
-            showToast('Геолокация не поддерживается', 'error');
             return;
         }
-        gpsRecordMode = true;
-        gpsRecordWatchId = true;
-        lastGpsPoint = null;
-        gpsRecordingPoint = null;
-        $('gpsRecordBtn').classList.add('active');
-        $('gpsRecordText').textContent = 'Остановить запись';
-        $('addText').textContent = 'Поставить первую точку';
-        $('addMarkerBtn').classList.add('active');
-        showToast('Нажмите «Поставить первую точку» для начала записи', 'info', 3000);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const coords = [position.coords.latitude, position.coords.longitude];
+                gpsRecordingPoint = addP(coords, {
+                    id: points.length + 1,
+                    color: 'Gold',
+                    cmd: 'Выполняем разгон до максимальной скорости',
+                    comm: '',
+                    pts: [coords]
+                }, false);
+                lastGpsPoint = { lat: coords[0], lon: coords[1] };
+                // Запускаем редактор для рисования пути
+                gpsRecordingPoint.line.editor.startDrawing();
+                gpsRecordingPoint.pm.options.set('draggable', true);
+                $('addText').textContent = 'Завершить запись';
+                $('gpsModeBtn').classList.add('active');
+            },
+            (error) => {
+                console.error('GPS error:', error);
+            },
+            { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+        );
     }
 }
 
 function stopGpsRecordMode() {
-    gpsRecordMode = false;
-    gpsRecordWatchId = null;
     // Завершаем рисование пути точки
     if (gpsRecordingPoint) {
         gpsRecordingPoint.line.editor.stopEditing();
@@ -547,12 +506,9 @@ function stopGpsRecordMode() {
         gpsRecordingPoint = null;
     }
     lastGpsPoint = null;
-    $('gpsRecordBtn').classList.remove('active');
-    $('gpsRecordText').textContent = 'Запись по GPS';
+    $('gpsModeBtn').classList.remove('active');
     $('addText').textContent = 'Добавить новую точку';
-    $('addMarkerBtn').classList.remove('active');
     pushHistorySnapshot();
-    showToast('Запись завершена', 'success');
 }
 
 const stopAdd = () => { isAdd = false; tempNewPointData = null; $('addText').textContent = "Добавить новую точку"; $('addMarkerBtn').classList.remove('active'); map.setCursor('grab'); };
