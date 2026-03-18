@@ -451,7 +451,7 @@ const stopDrawingMode = () => {
     cur = null;
 };
 const handleAddBtnClick = () => {
-    if (gpsRecordMode && gpsRecordingPoint) {
+    if (gpsRecordingPoint) {
         // Если активен режим GPS записи - завершаем запись
         stopGpsRecordMode();
     } else if (isDrawing) {

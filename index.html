@@ -384,7 +384,7 @@
 
     /* Toast уведомления */
     .toast {
-        position: fixed; top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 10px);
+        position: fixed; top: calc(env(safe-area-inset-top) + var(--twa-header-height) + 80px);
         left: 50%; transform: translateX(-50%) translateY(-100px);
         background: var(--dark-panel); color: #ffffff;
         padding: 14px 24px; border-radius: 16px;
@@ -397,6 +397,7 @@
         white-space: pre-wrap;
         text-align: center;
         line-height: 1.4;
+        pointer-events: none;
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .toast.success { background: rgba(52,199,89,0.95); }
@@ -2177,32 +2178,29 @@ async function initApp() {
                 if (id) {
                     APP.gistId = id;
                     fetchRoutes().then((routes) => {
-                        APP.routes = routes; // Сохраняем маршруты в APP.routes
+                        APP.routes = routes;
                         renderRoutesList();
                         console.log('Маршруты загружены:', APP.routes.length);
 
-                        // Приветственное сообщение с количеством маршрутов
+                        // Приветственное сообщение
                         const userName = APP.user.name || 'Пользователь';
                         const routesCount = APP.routes.length;
-                        const welcomeMsg = `Здравствуйте, ${userName}!\nУ вас маршрутов: ${routesCount}`;
-                        showToast(welcomeMsg, 'info', 2000);
+                        showToast(`${userName}, маршрутов: ${routesCount}`, 'info', 1500);
                     });
                 } else {
-                    // Gist не найден - показываем пустой список
                     APP.gistId = null;
                     APP.routes = [];
                     renderRoutesList();
                     console.log('Gist не найден, создайте первый маршрут');
 
-                    // Приветственное сообщение для нового пользователя
                     const userName = APP.user.name || 'Пользователь';
-                    showToast(`Здравствуйте, ${userName}!\nУ вас маршрутов: 0`, 'info', 2000);
+                    showToast(`${userName}, маршрутов: 0`, 'info', 1500);
                 }
             }).catch(err => {
                 console.error('Ошибка поиска gist:', err);
                 renderRoutesList();
                 const userName = APP.user.name || 'Пользователь';
-                showToast(`Здравствуйте, ${userName}!\nУ вас маршрутов: 0`, 'info', 2000);
+                showToast(`${userName}, маршрутов: 0`, 'info', 1500);
             });
         } else {
             renderRoutesList();
