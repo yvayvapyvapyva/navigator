@@ -37,17 +37,12 @@ const serializePoints = () => JSON.stringify(points.map(p => ({ id: p.id, color:
 
 // Форматирование JSON с pts в одной строке
 function formatJsonWithPts(data) {
-    // Сначала сериализуем всё с отступами
-    let json = JSON.stringify(data, null, 2);
-    
-    // Находим каждый "pts": [...] и сворачиваем массив в одну строку
-    return json.replace(/"pts":\s*\[([\s\S]*?)\]/g, (match, content) => {
-        // Парсим содержимое массива pts
-        const coords = JSON.parse('[' + content + ']');
-        // Форматируем как компактный массив [[lat,lon],[lat,lon],...]
-        const compact = coords.map(pt => '[' + pt.join(',') + ']').join(',');
-        return '"pts": [' + compact + ']';
+    // Сериализуем каждую точку вручную, чтобы pts был в одну строку
+    const items = data.map(p => {
+        const ptsStr = JSON.stringify(p.pts); // pts будет в одну строку: [[lat,lon],[lat,lon]]
+        return `  {\n    "id": ${p.id},\n    "color": "${p.color}",\n    "pts": ${ptsStr},\n    "cmd": "${p.cmd.replace(/"/g, '\\"')}",\n    "comm": "${(p.comm || '').replace(/"/g, '\\"')}"\n  }`;
     });
+    return '[\n' + items.join(',\n') + '\n]';
 }
 const clearRouteObjects = () => {
     points.forEach(p => { map.geoObjects.remove(p.pm); map.geoObjects.remove(p.line); if (p.pmEnd) map.geoObjects.remove(p.pmEnd); });
@@ -632,20 +627,31 @@ async function saveGist() {
     const topSaveBtn = $('saveStateBtn');
     btn.classList.add('loading');
     if (topSaveBtn) { topSaveBtn.disabled = true; topSaveBtn.textContent = 'Сохраняем...'; }
-    const data = points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm }));
-    const formattedJson = formatJsonWithPts(data);
-    if(await api(`https://api.github.com/gists/${userGistId}`, 'PATCH', { files: { [curFile]: { content: formattedJson } } })) {
-        lastSavedSnapshot = serializePoints();
-        btn.classList.remove('loading');
-        btn.classList.add('saved');
-        if (topSaveBtn) topSaveBtn.textContent = 'Сохранено';
-        setTimeout(() => {
-            btn.classList.remove('saved');
-            if (modalMode === 'list') toggleM('pointsOrderModal');
-            updateSaveState();
-        }, 900);
-    } else {
+    
+    try {
+        const data = points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm }));
+        const formattedJson = formatJsonWithPts(data);
+        
+        const result = await api(`https://api.github.com/gists/${userGistId}`, 'PATCH', { files: { [curFile]: { content: formattedJson } } });
+        
+        if(result) {
+            lastSavedSnapshot = serializePoints();
+            btn.classList.remove('loading');
+            btn.classList.add('saved');
+            if (topSaveBtn) topSaveBtn.textContent = 'Сохранено';
+            setTimeout(() => {
+                btn.classList.remove('saved');
+                if (modalMode === 'list') toggleM('pointsOrderModal');
+                updateSaveState();
+            }, 900);
+        } else {
+            btn.classList.remove('loading');
+            if (topSaveBtn) { topSaveBtn.disabled = false; topSaveBtn.textContent = 'Ошибка, повторить'; }
+            showToast('Ошибка сохранения', 'error');
+        }
+    } catch(e) {
         btn.classList.remove('loading');
         if (topSaveBtn) { topSaveBtn.disabled = false; topSaveBtn.textContent = 'Ошибка, повторить'; }
+        showToast('Ошибка: ' + e.message, 'error');
     }
 }
