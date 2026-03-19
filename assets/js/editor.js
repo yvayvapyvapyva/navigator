@@ -37,36 +37,52 @@ const serializePoints = () => JSON.stringify(points.map(p => ({ id: p.id, color:
 
 // Форматирование JSON с pts в одной строке
 function formatJsonWithPts(data) {
-    const lines = JSON.stringify(data, null, 2).split('\n');
+    const json = JSON.stringify(data, null, 2);
+    const lines = json.split('\n');
     const result = [];
-    let inPts = false;
-    let ptsContent = '';
+    let i = 0;
     
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+    while (i < lines.length) {
+        const line = lines[i];
+        const trimmed = line.trim();
         
-        if (line.startsWith('"pts":')) {
-            inPts = true;
-            ptsContent = line;
-            if (line.endsWith('],')) {
-                // pts в одну строку уже
-                result.push(line);
-                inPts = false;
-            } else if (line.endsWith('[')) {
-                ptsContent = '"pts": [';
-            }
-        } else if (inPts) {
-            if (line === ']' || line === '],') {
-                // Конец массива pts
-                result.push(ptsContent + ']');
-                inPts = false;
-                ptsContent = '';
-            } else {
-                // Добавляем координату к pts
-                ptsContent += line + (line.endsWith(',') ? ' ' : ', ');
+        // Ищем начало "pts": [
+        if (trimmed.startsWith('"pts":') && trimmed.includes('[')) {
+            // Собираем весь массив pts включая вложенные массивы
+            let ptsArray = '';
+            let bracketCount = 0;
+            let started = false;
+            
+            while (i < lines.length) {
+                const currentLine = lines[i];
+                for (let j = 0; j < currentLine.length; j++) {
+                    const char = currentLine[j];
+                    if (char === '[') {
+                        bracketCount++;
+                        started = true;
+                    } else if (char === ']') {
+                        bracketCount--;
+                    }
+                }
+                
+                // Добавляем координаты в одну строку
+                const coords = currentLine.trim().replace(/,$/, '');
+                if (coords && coords !== '[' && coords !== '],') {
+                    if (ptsArray && !ptsArray.endsWith(' ')) ptsArray += ' ';
+                    ptsArray += coords;
+                }
+                
+                i++;
+                
+                // Если все скопки закрыты - конец массива pts
+                if (started && bracketCount === 0) {
+                    result.push(`    "pts": [${ptsArray.trim()}],`);
+                    break;
+                }
             }
         } else {
-            result.push(lines[i]);
+            result.push(line);
+            i++;
         }
     }
     
