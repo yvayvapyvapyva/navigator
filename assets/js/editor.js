@@ -37,11 +37,40 @@ const serializePoints = () => JSON.stringify(points.map(p => ({ id: p.id, color:
 
 // Форматирование JSON с pts в одной строке
 function formatJsonWithPts(data) {
-    const json = JSON.stringify(data, null, 2);
-    return json.replace(/"pts":\s*\[([\s\S]*?)\]/g, (match, content) => {
-        const singleLine = content.replace(/\s+/g, ' ').trim();
-        return `"pts": [${singleLine}]`;
-    });
+    const lines = JSON.stringify(data, null, 2).split('\n');
+    const result = [];
+    let inPts = false;
+    let ptsContent = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.startsWith('"pts":')) {
+            inPts = true;
+            ptsContent = line;
+            if (line.endsWith('],')) {
+                // pts в одну строку уже
+                result.push(line);
+                inPts = false;
+            } else if (line.endsWith('[')) {
+                ptsContent = '"pts": [';
+            }
+        } else if (inPts) {
+            if (line === ']' || line === '],') {
+                // Конец массива pts
+                result.push(ptsContent + ']');
+                inPts = false;
+                ptsContent = '';
+            } else {
+                // Добавляем координату к pts
+                ptsContent += line + (line.endsWith(',') ? ' ' : ', ');
+            }
+        } else {
+            result.push(lines[i]);
+        }
+    }
+    
+    return result.join('\n');
 }
 const clearRouteObjects = () => {
     points.forEach(p => { map.geoObjects.remove(p.pm); map.geoObjects.remove(p.line); if (p.pmEnd) map.geoObjects.remove(p.pmEnd); });
