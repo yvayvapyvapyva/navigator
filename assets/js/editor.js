@@ -37,12 +37,16 @@ const serializePoints = () => JSON.stringify(points.map(p => ({ id: p.id, color:
 
 // Форматирование JSON с pts в одной строке
 function formatJsonWithPts(data) {
-    const json = JSON.stringify(data, null, 2);
-    // Находим "pts": [...] и убираем переносы строк внутри массива
-    return json.replace(/("pts":\s*\[)([\s\S]*?)(\],)/g, (match, start, content, end) => {
-        // Удаляем переносы строк и лишние пробелы, оставляем только координаты
-        const flat = content.replace(/[\n\s]+/g, ' ').trim();
-        return start + flat + end;
+    // Сначала сериализуем всё с отступами
+    let json = JSON.stringify(data, null, 2);
+    
+    // Находим каждый "pts": [...] и сворачиваем массив в одну строку
+    return json.replace(/"pts":\s*\[([\s\S]*?)\]/g, (match, content) => {
+        // Парсим содержимое массива pts
+        const coords = JSON.parse('[' + content + ']');
+        // Форматируем как компактный массив [[lat,lon],[lat,lon],...]
+        const compact = coords.map(pt => '[' + pt.join(',') + ']').join(',');
+        return '"pts": [' + compact + ']';
     });
 }
 const clearRouteObjects = () => {
