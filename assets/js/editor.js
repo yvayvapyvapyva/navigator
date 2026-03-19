@@ -38,55 +38,12 @@ const serializePoints = () => JSON.stringify(points.map(p => ({ id: p.id, color:
 // Форматирование JSON с pts в одной строке
 function formatJsonWithPts(data) {
     const json = JSON.stringify(data, null, 2);
-    const lines = json.split('\n');
-    const result = [];
-    let i = 0;
-    
-    while (i < lines.length) {
-        const line = lines[i];
-        const trimmed = line.trim();
-        
-        // Ищем начало "pts": [
-        if (trimmed.startsWith('"pts":') && trimmed.includes('[')) {
-            // Собираем весь массив pts включая вложенные массивы
-            let ptsArray = '';
-            let bracketCount = 0;
-            let started = false;
-            
-            while (i < lines.length) {
-                const currentLine = lines[i];
-                for (let j = 0; j < currentLine.length; j++) {
-                    const char = currentLine[j];
-                    if (char === '[') {
-                        bracketCount++;
-                        started = true;
-                    } else if (char === ']') {
-                        bracketCount--;
-                    }
-                }
-                
-                // Добавляем координаты в одну строку
-                const coords = currentLine.trim().replace(/,$/, '');
-                if (coords && coords !== '[' && coords !== '],') {
-                    if (ptsArray && !ptsArray.endsWith(' ')) ptsArray += ' ';
-                    ptsArray += coords;
-                }
-                
-                i++;
-                
-                // Если все скопки закрыты - конец массива pts
-                if (started && bracketCount === 0) {
-                    result.push(`    "pts": [${ptsArray.trim()}],`);
-                    break;
-                }
-            }
-        } else {
-            result.push(line);
-            i++;
-        }
-    }
-    
-    return result.join('\n');
+    // Находим "pts": [...] и убираем переносы строк внутри массива
+    return json.replace(/("pts":\s*\[)([\s\S]*?)(\],)/g, (match, start, content, end) => {
+        // Удаляем переносы строк и лишние пробелы, оставляем только координаты
+        const flat = content.replace(/[\n\s]+/g, ' ').trim();
+        return start + flat + end;
+    });
 }
 const clearRouteObjects = () => {
     points.forEach(p => { map.geoObjects.remove(p.pm); map.geoObjects.remove(p.line); if (p.pmEnd) map.geoObjects.remove(p.pmEnd); });
