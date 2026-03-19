@@ -1415,21 +1415,41 @@ async function createRoute() {
 }
 
 async function renameRoute() {
-    if (!APP.selectedRoute) return;
+    if (!APP.selectedRoute || !APP.gistId) {
+        showToast('Выберите маршрут', 'error');
+        return;
+    }
     const currentName = APP.selectedRoute.replace('.json', '');
     const nextRaw = prompt('Новое название маршрута (разрешены: a-z, 0-9, _)', currentName);
     if (nextRaw === null) return;
     const nextName = nextRaw.trim().replace(/[^a-zA-Z0-9_]/g, '');
-    if (!nextName || nextName === currentName) return;
+    if (!nextName) {
+        showToast('Введите название маршрута', 'error');
+        return;
+    }
+    if (nextName === currentName) return;
     const nextFile = `${nextName}.json`;
-    if (APP.routes.includes(nextFile)) { showToast('Маршрут с таким именем уже существует', 'error'); return; }
+    if (APP.routes.includes(nextFile)) {
+        showToast('Маршрут с таким именем уже существует', 'error');
+        return;
+    }
     const gist = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}?t=${Date.now()}`);
-    if (!gist || !gist.files || !gist.files[APP.selectedRoute]) { showToast('Не удалось загрузить данные', 'error'); return; }
+    if (!gist || !gist.files || !gist.files[APP.selectedRoute]) {
+        showToast('Не удалось загрузить данные', 'error');
+        return;
+    }
+    if (gist.files[nextFile]) {
+        showToast('Маршрут с таким именем уже существует', 'error');
+        return;
+    }
     const content = gist.files[APP.selectedRoute].content || '[]';
     const ok = await apiRequest(APP.token, `https://api.github.com/gists/${APP.gistId}`, 'PATCH', {
         files: { [APP.selectedRoute]: null, [nextFile]: { content } }
     });
-    if (!ok) { showToast('Не удалось переименовать', 'error'); return; }
+    if (!ok) {
+        showToast('Не удалось переименовать', 'error');
+        return;
+    }
     APP.routes = await fetchRoutes();
     APP.selectedRoute = nextFile;
     closeRouteActions();

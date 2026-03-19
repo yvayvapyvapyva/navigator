@@ -374,17 +374,27 @@ const loadRoute = async (fn) => {
 };
 
 const renameActiveRoute = async () => {
-    if (!curFile || !userGistId) return;
+    if (!curFile || !userGistId) {
+        showToast('Выберите маршрут', 'error');
+        return;
+    }
     const currentName = curFile.replace('.json', '');
     const nextNameRaw = prompt('Новое имя маршрута (разрешены: a-z, 0-9, _)', currentName);
     if (nextNameRaw === null) return;
     const nextName = nextNameRaw.trim().replace(/[^a-zA-Z0-9_]/g, '');
-    if (!nextName) return;
+    if (!nextName) {
+        showToast('Введите имя маршрута', 'error');
+        return;
+    }
     const nextFile = `${nextName}.json`;
     if (nextFile === curFile) return;
     const g = await api(`https://api.github.com/gists/${userGistId}?t=${Date.now()}`);
-    if (!g || !g.files[curFile] || g.files[nextFile]) {
-        showToast(g?.files?.[nextFile] ? 'Маршрут с таким именем уже есть' : 'Ошибка переименования', 'error');
+    if (!g || !g.files[curFile]) {
+        showToast('Ошибка загрузки данных', 'error');
+        return;
+    }
+    if (g.files[nextFile]) {
+        showToast('Маршрут с таким именем уже есть', 'error');
         return;
     }
     const content = g.files[curFile].content || "[]";
