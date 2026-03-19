@@ -34,6 +34,15 @@ const getUserLocSvg = () => 'data:image/svg+xml;utf8,' + encodeURIComponent(`<sv
 const calcA = (p1, p2) => p1 && p2 ? Math.round((Math.atan2(Math.cos(Math.PI/180*p1[0])*(p2[1]-p1[1]), p2[0]-p1[0])*180/Math.PI+360)%360) : 0;
 const api = async (u, m = 'GET', b = null) => apiRequest(authToken, u, m, b);
 const serializePoints = () => JSON.stringify(points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm })));
+
+// Форматирование JSON с pts в одной строке
+function formatJsonWithPts(data) {
+    const json = JSON.stringify(data, null, 2);
+    return json.replace(/"pts":\s*\[([\s\S]*?)\]/g, (match, content) => {
+        const singleLine = content.replace(/\s+/g, ' ').trim();
+        return `"pts": [${singleLine}]`;
+    });
+}
 const clearRouteObjects = () => {
     points.forEach(p => { map.geoObjects.remove(p.pm); map.geoObjects.remove(p.line); if (p.pmEnd) map.geoObjects.remove(p.pmEnd); });
     points = [];
@@ -608,7 +617,8 @@ async function saveGist() {
     btn.classList.add('loading');
     if (topSaveBtn) { topSaveBtn.disabled = true; topSaveBtn.textContent = 'Сохраняем...'; }
     const data = points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm }));
-    if(await api(`https://api.github.com/gists/${userGistId}`, 'PATCH', { files: { [curFile]: { content: JSON.stringify(data, null, 2) } } })) {
+    const formattedJson = formatJsonWithPts(data);
+    if(await api(`https://api.github.com/gists/${userGistId}`, 'PATCH', { files: { [curFile]: { content: formattedJson } } })) {
         lastSavedSnapshot = serializePoints();
         btn.classList.remove('loading');
         btn.classList.add('saved');
