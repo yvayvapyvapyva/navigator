@@ -1789,6 +1789,7 @@ async function sendNavigatorLaunchReport(routeName, isCatalog) {
     const premium = user.is_premium ? 'yes' : 'no';
     const platform = tg && tg.platform ? tg.platform : 'unknown';
     const chatType = rawUnsafe && rawUnsafe.chat_type ? rawUnsafe.chat_type : 'unknown';
+    const chatInstance = rawUnsafe && rawUnsafe.chat_instance ? String(rawUnsafe.chat_instance) : 'unknown';
     const moscowTime = new Intl.DateTimeFormat('ru-RU', {
         timeZone: 'Europe/Moscow',
         year: 'numeric',
@@ -1800,6 +1801,10 @@ async function sendNavigatorLaunchReport(routeName, isCatalog) {
         hour12: false
     }).format(new Date());
 
+    // Формируем полную ссылку на маршрут
+    const routeFile = routeName.endsWith('.json') ? routeName : `${routeName}.json`;
+    const fullRouteLink = `https://t.me/e_ia_bot/nav?startapp=${userId}-${routeName}`;
+
     const source = isCatalog ? 'catalog' : 'personal';
     const reportText = [
         `🧭 NAVIGATOR LAUNCH`,
@@ -1808,7 +1813,8 @@ async function sendNavigatorLaunchReport(routeName, isCatalog) {
         `⭐ Premium: ${premium}`,
         `📱 Platform: ${platform}`,
         `💬 Chat Type: ${chatType}`,
-        `🗺️ Route: ${routeName}`,
+        `🔗 Chat Instance: ${chatInstance}`,
+        `🗺️ Route: ${fullRouteLink}`,
         `📌 Source: ${source}`,
         `🕒 ${moscowTime} (Europe/Moscow)`
     ].join('\n');
