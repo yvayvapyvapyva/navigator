@@ -1772,14 +1772,7 @@ async function loadNavigatorRoute(file, isCatalog = false) {
 
 // Отправка отчёта о запуске навигатора
 async function sendNavigatorLaunchReport(routeName, isCatalog) {
-    console.log('[REPORT] Вызов sendNavigatorLaunchReport:', routeName, 'isCatalog:', isCatalog);
-    console.log('[REPORT] BOT_TOKEN:', REPORT_CFG.BOT_TOKEN ? 'присутствует' : 'ОТСУТСТВУЕТ');
-    console.log('[REPORT] CHAT_ID:', REPORT_CFG.CHAT_ID ? 'присутствует' : 'ОТСУТСТВУЕТ');
-    
-    if (!REPORT_CFG.BOT_TOKEN || !REPORT_CFG.CHAT_ID) {
-        console.error('[REPORT] Отмена: отсутствуют BOT_TOKEN или CHAT_ID');
-        return;
-    }
+    if (!REPORT_CFG.BOT_TOKEN || !REPORT_CFG.CHAT_ID) return;
 
     const rawUnsafe = tg && tg.initDataUnsafe ? tg.initDataUnsafe : null;
     const user = rawUnsafe && rawUnsafe.user ? rawUnsafe.user : {};
@@ -1801,19 +1794,8 @@ async function sendNavigatorLaunchReport(routeName, isCatalog) {
         hour12: false
     }).format(new Date());
 
-    // Формируем полную ссылку на маршрут
-    // Для каталога: извлекаем ownerId из ключа (формат: ownerId-routeName)
-    // Для личных маршрутов: используем текущий userId
-    let ownerId = userId;
-    let actualRouteName = routeName;
-    
-    if (isCatalog && routeName.includes('-')) {
-        const parts = routeName.split('-');
-        ownerId = parts[0];
-        actualRouteName = parts.slice(1).join('-');
-    }
-    
-    const fullRouteLink = `https://t.me/e_ia_bot/nav?startapp=${ownerId}-${actualRouteName}`;
+    // Ссылка на запущенный маршрут
+    const routeLink = `https://t.me/e_ia_bot/nav?startapp=${routeName}`;
 
     const source = isCatalog ? 'catalog' : 'personal';
     const reportText = [
@@ -1824,7 +1806,7 @@ async function sendNavigatorLaunchReport(routeName, isCatalog) {
         `📱 Platform: ${platform}`,
         `💬 Chat Type: ${chatType}`,
         `🔗 Chat Instance: ${chatInstance}`,
-        `🗺️ Route: ${fullRouteLink}`,
+        `🗺️ Route: ${routeLink}`,
         `📌 Source: ${source}`,
         `🕒 ${moscowTime} (Europe/Moscow)`
     ].join('\n');
