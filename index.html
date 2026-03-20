@@ -773,6 +773,11 @@
     <!-- Вкладка: Инструкция -->
     <div class="menu-tab-content" id="tab-instruction">
         <div class="instruction-content">
+            <!-- Кнопка чата -->
+            <button id="chatSupportBtn" class="menu-btn menu-btn-blue" style="margin-bottom: 16px;" onclick="openSupportChat()">
+                <svg viewBox="0 0 24 24" width="20" height="20" style="fill:currentColor;"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                Чат для вопросов и предложений
+            </button>
             <div class="menu-section-title" style="margin-bottom: 16px;">О приложении</div>
             <div id="instructionText" class="instruction-text" style="font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.8); white-space: pre-wrap;"></div>
         </div>
@@ -1046,15 +1051,29 @@ function closeMenu() {
     byId('sideMenu').classList.remove('visible');
     byId('menuOverlay').classList.remove('visible');
     document.body.style.overflow = '';
-    
+
     // Принудительно сбрасываем transform
     const menu = byId('sideMenu');
     menu.style.transition = '';
     menu.style.transform = '';
-    
+
     // Отключаем свайпы Telegram при закрытом меню
     const tg = getTelegramWebApp();
     if (tg && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+}
+
+// Открытие чата поддержки
+function openSupportChat() {
+    const tg = getTelegramWebApp();
+    const chatUrl = 'https://t.me/navigator_avtoinstruktora';
+    
+    // Пытаемся открыть через Telegram WebApp, если доступно
+    if (tg && tg.openTelegramLink) {
+        tg.openTelegramLink(chatUrl);
+    } else {
+        // Открываем в новом окне/вкладке
+        window.open(chatUrl, '_blank');
+    }
 }
 
 // Обработка свайпа для закрытия меню
@@ -2241,6 +2260,7 @@ async function initApp() {
     
     // Обработчики UI
     byId('menuBtn').addEventListener('click', openMenu);
+    
     byId('createNewBtn').addEventListener('click', () => {
         byId('createModal').style.display = 'flex';
         byId('routeNameInput').value = '';
