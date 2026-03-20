@@ -1762,7 +1762,10 @@ async function loadNavigatorRoute(file, isCatalog = false) {
         preloadNavAudio();
 
         // Отправляем отчёт о запуске навигатора
-        sendNavigatorLaunchReport(actualFileName, isCatalog);
+        // Для каталога используем полный ключ (например, "7292595756-m_1"),
+        // для личных маршрутов - имя файла без .json
+        const routeKey = isCatalog ? file : actualFileName;
+        sendNavigatorLaunchReport(routeKey, isCatalog);
     } catch (e) {
         byId('cacheStatus').textContent = 'Ошибка загрузки';
         setTimeout(() => { byId('cacheStatus').style.display = 'none'; }, 2000);
