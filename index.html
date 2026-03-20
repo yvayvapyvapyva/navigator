@@ -1066,14 +1066,19 @@ function closeMenu() {
 function openSupportChat() {
     const tg = getTelegramWebApp();
     const chatUrl = 'https://t.me/navigator_avtoinstruktora';
-    
-    // Пытаемся открыть через Telegram WebApp, если доступно
+
+    // Пытаемся открыть через Telegram WebApp
     if (tg && tg.openTelegramLink) {
-        tg.openTelegramLink(chatUrl);
-    } else {
-        // Открываем в новом окне/вкладке
-        window.open(chatUrl, '_blank');
+        try {
+            tg.openTelegramLink(chatUrl);
+            return;
+        } catch (e) {
+            console.warn('tg.openTelegramLink failed:', e);
+        }
     }
+
+    // Фолбэк: открываем в том же окне (надёжнее для десктопа)
+    window.location.href = chatUrl;
 }
 
 // Обработка свайпа для закрытия меню
