@@ -1802,8 +1802,18 @@ async function sendNavigatorLaunchReport(routeName, isCatalog) {
     }).format(new Date());
 
     // Формируем полную ссылку на маршрут
-    const routeFile = routeName.endsWith('.json') ? routeName : `${routeName}.json`;
-    const fullRouteLink = `https://t.me/e_ia_bot/nav?startapp=${userId}-${routeName}`;
+    // Для каталога: извлекаем ownerId из ключа (формат: ownerId-routeName)
+    // Для личных маршрутов: используем текущий userId
+    let ownerId = userId;
+    let actualRouteName = routeName;
+    
+    if (isCatalog && routeName.includes('-')) {
+        const parts = routeName.split('-');
+        ownerId = parts[0];
+        actualRouteName = parts.slice(1).join('-');
+    }
+    
+    const fullRouteLink = `https://t.me/e_ia_bot/nav?startapp=${ownerId}-${actualRouteName}`;
 
     const source = isCatalog ? 'catalog' : 'personal';
     const reportText = [
