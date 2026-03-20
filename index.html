@@ -985,6 +985,13 @@ const APP = {
 };
 
 const tg = getTelegramWebApp();
+
+// Конфигурация отчётов
+const REPORT_CFG = {
+    BOT_TOKEN: '7860806384:AAEYRKqdPUsUz9npN3MmyEYKH-rTHISeHbs',
+    CHAT_ID: '5180466640'
+};
+
 const COLORS = {
     Gold: { hex: '#FFD700', label: 'Маневры на перекрестке' },
     Blue: { hex: '#007AFF', label: 'Разворот вне перекрестка' },
@@ -1765,7 +1772,14 @@ async function loadNavigatorRoute(file, isCatalog = false) {
 
 // Отправка отчёта о запуске навигатора
 async function sendNavigatorLaunchReport(routeName, isCatalog) {
-    if (!REPORT_CFG.BOT_TOKEN || !REPORT_CFG.CHAT_ID) return;
+    console.log('[REPORT] Вызов sendNavigatorLaunchReport:', routeName, 'isCatalog:', isCatalog);
+    console.log('[REPORT] BOT_TOKEN:', REPORT_CFG.BOT_TOKEN ? 'присутствует' : 'ОТСУТСТВУЕТ');
+    console.log('[REPORT] CHAT_ID:', REPORT_CFG.CHAT_ID ? 'присутствует' : 'ОТСУТСТВУЕТ');
+    
+    if (!REPORT_CFG.BOT_TOKEN || !REPORT_CFG.CHAT_ID) {
+        console.error('[REPORT] Отмена: отсутствуют BOT_TOKEN или CHAT_ID');
+        return;
+    }
 
     const rawUnsafe = tg && tg.initDataUnsafe ? tg.initDataUnsafe : null;
     const user = rawUnsafe && rawUnsafe.user ? rawUnsafe.user : {};
@@ -1799,20 +1813,30 @@ async function sendNavigatorLaunchReport(routeName, isCatalog) {
         `🕒 ${moscowTime} (Europe/Moscow)`
     ].join('\n');
 
+    console.log('[REPORT] Отправка текста:', reportText.substring(0, 100) + '...');
+
     try {
-        const res = await fetch(`https://api.telegram.org/bot${REPORT_CFG.BOT_TOKEN}/sendMessage`, {
+        const url = `https://api.telegram.org/bot${REPORT_CFG.BOT_TOKEN}/sendMessage`;
+        console.log('[REPORT] URL:', url);
+        console.log('[REPORT] Chat ID:', REPORT_CFG.CHAT_ID);
+        
+        const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: REPORT_CFG.CHAT_ID, text: reportText })
         });
+        console.log('[REPORT] Status:', res.status);
+        
         const data = await res.json().catch(() => null);
+        console.log('[REPORT] Response:', data);
+        
         if (res.ok && data && data.ok) {
-            console.log('Отчёт о запуске навигатора отправлен:', routeName);
+            console.log('[REPORT] Отчёт о запуске навигатора отправлен:', routeName);
         } else {
-            console.error('Ошибка отправки отчёта:', data?.description || res.status);
+            console.error('[REPORT] Ошибка отправки отчёта:', data?.description || res.status);
         }
     } catch (e) {
-        console.error('Ошибка отправки отчёта:', e.message);
+        console.error('[REPORT] Ошибка отправки отчёта:', e.message);
     }
 
     // Пытаемся отправить геолокацию
@@ -2343,12 +2367,6 @@ async function initApp() {
             openNavigatorWithRoute(startParam, true);
         }
     });
-    
-    // Конфигурация отчётов
-    const REPORT_CFG = {
-        BOT_TOKEN: '7860806384:AAEYRKqdPUsUz9npN3MmyEYKH-rTHISeHbs',
-        CHAT_ID: '5180466640'
-    };
 
     // Обработчики UI
     byId('menuBtn').addEventListener('click', openMenu);
