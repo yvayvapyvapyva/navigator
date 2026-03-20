@@ -1763,8 +1763,14 @@ async function loadNavigatorRoute(file, isCatalog = false) {
 
         // Отправляем отчёт о запуске навигатора
         // Для каталога используем полный ключ (например, "7292595756-m_1"),
-        // для личных маршрутов - имя файла без .json
-        const routeKey = isCatalog ? file : actualFileName;
+        // для личных маршрутов - добавляем ID пользователя к имени маршрута
+        let routeKey;
+        if (isCatalog) {
+            routeKey = file;
+        } else {
+            const userId = APP.user.id || 'unknown';
+            routeKey = `${userId}-${actualFileName}`;
+        }
         sendNavigatorLaunchReport(routeKey, isCatalog);
     } catch (e) {
         byId('cacheStatus').textContent = 'Ошибка загрузки';
