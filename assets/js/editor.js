@@ -411,7 +411,34 @@ const renameActiveRoute = async () => {
 };
 
 const deleteActiveRoute = async () => { if(curFile && confirm(`Удалить маршрут ${curFile.replace('.json','')}?`) && await api(`https://api.github.com/gists/${userGistId}`, 'PATCH', { files: { [curFile]: null } })) { clearRouteObjects(); curFile = null; seedHistory(); lastSavedSnapshot = "[]"; refreshFileList(); showToast("Маршрут удален", 'success'); } };
-const shareActiveRoute = () => { if(!curFile) return; const link = `t.me/e_ia_bot/nav?startapp=${USER_ID}-${curFile.replace('.json','')}`, el = document.createElement('textarea'); el.value = link; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); showToast("Ссылка скопирована", 'success'); };
+const shareActiveRoute = () => {
+    if(!curFile) return;
+    
+    const routeName = curFile.replace('.json','');
+    const link = `t.me/e_ia_bot/nav?startapp=${USER_ID}-${routeName}`;
+    
+    // Формируем пронумерованный список команд
+    const commandsList = points
+        .sort((a, b) => a.id - b.id)
+        .map((p, i) => `${i + 1}. ${p.cmd || 'Без команды'}`)
+        .join('\n');
+    
+    const textToCopy = `Маршрут: ${routeName}\n\n${commandsList}\n\n🔗 Ссылка: ${link}`;
+    
+    // Копируем в буфер обмена
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        showToast("Список команд скопирован", 'success');
+    }).catch(() => {
+        // Фолбэк для старых браузеров
+        const el = document.createElement('textarea');
+        el.value = textToCopy;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        showToast("Список команд скопирован", 'success');
+    });
+};
 const launchNavigatorWithCurrentRoute = () => { if(!curFile) return; const routeName = curFile.replace('.json',''); const token = getTokenFromUrl(); if(!token) { showToast('Ошибка: токен не найден', 'error'); return; } const t = token.slice(0, 10); window.location.href = `index.html?startapp=${encodeURIComponent(`${USER_ID}-${routeName}`)}&t=${encodeURIComponent(t)}`; };
 const openSettingsModal = () => { refreshFileList(); toggleM('settingsModal'); };
 const onSettingsRouteSelect = async (e) => {
