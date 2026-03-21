@@ -427,7 +427,7 @@ const shareActiveRoute = () => {
     
     // Копируем в буфер обмена
     navigator.clipboard.writeText(textToCopy).then(() => {
-        showToast("Список команд скопирован", 'success');
+        showToast("Список команд и ссылка скопированы", 'success');
     }).catch(() => {
         // Фолбэк для старых браузеров
         const el = document.createElement('textarea');
@@ -436,7 +436,7 @@ const shareActiveRoute = () => {
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
-        showToast("Список команд скопирован", 'success');
+        showToast("Список команд и ссылка скопированы", 'success');
     });
 };
 const launchNavigatorWithCurrentRoute = () => { if(!curFile) return; const routeName = curFile.replace('.json',''); const token = getTokenFromUrl(); if(!token) { showToast('Ошибка: токен не найден', 'error'); return; } const t = token.slice(0, 10); window.location.href = `index.html?startapp=${encodeURIComponent(`${USER_ID}-${routeName}`)}&t=${encodeURIComponent(t)}`; };
