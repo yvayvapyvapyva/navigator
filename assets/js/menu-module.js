@@ -455,7 +455,7 @@ const MenuModule = {
                     id: tgUser.id,
                     first_name: tgUser.first_name || 'Telegram',
                     last_name: tgUser.last_name || '',
-                    city: { title: tgUser.language_code || 'TG' }
+                    city: { title: tgUser.username ? `@${tgUser.username}` : (tgUser.language_code || 'TG') }
                 };
                 const userInfoBase64 = btoa(encodeURIComponent(JSON.stringify(userData)));
                 params.push(`i=${userInfoBase64}`);
