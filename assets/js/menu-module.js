@@ -418,8 +418,18 @@ const MenuModule = {
     
     // Проверка URL параметра
     checkUrlParam() {
-        // Поддерживаем только формат: #m=id-название
-        const routeParam = this.getUrlParam('m');
+        let routeParam = null;
+
+        // 1. Telegram start_param
+        if (typeof window.Telegram?.WebApp?.initDataUnsafe?.start_param !== 'undefined') {
+            const tgParams = new URLSearchParams(window.Telegram.WebApp.initDataUnsafe.start_param);
+            routeParam = tgParams.get('m');
+        }
+
+        // 2. Fallback: URL hash
+        if (!routeParam) {
+            routeParam = this.getUrlParam('m');
+        }
 
         if (routeParam) {
             // Парсим формат "id-название"
