@@ -4,29 +4,31 @@
     <meta charset="utf-8">
     <title>Route Editor Pro | Cloud Sync</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
     <script src="https://api-maps.yandex.ru/2.1/?apikey=YANDEX_API_KEY&lang=ru_RU&suppressMapOpenBlock=true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <link rel="stylesheet" href="assets/css/shared.css">
-    <link rel="stylesheet" href="assets/css/editor.css">
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/vk-user.js"></script>
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
 
 <div id="toast">Готово</div>
-<div id="welcomeScreen"><div class="welcome-card"><h2 style="margin: 0 0 8px 0; font-weight:800;">Route Editor</h2><div id="userIdBadge" style="background:rgba(255,255,255,0.12);color:#d1d5db;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;margin-bottom:18px;border:1px solid rgba(255,255,255,0.2)">Загрузка...</div><div style="font-size:13px; color:#c7c9d1; margin-top:6px;">Авторизация через параметр URL <b>t</b>...</div></div></div>
+<div id="welcomeScreen" style="display:flex;align-items:center;justify-content:center;background:rgba(10,11,15,0.95);"><div style="display:flex;flex-direction:column;align-items:center;gap:16px;"><span style="width:32px;height:32px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;"></span><div style="font-size:16px;font-weight:600;color:#fff;">Загрузка</div></div></div>
 <div id="map"></div>
 <div class="top-controls" id="uiControls" style="display:none">
+    <button id="layerSwitchBtn" class="circle-btn" onclick="toggleLayer()" style="visibility:hidden">
+        <svg viewBox="0 0 24 24"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
+    </button>
     <button id="listPointsBtn" class="btn-top" onclick="openPointsOrderModal()" style="visibility:hidden">
         <span id="routeLabelText">Маршрут</span>
     </button>
-    <div class="top-right-buttons">
-        <button class="btn-top btn-icon-only" onclick="openSettingsModal()">
-            <span class="btn-icon">⚙️</span>
-        </button>
-        <button class="btn-top btn-icon-only" id="gpsModeBtn" onclick="toggleGpsMode()" style="display:none;">
-            <span class="btn-icon">🌍</span>
-        </button>
-    </div>
+    <button class="btn-top btn-icon-only" id="gpsModeBtn" onclick="toggleGpsMode()" style="display:none;">
+        <span class="btn-icon">🌍</span>
+    </button>
+    <button id="settingsBtn" class="btn-top btn-icon-only" onclick="openSettingsModal()">
+        <span class="btn-icon">⚙️</span>
+    </button>
 </div>
 <div class="bottom-center-controls" id="bottomControls">
     <button id="addMarkerBtn" class="btn-add-main" onclick="handleAddBtnClick()" style="visibility:hidden">
@@ -37,11 +39,1044 @@
 <div id="dropdownOverlay" class="dropdown-overlay" onclick="closeD()"></div>
 <div id="listColorDropdown" class="color-dropdown"></div>
 
-<div id="pointsOrderModal" class="modal" onclick="if(event.target===this) toggleM('pointsOrderModal')"><div class="modal-content"><div class="modal-header"><h3 id="orderModalTitle">Маршрут</h3><button class="close-circle" onclick="toggleM('pointsOrderModal')">✕</button></div><div class="editor-section" id="pointsSortList"></div><div style="padding: 20px;"><button id="saveInListBtn" class="btn-action" onclick="handleModalSave()"><span id="saveBtnText">Готово</span></button></div></div></div>
-<div id="settingsModal" class="modal settings-sheet" onclick="if(event.target===this) toggleM('settingsModal')"><div class="modal-content"><div class="settings-header"><div style="flex:1; min-width:0;"><h3>Настройки</h3></div><button class="close-circle" onclick="toggleM('settingsModal')">✕</button></div><div class="editor-section settings-body"><div class="settings-section"><select id="settingsRouteSelect" class="settings-route-select"><option value="">Выберите маршрут</option></select></div><div id="fileActions" class="settings-section" style="display:none;"><div class="settings-tools"><button class="settings-tool-btn" onclick="renameActiveRoute()">✏️ Переименовать маршрут</button><button class="settings-tool-btn" onclick="shareActiveRoute()">🔗 Скопировать ссылку на маршрут</button><button class="settings-tool-btn settings-tool-btn-danger" onclick="deleteActiveRoute()">🗑️ Удалить маршрут</button><button class="settings-tool-btn settings-tool-btn-green settings-tool-btn-wide" onclick="launchNavigatorWithCurrentRoute()">Открыть в навигаторе</button></div></div></div></div></div>
+<div id="pointsOrderModal" class="modal points-sheet" onclick="if(event.target===this) toggleM('pointsOrderModal')"><div class="modal-sheet" style="gap:0;"><div class="modal-header" style="padding:16px 20px;border-bottom:0.5px solid rgba(255,255,255,0.08);"><h3 id="orderModalTitle" style="margin:0;font-size:18px;font-weight:700;">Маршрут</h3><button class="close-circle" onclick="toggleM('pointsOrderModal')">✕</button></div><div class="editor-section" id="pointsSortList" style="flex:1;overflow-y:auto;"></div><div style="padding:16px 20px;border-top:0.5px solid rgba(255,255,255,0.08);"><button id="saveInListBtn" class="btn-action" onclick="handleModalSave()"><span id="saveBtnText">Готово</span></button></div></div></div>
+<div id="settingsModal" class="modal settings-sheet" onclick="if(event.target===this) toggleM('settingsModal')"><div class="modal-sheet"><div class="modal-header" style="padding:16px 20px;border-bottom:0.5px solid rgba(255,255,255,0.08);"><span id="settingsTitle" style="font-size:18px;font-weight:700;">Ваши маршруты</span><button class="close-circle" onclick="toggleM('settingsModal')">✕</button></div><div class="editor-section settings-body" id="routesList"></div><button class="settings-tool-btn settings-tool-btn-green" onclick="openCreateRouteModal()" style="width:100%;flex-shrink:0;">➕ Создать новый маршрут</button></div></div>
+<div id="createRouteModal" class="modal" onclick="if(event.target===this) toggleM('createRouteModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Новый маршрут</h3><div class="input-wrapper" style="padding:4px;border-radius:14px;"><input type="text" id="newRouteNameInput" placeholder="Название маршрута" style="width:100%;padding:14px;border:none;font-size:17px;outline:none;background:transparent;color:#f5f7fa;font-family:inherit;"></div><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('createRouteModal')" style="flex:1;">Отмена</button><button class="btn-action" onclick="handleCreateNew()" style="flex:1;background:linear-gradient(180deg, rgba(52,199,89,0.9), rgba(40,160,70,0.85));">Создать</button></div></div></div>
+<div id="settingsRouteModal" class="modal" onclick="if(event.target===this) toggleM('settingsRouteModal')"><div class="modal-sheet" style="gap:12px;padding:20px;max-width:500px;margin:auto;"><h3 id="settingsRouteTitle" style="margin:0;font-size:18px;font-weight:700;text-align:center;">Настройки маршрута</h3><div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;">
+<div style="font-size:12px;color:#8b8f99;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Имя маршрута</div>
+<div class="input-wrapper" style="padding:3px;border-radius:12px;margin-bottom:8px;"><input type="text" id="routeDisplayName" placeholder="Введите имя маршрута" style="width:100%;padding:10px;border:none;font-size:16px;outline:none;background:transparent;color:#f5f7fa;font-family:inherit;"></div>
+<div style="font-size:12px;color:#8b8f99;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Описание маршрута</div>
+<div class="input-wrapper" style="padding:3px;border-radius:12px;margin-bottom:8px;"><textarea id="routeDescription" placeholder="Введите описание маршрута" rows="2" style="width:100%;padding:10px;border:none;font-size:16px;outline:none;background:transparent;color:#f5f7fa;font-family:inherit;resize:none;min-height:56px;"></textarea></div>
+<div style="font-size:12px;color:#8b8f99;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Категория</div>
+<div class="input-wrapper" style="padding:3px;border-radius:12px;margin-bottom:8px;"><input type="text" id="routeCategory" placeholder="Категория (необязательно)" style="width:100%;padding:10px;border:none;font-size:16px;outline:none;background:transparent;color:#f5f7fa;font-family:inherit;"></div>
+<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:rgba(25,25,30,0.7);border:1px solid rgba(255,255,255,0.25);">
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;">
+<input type="checkbox" id="routeVisible" style="width:20px;height:20px;accent-color:#34C759;cursor:pointer;">
+<span style="font-size:16px;font-weight:600;color:#ffffff;">Отображать маршрут в публичном списке</span>
+</label>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;">
+<button class="btn-action" onclick="saveRouteMeta();">💾 Сохранить метаданные</button>
+<button class="btn-action" onclick="openInNavigator();">🧭 Открыть в навигаторе</button>
+<button class="btn-action" onclick="shareRouteFromSettings();">🔗 Скопировать ссылку</button>
+<button class="btn-action" onclick="confirmDeleteRoute();" style="background:rgba(255,80,80,0.8);">🗑️ Удалить маршрут</button>
+<button class="btn-action" onclick="toggleM('settingsRouteModal')">Отмена</button>
+</div></div></div>
+<div id="confirmDeleteModal" class="modal" onclick="if(event.target===this) toggleM('confirmDeleteModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Удалить маршрут?</h3><p id="confirmDeleteText" style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;"></p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeleteModal')">Отмена</button><button class="btn-action" onclick="executeDeleteRoute()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
+<div id="confirmDeletePointModal" class="modal" onclick="if(event.target===this) toggleM('confirmDeletePointModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Удалить точку?</h3><p style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;">Вы уверены, что хотите удалить эту точку?</p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeletePointModal')">Отмена</button><button class="btn-action" onclick="executeDeletePoint()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
 
-<script src="assets/js/shared.js"></script>
-<script src="assets/js/telegram-time-report.js"></script>
-<script src="assets/js/editor.js"></script>
+<script>
+(function (global) {
+  const byId = (id) => document.getElementById(id);
+  const round6 = (n) => Math.round(n * 1e6) / 1e6;
+
+  global.AppShared = {
+    byId,
+    round6
+  };
+})(window);
+</script>
+<script>
+const { byId, round6 } = window.AppShared;
+const $ = byId;
+const f6 = round6;
+const vk = typeof vkBridge !== 'undefined' ? vkBridge : null;
+if (vk) VK.init();
+const USER_ID = VK.getId();
+const USER_NAME = VK.getName();
+const USER_UNAME = window.vkUser?.screen_name ? `vk.com/${window.vkUser.screen_name}` : '';
+window.USER_ID = USER_ID;
+window.USER_NAME = USER_NAME;
+window.USER_UNAME = USER_UNAME;
+const YC_FUNCTION_URL = 'https://functions.yandexcloud.net/d4e6qbc1mm9j44h0na3n';
+let map, points = [], cur = null, isAdd = false, isDrawing = false, curRoute = null, activeListPoint = null, modalMode = 'list', tempNewPointData = null, userLocPlacemark = null, activePoint = null, settingsRouteFiles = [];
+let historyStack = [], historyIndex = -1, lastSavedSnapshot = "[]", toastTimer = null;
+let lastGpsPoint = null;
+let gpsRecordingPoint = null;
+let pendingDeletePoint = null;
+let pendingDeleteSingle = false;
+const GPS_MIN_DISTANCE = 5;
+
+const showToast = (text, type = 'info', duration = 2200) => {
+    const el = $('toast');
+    el.textContent = text;
+    el.className = '';
+    el.classList.add(type || 'info');
+    if (toastTimer) clearTimeout(toastTimer);
+    el.classList.add('show');
+    toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+};
+
+// Вызов Yandex Cloud Function
+// Получаем все VK-параметры из URL страницы (передаются VK при запуске Mini App)
+const VK_PARAMS = new URLSearchParams(window.location.search);
+
+async function callYcFunction(action, params = {}, bodyData = null) {
+    const url = new URL(YC_FUNCTION_URL);
+    url.searchParams.set('action', action);
+    // Передаём все VK-параметры для проверки подписи (sign, vk_user_id, vk_app_id, vk_ts и т.д.)
+    VK_PARAMS.forEach((v, k) => url.searchParams.set(k, v));
+    // Наш параметр id берём из window.USER_ID
+    url.searchParams.set('id', window.USER_ID || USER_ID);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    
+    const options = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    };
+    
+    if (bodyData !== null) {
+        options.body = JSON.stringify(bodyData);
+    }
+    
+    const response = await fetch(url.toString(), options);
+    
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    
+    return await response.json();
+}
+function getNavIconSvg(col, txt, az, isEnd = false, isCurr = false, hasComm = false) {
+    const s = isEnd ? 34 : 40, c = s / 2;
+    const r = isEnd ? 7 : 9;
+    const txtStroke = hasComm ? '#FF3B30' : '#000000';
+    const txtStrokeW = hasComm ? 3 : 2;
+    
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}">
+        <rect width="${s}" height="${s}" fill="transparent"/>
+        ${isCurr ? `<circle cx="${c}" cy="${c}" r="${r + 3}" fill="none" stroke="#00FF00" stroke-width="2.5" opacity="0.9"/>` : ''}
+        <g transform="rotate(${az},${c},${c})">
+            <polygon points="${c},2 ${c+r},${c} ${c-r},${c}" fill="${col}" stroke="#000000" stroke-width="1" opacity="0.9"/>
+        </g>
+        <circle cx="${c}" cy="${c}" r="${r}" fill="rgba(0,0,0,0.7)"/>
+        <circle cx="${c}" cy="${c}" r="${r}" fill="${col}" opacity="0.3"/>
+        <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${col}" stroke-width="1.5"/>
+        <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+        <text x="${c}" y="${c + 0.5}" font-size="${isEnd ? 8 : 9}" font-family="Arial" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" stroke="${txtStroke}" stroke-width="${txtStrokeW}" paint-order="stroke fill">${txt}</text>
+    </svg>`;
+    
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
+function getArrowEndSvg(col, az) {
+    const s = 30, c = s / 2;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}">
+        <g transform="rotate(${az},${c},${c})">
+            <polygon points="${c},3 ${c+6},${c+6} ${c},${c+1} ${c-6},${c+6}" fill="${col}" stroke="#000000" stroke-width="1" opacity="0.9"/>
+        </g>
+    </svg>`;
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+const getUserLocSvg = () => 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#007AFF" stroke="white" stroke-width="3"/><circle cx="12" cy="12" r="11" fill="none" stroke="#007AFF" stroke-width="1" opacity="0.3"/></svg>`);
+function calcAzimuth(p1, p2) {
+    if (!p1 || !p2) return 0;
+    const [la1, lo1] = p1.map(v => v * Math.PI / 180);
+    const [la2, lo2] = p2.map(v => v * Math.PI / 180);
+    const y = Math.sin(lo2 - lo1) * Math.cos(la2);
+    const x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(lo2 - lo1);
+    return Math.round((Math.atan2(y, x) * 180 / Math.PI + 360) % 360);
+}
+const serializePoints = () => JSON.stringify(points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm })));
+
+function formatJsonWithPts(data) {
+    const items = data.map(p => {
+        const ptsStr = JSON.stringify(p.pts);
+        return `  {\n    "id": ${p.id},\n    "color": "${p.color}",\n    "pts": ${ptsStr},\n    "cmd": "${p.cmd.replace(/"/g, '\\"')}",\n    "comm": "${(p.comm || '').replace(/"/g, '\\"')}"\n  }`;
+    });
+    return '[\n' + items.join(',\n') + '\n]';
+}
+const clearRouteObjects = () => {
+    points.forEach(p => { 
+        map.geoObjects.remove(p.pm); 
+        map.geoObjects.remove(p.line); 
+        map.geoObjects.remove(p.lineOutline); 
+        if (p.lineAccent) map.geoObjects.remove(p.lineAccent);
+        if (p.endPlacemark) map.geoObjects.remove(p.endPlacemark);
+    });
+    points = [];
+    activePoint = null;
+};
+const updateHistoryButtons = () => { return; };
+const seedHistory = () => {
+    historyStack = [serializePoints()];
+    historyIndex = 0;
+    updateHistoryButtons();
+};
+const pushHistorySnapshot = () => {
+    const snap = serializePoints();
+    if (historyStack[historyIndex] === snap) return;
+    historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(snap);
+    historyIndex = historyStack.length - 1;
+    updateHistoryButtons();
+};
+const updateSaveState = () => {
+    $('floatingSave').style.display = 'none';
+};
+const syncActiveListCard = () => {
+    document.querySelectorAll('.sortable-point-item').forEach(card => {
+        card.classList.toggle('active', !!activePoint && parseInt(card.dataset.id) === activePoint.id);
+    });
+};
+const setActivePoint = (p, center = false) => {
+    activePoint = p || null;
+    points.forEach(pt => {
+        const active = activePoint && pt === activePoint;
+        pt.line.options.set({ strokeOpacity: active ? 1 : 0.8 });
+        pt.lineOutline.options.set({ strokeWidth: active ? 8 : 6 });
+        pt.pm.options.set('zIndex', active ? 1800 : 1000);
+        if (pt.endPlacemark) pt.endPlacemark.options.set('zIndex', active ? 1600 : 800);
+        updI(pt);
+    });
+    if (center && activePoint?.pts?.length) map.setCenter(activePoint.pts[0]);
+    syncActiveListCard();
+};
+const applySnapshot = (snapshot) => {
+    const data = JSON.parse(snapshot || "[]");
+    clearRouteObjects();
+    data.forEach(d => addP(d.pts[0], d, true));
+    recalculateIds();
+    setActivePoint(null);
+    updateSaveState();
+};
+
+let initialCenter = [56.3399, 43.9332];
+let currentLayerType = 'yandex#satellite';
+
+function toggleLayer() {
+    if (!map) return;
+    currentLayerType = currentLayerType === 'yandex#satellite' ? 'yandex#map' : 'yandex#satellite';
+    map.setType(currentLayerType);
+    const btn = $('layerSwitchBtn');
+    if (btn) {
+        btn.querySelector('.btn-icon').textContent = currentLayerType === 'yandex#satellite' ? '🗺️' : '🛰️';
+    }
+}
+
+function initMapWithGeolocation() {
+    return new Promise((resolve) => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    initialCenter = [position.coords.latitude, position.coords.longitude];
+                    resolve(initialCenter);
+                },
+                () => { resolve(initialCenter); },
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+            );
+        } else { resolve(initialCenter); }
+    });
+}
+
+// Инициализация VK Bridge
+vkBridge.send('VKWebAppInit').then(() => {
+    
+}).catch((err) => {
+    
+});
+
+// Получение данных пользователя VK
+vkBridge.send('VKWebAppGetUserInfo').then((data) => {
+    window.vkUser = data;
+    
+    // Обновляем данные пользователя после загрузки
+    window.USER_ID = String(data.id);
+    window.USER_NAME = data.first_name + (data.last_name ? " " + data.last_name : "");
+    window.USER_UNAME = data.screen_name ? `vk.com/${data.screen_name}` : "";
+    
+}).catch((err) => {
+    
+});
+
+ymaps.ready(async () => {
+    // Ждём загрузки данных VK (до 2 секунд)
+    for(let i = 0; i < 20 && !window.vkUser; i++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    const userId = window.USER_ID || USER_ID;
+
+    const center = await initMapWithGeolocation();
+    map = new ymaps.Map("map", { center: center, zoom: 17, type: 'yandex#satellite', controls: [] });
+    userLocPlacemark = new ymaps.Placemark([0,0], {}, { iconLayout: 'default#image', iconImageHref: getUserLocSvg(), iconImageSize: [24,24], iconImageOffset: [-12,-12], zIndex: 5000, visible: false });
+    map.geoObjects.add(userLocPlacemark);
+    initGeolocation();
+    map.events.add('click', e => {
+        if(isAdd && tempNewPointData) {
+            const target = e.get('target');
+            let coords = e.get('coords');
+            
+            for (const p of points) {
+                if (p.endPlacemark && target === p.endPlacemark) {
+                    coords = p.endPlacemark.geometry.getCoordinates();
+                    break;
+                }
+            }
+            
+            const newPoint = addP(coords, { ...tempNewPointData });
+            pushHistorySnapshot();
+            updateSaveState();
+            setActivePoint(newPoint, false);
+            startDrawingForPoint(newPoint, true);
+            tempNewPointData = null;
+        }
+    });
+    initColorDropdown('listColorDropdown', (h, n) => {
+        if(activeListPoint) {
+            pushHistorySnapshot();
+            const { point: p, card: c } = activeListPoint; p.color = n; c.querySelector('.color-indicator-btn').style.background = h;
+            const sel = c.querySelector('.cmd-select'); updateCommandOptions(sel, n, ""); p.cmd = sel.value;
+            if (p.line) { p.line.options.set('strokeColor', h); p.lineOutline.options.set('strokeColor', '#000000'); updI(p); } activeListPoint = null;
+            pushHistorySnapshot();
+            updateSaveState();
+        }
+    });
+    new Sortable($('pointsSortList'), { animation: 150, handle: '.sort-handle', ghostClass: 'sortable-ghost', onEnd: reorderPointsFromList });
+
+    localStorage.removeItem('gh_t_optimized');
+    
+    handleInitialAuth();
+});
+
+function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+
+const initGeolocation = () => {
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(p => {
+            const coords = [p.coords.latitude, p.coords.longitude];
+            if (userLocPlacemark) {
+                userLocPlacemark.geometry.setCoordinates(coords);
+                userLocPlacemark.options.set('visible', true);
+            }
+            if (gpsRecordingPoint) {
+                const currentCoords = p.coords;
+                const dist = getDistanceFromLatLonInM(
+                    lastGpsPoint.lat, lastGpsPoint.lon,
+                    currentCoords.latitude, currentCoords.longitude
+                );
+                if (dist < GPS_MIN_DISTANCE) return;
+                const pts = gpsRecordingPoint.line.geometry.getCoordinates();
+                pts.push(coords);
+                gpsRecordingPoint.line.geometry.setCoordinates(pts);
+                gpsRecordingPoint.pts = pts.map(pt => [f6(pt[0]), f6(pt[1])]);
+                lastGpsPoint = { lat: currentCoords.latitude, lon: currentCoords.longitude };
+                map.setCenter(coords);
+            }
+        }, null, { enableHighAccuracy: true, maximumAge: 5000 });
+    }
+};
+const getRouteFromUrl = () => {
+    const raw = (new URLSearchParams(window.location.search).get('route') || '').trim();
+    if (!raw) return null;
+    const normalized = raw.endsWith('.json') ? raw : `${raw}.json`;
+    return normalized;
+};
+const handleInitialAuth = async () => {
+    
+    $('welcomeScreen').style.display = 'none';
+    $('uiControls').style.display = 'flex';
+    $('bottomControls').style.display = 'flex';
+    seedHistory();
+    updateSaveState();
+    await refreshFileList();
+    const userId = window.USER_ID || USER_ID;
+    const routeCount = settingsRouteFiles.length;
+    $('settingsTitle').textContent = `${userId} - маршрутов:${routeCount}`;
+    toggleM('settingsModal');
+};
+
+const refreshFileList = async () => {
+    try {
+        const result = await callYcFunction('list');
+        settingsRouteFiles = result.routes || [];
+        renderSettingsFileList();
+        updateVisibility();
+    } catch (e) {
+        
+        settingsRouteFiles = [];
+        renderSettingsFileList();
+        updateVisibility();
+        showToast('Ошибка загрузки маршрутов', 'error');
+    }
+};
+const renderSettingsFileList = () => {
+    const list = $('routesList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (settingsRouteFiles.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#8b8f99;font-size:15px;">У вас пока нет маршрутов.<br>Создайте первый маршрут.</div>';
+    } else {
+        settingsRouteFiles.forEach(route => {
+            const routeKey = typeof route === 'string' ? route : (route.m || '');
+            const displayName = typeof route === 'string' ? route : (route.name || route.m || '');
+            const item = document.createElement('div');
+            item.className = 'route-list-item' + (routeKey === curRoute ? ' active' : '');
+            
+            const nameBtn = document.createElement('button');
+            nameBtn.textContent = displayName;
+            nameBtn.style.cssText = 'flex:1;background:transparent;border:none;color:#fff;font-size:16px;font-weight:600;cursor:pointer;padding:14px 8px;margin:0;outline:none;width:100%;text-align:left;height:100%;';
+            nameBtn.onclick = () => {
+                if (nameBtn.textContent === 'Загрузка...') return;
+                nameBtn.textContent = 'Загрузка...';
+                loadRoute(routeKey).then(() => {
+                    nameBtn.textContent = displayName;
+                });
+            };
+            
+            const settingsWrapper = document.createElement('div');
+            settingsWrapper.style.cssText = 'background:linear-gradient(180deg, rgba(50,50,58,0.8), rgba(35,35,42,0.7));border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:4px;margin-right:4px;cursor:pointer;';
+            
+            const settingsBtn = document.createElement('button');
+            settingsBtn.innerHTML = '⚙️';
+            settingsBtn.style.cssText = 'background:transparent;border:none;font-size:18px;cursor:pointer;padding:4px;';
+            settingsBtn.onclick = (e) => { e.stopPropagation(); openRouteSettings(routeKey); };
+            
+            settingsWrapper.appendChild(settingsBtn);
+            item.appendChild(nameBtn);
+            item.appendChild(settingsWrapper);
+            list.appendChild(item);
+        });
+    }
+    const userId = window.USER_ID || USER_ID;
+    $('settingsTitle').textContent = `${userId} - маршрутов:${settingsRouteFiles.length}`;
+};
+
+const updateVisibility = () => {
+    const act = curRoute !== null;
+    $('listPointsBtn').style.visibility = act ? 'visible' : 'hidden';
+    $('layerSwitchBtn').style.visibility = act ? 'visible' : 'hidden';
+    $('addMarkerBtn').style.visibility = act ? 'visible' : 'hidden';
+    $('gpsModeBtn').style.display = act ? 'flex' : 'none';
+    if(curRoute) {
+        if ($('fileActions')) $('fileActions').style.display = 'block';
+        $('routeLabelText').textContent = currentRouteMeta.name || curRoute;
+    }
+    else {
+        if ($('fileActions')) $('fileActions').style.display = 'none';
+        $('routeLabelText').textContent = 'Маршрут';
+    }
+    renderSettingsFileList();
+    updateSaveState();
+};
+
+const openCreateRouteModal = () => {
+    toggleM('createRouteModal');
+    $('newRouteNameInput').value = '';
+    setTimeout(() => $('newRouteNameInput').focus(), 100);
+};
+
+const generateSlug = (text) => {
+    const ruToEn = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh', 'з': 'z', 'и': 'i',
+        'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't',
+        'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '',
+        'э': 'e', 'ю': 'yu', 'я': 'ya'
+    };
+    return text.toLowerCase()
+        .split('')
+        .map(char => ruToEn[char] || char)
+        .join('')
+        .replace(/[^a-z0-9]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '') || 'route';
+};
+
+const handleCreateNew = async () => {
+    const name = $('newRouteNameInput').value.trim();
+    if(!name) return;
+    
+    const slug = generateSlug(name);
+    if(!slug) return;
+    
+    toggleM('createRouteModal');
+    
+    try {
+        await callYcFunction('save', { m: slug }, { data: [] });
+        await callYcFunction('save_meta', { m: slug }, { name: name, description: '', visible: false, category: '' });
+        refreshFileList(); 
+        loadRoute(slug); 
+        showToast("Маршрут создан", 'success'); 
+    } catch (e) {
+        
+        showToast("Ошибка создания", 'error');
+    }
+};
+
+const loadRoute = async (routeName) => {
+    showToast("Загрузка...", "info");
+    try {
+        const result = await callYcFunction('get_protected', { m: routeName });
+        if (result.error) {
+            showToast(result.error, 'error');
+            return;
+        }
+        const data = result.data || [];
+        clearRouteObjects();
+        curRoute = routeName;
+        data.forEach(d => addP(d.pts[0], d, true));
+        if(points.length) map.setCenter(points[0].pts[0]);
+        recalculateIds();
+        seedHistory();
+        lastSavedSnapshot = serializePoints();
+        
+        try {
+            const meta = await callYcFunction('get_meta', { m: routeName });
+            currentRouteMeta.name = meta.name || routeName;
+        } catch (e) {
+            currentRouteMeta.name = routeName;
+        }
+        
+        updateVisibility();
+        setActivePoint(points[0] || null);
+        toggleM('settingsModal');
+        showToast(`Загружен: ${currentRouteMeta.name}`, 'success');
+    } catch (e) {
+        
+        showToast('Ошибка загрузки маршрута', 'error');
+    }
+};
+
+const renameActiveRoute = async () => {
+    if (!curRoute) { showToast('Выберите маршрут', 'error'); return; }
+    const currentName = curRoute;
+    const nextNameRaw = prompt('Новое имя маршрута', currentName);
+    if (nextNameRaw === null) return;
+    const nextName = nextNameRaw.replace(/\s/g, '_');
+    if (!nextName) { showToast('Введите имя маршрута', 'error'); return; }
+    if (nextName === curRoute) return;
+    
+    try {
+        // Получаем данные текущего маршрута
+        const getResult = await callYcFunction('get', { m: curRoute });
+        if (getResult.error) { showToast('Ошибка загрузки данных', 'error'); return; }
+        
+        // Сохраняем с новым именем
+        const content = getResult.data || [];
+        await callYcFunction('save', { m: nextName }, { data: content });
+        
+        // Удаляем старый
+        await callYcFunction('delete', { m: curRoute });
+        
+        curRoute = nextName;
+        updateVisibility();
+        refreshFileList();
+        showToast('Маршрут переименован', 'success');
+    } catch (e) {
+        
+        showToast('Ошибка переименования', 'error');
+    }
+};
+
+const deleteActiveRoute = async () => {
+    if (!curRoute) return;
+    settingsRouteName = curRoute;
+    confirmDeleteRoute();
+};
+const shareActiveRoute = () => {
+    if(!curRoute) return;
+    const userId = window.vkUser?.id;
+    const link = `https://vk.com/app54507759#m=${userId}-${curRoute}`;
+    navigator.clipboard.writeText(link).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        showToast("Ссылка скопирована", 'success');
+    });
+};
+
+let settingsRouteName = null;
+let currentRouteMeta = { name: '', description: '', visible: false, category: '' };
+
+const openRouteSettings = async (routeName) => {
+    settingsRouteName = routeName;
+    try {
+        const meta = await callYcFunction('get_meta', { m: routeName });
+        const displayName = meta.name || routeName;
+        $('settingsRouteTitle').textContent = `Маршрут "${displayName}"`;
+        currentRouteMeta = {
+            name: meta.name || '',
+            description: meta.description || '',
+            visible: meta.visible !== undefined ? meta.visible : false,
+            category: meta.category || ''
+        };
+        $('routeDisplayName').value = currentRouteMeta.name;
+        $('routeDescription').value = currentRouteMeta.description;
+        $('routeVisible').checked = currentRouteMeta.visible;
+        $('routeCategory').value = currentRouteMeta.category;
+    } catch (e) {
+        
+        currentRouteMeta = { name: '', description: '', visible: false, category: '' };
+        $('routeDisplayName').value = '';
+        $('routeDescription').value = '';
+        $('routeVisible').checked = false;
+        $('routeCategory').value = '';
+    }
+    toggleM('settingsRouteModal');
+};
+
+const saveRouteMeta = async () => {
+    if (!settingsRouteName) { showToast('Выберите маршрут', 'error'); return; }
+    const name = $('routeDisplayName').value.trim();
+    const description = $('routeDescription').value.trim();
+    const visible = $('routeVisible').checked;
+    const category = $('routeCategory').value.trim();
+
+    if (!name) { showToast('Введите имя маршрута', 'error'); return; }
+
+    const newSlug = generateSlug(name);
+    const isRenaming = newSlug !== settingsRouteName;
+
+    try {
+        const result = await callYcFunction('save_meta', { m: settingsRouteName }, { name, description, visible, category, new_m: newSlug });
+        
+        if (result.new_m) {
+            settingsRouteName = result.new_m;
+            if (curRoute === settingsRouteName) curRoute = result.new_m;
+            refreshFileList();
+        }
+        
+        currentRouteMeta = { name, description, visible, category };
+        
+        if (curRoute === settingsRouteName || curRoute === result.new_m) {
+            $('routeLabelText').textContent = name;
+        }
+        
+        showToast('Метаданные сохранены', 'success');
+    } catch (e) {
+        
+        showToast('Ошибка сохранения метаданных', 'error');
+    }
+};
+
+const confirmDeleteRoute = () => {
+    if (!settingsRouteName) return;
+    $('confirmDeleteText').textContent = `Вы уверены, что хотите удалить маршрут "${settingsRouteName}"?`;
+    toggleM('settingsRouteModal');
+    setTimeout(() => toggleM('confirmDeleteModal'), 100);
+};
+const executeDeleteRoute = async () => {
+    if (!settingsRouteName) return;
+    toggleM('confirmDeleteModal');
+    try {
+        await callYcFunction('delete', { m: settingsRouteName });
+        if (curRoute === settingsRouteName) {
+            clearRouteObjects();
+            curRoute = null;
+            seedHistory();
+            lastSavedSnapshot = "[]";
+        }
+        refreshFileList();
+        showToast("Маршрут удален", 'success');
+    } catch (e) {
+        
+        showToast('Ошибка удаления', 'error');
+    }
+};
+const shareRouteFromSettings = () => {
+    if (!settingsRouteName) return;
+    const userId = window.vkUser?.id;
+    const link = `https://vk.com/app54507759#m=${userId}-${settingsRouteName}`;
+    navigator.clipboard.writeText(link).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        showToast("Ссылка скопирована", 'success');
+    });
+};
+const openInNavigator = () => {
+    const routeKey = settingsRouteName || curRoute;
+    if (!routeKey) return;
+    const userId = window.vkUser?.id;
+    window.location.href = `navigator.html#m=${userId}-${routeKey}`;
+};
+const launchNavigatorWithCurrentRoute = () => { 
+    if(!curRoute) return; 
+    const userId = window.vkUser?.id;
+    window.location.href = `https://vk.com/app54507759#m=${userId}-${curRoute}`; 
+};
+const saveRouteLocally = () => {
+    if(!curRoute) { showToast('Выберите маршрут', 'error'); return; }
+    const data = points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm }));
+    const jsonStr = formatJsonWithPts(data);
+    const filename = `${window.USER_ID || USER_ID}-${curRoute}.json`;
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Сохранено: ${filename}`, 'success');
+};
+const openSettingsModal = () => { refreshFileList(); toggleM('settingsModal'); };
+const onSettingsRouteSelect = async (e) => { const val = e.target.value || ''; if (!val || val === curRoute) return; await loadRoute(val); };
+const toggleM = id => { const m = $(id); m.style.display = (m.style.display === 'none' || !m.style.display) ? 'flex' : 'none'; };
+const closeD = () => { document.querySelectorAll('.color-dropdown').forEach(dr => dr.style.display = 'none'); $('dropdownOverlay').style.display = 'none'; };
+const toggleD = id => { const d = $(id), vis = d.style.display === 'flex'; closeD(); if(!vis) { d.style.display = 'flex'; $('dropdownOverlay').style.display = 'block'; } };
+const initColorDropdown = (id, cb) => Object.entries(COLORS).forEach(([n, d]) => { const r = Object.assign(document.createElement('div'), { className: 'color-row', onclick: (e) => { e.stopPropagation(); cb(d.hex, n); closeD(); }, innerHTML: `<div class="swatch" style="background:${d.hex}"></div><div style="font-weight:600;">${d.label}</div>` }); $(id).appendChild(r); });
+const updateCommandOptions = (sel, col, val = "") => { sel.innerHTML = ''; (COMMAND_SETS[col] || ["Без команды"]).forEach(cmd => sel.appendChild(Object.assign(document.createElement('option'), { value: cmd, text: cmd, selected: cmd === val }))); };
+
+function addP(coords, data = null, silent = false) {
+    const ptsData = data?.pts || [coords];
+    const p = { 
+        id: data?.id || (points.length + 1), 
+        color: data?.color || 'Gold', 
+        cmd: data?.cmd || '', 
+        comm: data?.comm || '', 
+        pts: ptsData, 
+        pm: new ymaps.Placemark(coords, {}, { iconLayout: 'default#imageWithContent', iconImageSize: [40,40], iconImageOffset: [-20,-20], zIndex: 1000 }), 
+        line: new ymaps.Polyline(ptsData, {}, { strokeWidth: 4, strokeOpacity: 1, zIndex: 852, interactive: false }), 
+        lineOutline: new ymaps.Polyline(ptsData, {}, { strokeWidth: 6, strokeOpacity: 1, zIndex: 850, interactive: false }), 
+        lineAccent: null, 
+        endPlacemark: null 
+    };
+    p.line.options.set('strokeColor', COLORS[p.color].hex);
+    p.lineOutline.options.set('strokeColor', '#000000');
+    
+    p.pm.geometry.events.add('change', () => { 
+        const nc = p.pm.geometry.getCoordinates(), pts = p.line.geometry.getCoordinates(); 
+        if(pts.length) { 
+            pts[0] = nc; 
+            p.line.geometry.setCoordinates(pts); 
+            p.lineOutline.geometry.setCoordinates(pts);
+            if(p.lineAccent) p.lineAccent.geometry.setCoordinates(pts);
+        } 
+    });
+    p.line.geometry.events.add('change', () => {
+        const coords = p.line.geometry.getCoordinates();
+        p.pts = coords.map(pt => [f6(pt[0]), f6(pt[1])]);
+        p.lineOutline.geometry.setCoordinates(coords);
+        if(p.lineAccent) p.lineAccent.geometry.setCoordinates(coords);
+        if(isDrawing && coords.length > 0) {
+            const pmCoords = p.pm.geometry.getCoordinates();
+            if(Math.abs(pmCoords[0] - coords[0][0]) > 0.000001 || Math.abs(pmCoords[1] - coords[0][1]) > 0.000001) {
+                p.pm.geometry.setCoordinates(coords[0]);
+            }
+        }
+        if(isDrawing && p.pts.length > 1) { $('addText').textContent = "Завершить рисование пути"; }
+        updI(p);
+    });
+    p.pm.events.add('click', () => { setActivePoint(p, true); if(!isAdd && !isDrawing) openEditPointModal(p); });
+    map.geoObjects.add(p.lineOutline);
+    map.geoObjects.add(p.pm);
+    map.geoObjects.add(p.line);
+    points.push(p);
+    updI(p);
+    if (!silent) updateSaveState();
+    return p;
+}
+
+const startDrawingForPoint = (p, isNewPoint = false) => {
+    isAdd = false;
+    isDrawing = true;
+    $('addText').textContent = "Рисуйте путь...";
+    $('addMarkerBtn').classList.remove('active');
+    $('addMarkerBtn').classList.add('drawing');
+    cur = p;
+    setActivePoint(p, !isNewPoint);
+    p.line.editor.startDrawing();
+    p.pm.options.set('draggable', true);
+};
+const stopDrawingMode = async () => {
+    if (cur) {
+        cur.pm.options.set('draggable', false);
+        cur.line.editor.stopEditing();
+        pushHistorySnapshot();
+        updateSaveState();
+    }
+    isDrawing = false;
+    $('addText').textContent = "Добавить новую точку";
+    $('addMarkerBtn').classList.remove('drawing');
+    cur = null;
+    await saveGist();
+    showToast("Изменения сохранены", "success");
+};
+const handleAddBtnClick = () => {
+    if (gpsRecordingPoint) { stopGpsRecordMode(); }
+    else if (isDrawing) { stopDrawingMode(); }
+    else if (isAdd) { stopAdd(); }
+    else { openCreatePointModal(); }
+};
+
+function toggleGpsMode() {
+    if (gpsRecordingPoint) { stopGpsRecordMode(); }
+    else {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const coords = [position.coords.latitude, position.coords.longitude];
+                gpsRecordingPoint = addP(coords, { id: points.length + 1, color: 'Gold', cmd: 'Выполняем разгон до максимальной скорости', comm: '', pts: [coords] }, false);
+                lastGpsPoint = { lat: coords[0], lon: coords[1] };
+                gpsRecordingPoint.line.editor.startDrawing();
+                gpsRecordingPoint.pm.options.set('draggable', true);
+                $('addText').textContent = 'Завершить запись';
+                $('gpsModeBtn').classList.add('active');
+            },
+            () => {},
+            { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+        );
+    }
+}
+
+async function stopGpsRecordMode() {
+    if (gpsRecordingPoint) {
+        gpsRecordingPoint.line.editor.stopEditing();
+        gpsRecordingPoint.pm.options.set('draggable', false);
+        gpsRecordingPoint = null;
+    }
+    lastGpsPoint = null;
+    $('gpsModeBtn').classList.remove('active');
+    $('addText').textContent = 'Добавить новую точку';
+    pushHistorySnapshot();
+    modalMode = 'gps';
+    await saveGist();
+    showToast("Изменения сохранены", "success");
+}
+
+const stopAdd = () => { isAdd = false; tempNewPointData = null; $('addText').textContent = "Добавить новую точку"; $('addMarkerBtn').classList.remove('active'); map.setCursor('grab'); points.forEach(p => { if (p.endPlacemark) p.endPlacemark.options.set('interactive', false); }); };
+const updI = p => { 
+    const isCurrent = p === activePoint;
+    const hasComm = !!p.comm;
+    const az = p.pts?.length >= 2 ? calcAzimuth(p.pts[0], p.pts[1]) : 0;
+    p.pm.options.set('iconImageHref', getNavIconSvg(COLORS[p.color].hex, p.id, az, false, isCurrent, hasComm));
+    
+    if (p.pts?.length >= 2) {
+        if (isCurrent) {
+            if (!p.lineAccent) {
+                p.lineAccent = new ymaps.Polyline(p.pts, {}, { strokeWidth: 6, strokeOpacity: 1, zIndex: 851, interactive: false });
+                p.lineAccent.options.set('strokeColor', '#A4E84A');
+                map.geoObjects.add(p.lineAccent);
+            } else {
+                p.lineAccent.geometry.setCoordinates(p.pts);
+            }
+        } else {
+            if (p.lineAccent) {
+                map.geoObjects.remove(p.lineAccent);
+                p.lineAccent = null;
+            }
+        }
+        
+        if (!p.endPlacemark) {
+            p.endPlacemark = new ymaps.Placemark([0, 0], {}, { iconLayout: 'default#image', iconImageSize: [30,30], iconImageOffset: [-15,-15], zIndex: 950 });
+            p.endPlacemark.events.add('click', (e) => {
+                if (isAdd && tempNewPointData) {
+                    e.stopPropagation();
+                    const coords = p.endPlacemark.geometry.getCoordinates();
+                    const newPoint = addP(coords, { ...tempNewPointData });
+                    pushHistorySnapshot();
+                    updateSaveState();
+                    setActivePoint(newPoint, false);
+                    startDrawingForPoint(newPoint, true);
+                    tempNewPointData = null;
+                    points.forEach(pt => { if (pt.endPlacemark) pt.endPlacemark.options.set('interactive', false); });
+                } else {
+                    e.stopPropagation();
+                }
+            });
+            p.endPlacemark.options.set('interactive', false);
+            map.geoObjects.add(p.endPlacemark);
+        }
+        const last = p.pts[p.pts.length - 1];
+        const prev = p.pts.length >= 2 ? p.pts[p.pts.length - 2] : last;
+        p.endPlacemark.geometry.setCoordinates(last);
+        p.endPlacemark.options.set('iconImageHref', getArrowEndSvg(COLORS[p.color].hex, calcAzimuth(prev, last)));
+    } else {
+        if (p.lineAccent) {
+            map.geoObjects.remove(p.lineAccent);
+            p.lineAccent = null;
+        }
+        if (p.endPlacemark) {
+            map.geoObjects.remove(p.endPlacemark);
+            p.endPlacemark = null;
+        }
+    }
+};
+function recalculateIds() {
+    points.forEach((p, i) => { p.id = i + 1; updI(p); });
+    const list = $('pointsSortList'); if (list && list.children.length === points.length) Array.from(list.children).forEach((c, i) => { const n = c.querySelector('.point-number-text'); if(n) n.textContent = i + 1; c.dataset.id = i + 1; });
+    syncActiveListCard();
+}
+
+function confirmDeletePoint(p, isSingle) {
+    pendingDeletePoint = p;
+    pendingDeleteSingle = isSingle;
+    setTimeout(() => toggleM('confirmDeletePointModal'), 100);
+}
+async function executeDeletePoint() {
+    if (!pendingDeletePoint) return;
+    const p = pendingDeletePoint;
+    toggleM('confirmDeletePointModal');
+    pushHistorySnapshot();
+    delPoint(p);
+    pushHistorySnapshot();
+    updateSaveState();
+    await saveGist();
+    showToast("Изменения сохранены", "success");
+    showToast("Точка удалена", "info");
+    pendingDeletePoint = null;
+}
+
+function createPointCard(p, single = false) {
+    const item = document.createElement('div'); item.className = 'sortable-point-item'; item.dataset.id = p.id;
+    item.innerHTML = `${!single ? '<div class="sort-handle">☰</div>' : ''}<div class="item-main-row"><div class="point-number-text">${p.id || '?'}</div><div class="color-indicator-btn" style="background:${COLORS[p.color].hex}"></div><select class="cmd-select"></select></div><textarea class="comm-input" placeholder="комментарий">${p.comm || ''}</textarea><div class="item-actions"><button class="btn-item-action btn-path">🖋️ Изменить путь</button><button class="btn-item-action btn-del" style="color:var(--danger)">🗑️ Удалить</button></div>`;
+
+const sel = item.querySelector('.cmd-select');
+    updateCommandOptions(sel, p.color, p.cmd);
+    const comm = item.querySelector('.comm-input');
+    const autoHeight = () => { comm.style.height = 'auto'; comm.style.height = comm.scrollHeight + 'px'; };
+    comm.addEventListener('input', () => { p.comm = comm.value; autoHeight(); updateSaveState(); });
+    comm.addEventListener('blur', () => { pushHistorySnapshot(); updateSaveState(); });
+    setTimeout(autoHeight, 0);
+    item.querySelector('.color-indicator-btn').onclick = e => { e.stopPropagation(); activeListPoint = { point: p, card: item }; toggleD('listColorDropdown'); };
+    sel.onchange = () => { p.cmd = sel.value; pushHistorySnapshot(); updateSaveState(); };
+    item.onclick = e => {
+        if (e.target.closest('.btn-item-action') || e.target.closest('.color-indicator-btn') || e.target.closest('.cmd-select') || e.target.closest('.comm-input')) return;
+        setActivePoint(p, true);
+    };
+    item.querySelector('.btn-del').onclick = () => { confirmDeletePoint(p, single); };
+    item.querySelector('.btn-path').onclick = () => { toggleM('pointsOrderModal'); startEditPath(p); };
+    return item;
+}
+async function delPoint(p) {
+    points = points.filter(x => x !== p);
+    map.geoObjects.remove(p.pm);
+    map.geoObjects.remove(p.line);
+    map.geoObjects.remove(p.lineOutline);
+    if(p.lineAccent) map.geoObjects.remove(p.lineAccent);
+    if(p.endPlacemark) map.geoObjects.remove(p.endPlacemark);
+    if (activePoint === p) activePoint = null;
+    recalculateIds();
+    setActivePoint(points[0] || null);
+    await saveGist();
+    showToast("Изменения сохранены", "success");
+}
+function startEditPath(p) {
+    cur = p;
+    isDrawing = true;
+    $('addText').textContent = "Завершить рисование пути";
+    $('addMarkerBtn').classList.add('drawing');
+    p.pm.options.set('draggable', true);
+    p.line.editor.startEditing();
+    setActivePoint(p, true);
+}
+
+function openPointsOrderModal() {
+    modalMode = 'list'; const list = $('pointsSortList'); list.innerHTML = ''; $('orderModalTitle').textContent = curRoute || "Маршрут"; $('saveInListBtn').style.display = 'block'; $('saveBtnText').textContent = "Готово";
+    if (!points.length) list.innerHTML = '<div style="text-align:center;padding:40px;color:#c7c9d1;font-weight:500;">Маршрут пока пуст</div>'; else points.forEach(p => list.appendChild(createPointCard(p)));
+    syncActiveListCard();
+    toggleM('pointsOrderModal');
+}
+
+function openEditPointModal(p) { modalMode = 'edit'; $('pointsSortList').innerHTML = ''; $('orderModalTitle').textContent = `Точка #${p.id}`; $('saveInListBtn').style.display = 'block'; $('saveBtnText').textContent = "Готово"; $('pointsSortList').appendChild(createPointCard(p, true)); syncActiveListCard(); toggleM('pointsOrderModal'); }
+function openCreatePointModal() {
+    modalMode = 'create';
+    $('pointsSortList').innerHTML = '';
+    $('orderModalTitle').textContent = "Новая точка";
+    $('saveInListBtn').style.display = 'block';
+    $('saveBtnText').textContent = "Поставить на карту";
+    tempNewPointData = { id: points.length + 1, color: 'Gold', cmd: COMMAND_SETS.Gold[0], comm: '' };
+    $('pointsSortList').appendChild(createPointCard(tempNewPointData, true));
+    toggleM('pointsOrderModal');
+}
+
+async function handleModalSave() {
+    if (modalMode === 'list' || modalMode === 'edit') {
+        await saveGist();
+    }
+    toggleM('pointsOrderModal');
+    if (modalMode === 'list' || modalMode === 'edit') {
+        showToast("Изменения сохранены", "success");
+    }
+    else if (modalMode === 'create') {
+        isAdd = true;
+        points.forEach(p => { if (p.endPlacemark) p.endPlacemark.options.set('interactive', true); });
+        $('addMarkerBtn').classList.add('active');
+        $('addText').textContent = "Выберите место на карте";
+    }
+}
+
+function reorderPointsFromList() {
+    pushHistorySnapshot();
+    points = Array.from($('pointsSortList').children).map(c => points.find(p => p.id === parseInt(c.dataset.id))).filter(p => !!p);
+    recalculateIds();
+    pushHistorySnapshot();
+    updateSaveState();
+}
+async function saveGist() {
+    if(!curRoute) return;
+    const btn = $('saveInListBtn');
+    const topSaveBtn = $('saveStateBtn');
+    btn.classList.add('loading');
+    if (topSaveBtn) { topSaveBtn.disabled = true; topSaveBtn.textContent = 'Сохраняем...'; }
+    try {
+        const data = points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm }));
+        const result = await callYcFunction('save', { m: curRoute }, { data });
+        if(result && !result.error) {
+            lastSavedSnapshot = serializePoints();
+            btn.classList.remove('loading');
+            btn.classList.add('saved');
+            if (topSaveBtn) topSaveBtn.textContent = 'Сохранено';
+            setTimeout(() => {
+                btn.classList.remove('saved');
+                updateSaveState();
+            }, 900);
+        } else {
+            btn.classList.remove('loading');
+            if (topSaveBtn) { topSaveBtn.disabled = false; topSaveBtn.textContent = 'Ошибка, повторить'; }
+            showToast(result?.error || 'Ошибка сохранения', 'error');
+        }
+    } catch(e) {
+        btn.classList.remove('loading');
+        if (topSaveBtn) { topSaveBtn.disabled = false; topSaveBtn.textContent = 'Ошибка, повторить'; }
+        showToast('Ошибка: ' + e.message, 'error');
+    }
+}
+
+// Экспорт функций в глобальную область для onclick обработчиков
+window.openPointsOrderModal = openPointsOrderModal;
+window.openSettingsModal = openSettingsModal;
+window.toggleGpsMode = toggleGpsMode;
+window.toggleLayer = toggleLayer;
+window.handleAddBtnClick = handleAddBtnClick;
+window.saveGist = saveGist;
+window.closeD = closeD;
+window.toggleM = toggleM;
+window.handleModalSave = handleModalSave;
+window.renameActiveRoute = renameActiveRoute;
+window.shareActiveRoute = shareActiveRoute;
+window.deleteActiveRoute = deleteActiveRoute;
+window.launchNavigatorWithCurrentRoute = launchNavigatorWithCurrentRoute;
+window.openInNavigator = openInNavigator;
+window.saveRouteLocally = saveRouteLocally;
+window.handleCreateNew = handleCreateNew;
+window.openCreateRouteModal = openCreateRouteModal;
+window.openRouteSettings = openRouteSettings;
+window.saveRouteMeta = saveRouteMeta;
+window.shareRouteFromSettings = shareRouteFromSettings;
+window.deleteRouteFromSettings = executeDeleteRoute;
+window.confirmDeleteRoute = confirmDeleteRoute;
+window.confirmDeletePoint = confirmDeletePoint;
+window.executeDeletePoint = executeDeletePoint;
+</script>
 </body>
 </html>
