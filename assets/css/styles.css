@@ -176,12 +176,12 @@ html, body {
 }
 
 #listBtn {
-    top: calc(12px + env(safe-area-inset-top));
+    top: calc(52px + env(safe-area-inset-top));
     left: 12px;
 }
 
 #locateBtn {
-    top: calc(12px + env(safe-area-inset-top));
+    top: calc(52px + env(safe-area-inset-top));
     right: 12px;
 }
 
@@ -190,7 +190,7 @@ html, body {
    ============================================ */
 #telemetryPanel {
     position: absolute;
-    top: calc(76px + env(safe-area-inset-top));
+    top: calc(116px + env(safe-area-inset-top));
     right: 12px;
     z-index: 9005;
     background: var(--glass-bg);
