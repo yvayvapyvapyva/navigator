@@ -86,6 +86,11 @@ const APP = {
 
 const $ = id => document.getElementById(id);
 
+if (typeof window.Telegram?.WebApp !== 'undefined') {
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+}
+
 let toastTimer = null;
 function showToast(text, type = 'info', duration = 2000) {
     const el = $('toast');
