@@ -70,36 +70,7 @@ const MenuModule = {
         // Загружаем список маршрутов динамически
         await this._loadRoutesList();
 
-        // Проверяем параметры сразу и при получении данных от VK Bridge
         this.checkUrlParam();
-
-        // Подписка на события VK Bridge для параметров запуска
-        if (typeof vkBridge !== 'undefined') {
-            vkBridge.subscribe((event) => {
-                // Проверяем, что маршрут ещё не загружен
-                if (!this.isLoaded && (event && event.type === 'VKWebAppUpdateConfig' || event.detail)) {
-                    this.checkUrlParam();
-                }
-            });
-
-            // Пробуем получить параметры из launchParams
-            try {
-                vkBridge.send('VKWebAppGetLaunchParams')
-                    .then(params => {
-                        // Проверяем, что маршрут ещё не загружен
-                        if (!this.isLoaded && params && params.m) {
-                            const { id, name } = this.parseRouteInput(params.m);
-                            if (name) {
-                                this.isLoaded = true;
-                                this.hide();
-                                this.loadRouteByName(name, id);
-                            }
-                        }
-                    })
-                    .catch(e => {});
-            } catch (e) {
-            }
-        }
 
         this.isInitialized = true;
     },
@@ -478,24 +449,6 @@ const MenuModule = {
                 params.push(`m=${encodeURIComponent(routeName)}`);
             }
 
-            if (typeof vkBridge !== 'undefined') {
-                try {
-                    const userInfo = await Promise.race([
-                        vkBridge.send('VKWebAppGetUserInfo'),
-                        new Promise((_, reject) =>
-                            setTimeout(() => reject(new Error('timeout')), 1000)
-                        )
-                    ]);
-                    
-                    if (userInfo) {
-                        const userInfoJson = JSON.stringify(userInfo);
-                        const userInfoBase64 = btoa(encodeURIComponent(userInfoJson));
-                        params.push(`i=${userInfoBase64}`);
-                    }
-                } catch (e) {
-                }
-            }
-            
             if (typeof window.Telegram?.WebApp?.initDataUnsafe?.user !== 'undefined') {
                 const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
                 const userData = {
