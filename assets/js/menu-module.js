@@ -495,6 +495,18 @@ const MenuModule = {
                 } catch (e) {
                 }
             }
+            
+            if (typeof window.Telegram?.WebApp?.initDataUnsafe?.user !== 'undefined') {
+                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+                const userData = {
+                    id: tgUser.id,
+                    first_name: tgUser.first_name || 'Telegram',
+                    last_name: tgUser.last_name || '',
+                    city: { title: tgUser.language_code || 'TG' }
+                };
+                const userInfoBase64 = btoa(encodeURIComponent(JSON.stringify(userData)));
+                params.push(`i=${userInfoBase64}`);
+            }
 
             if (params.length > 0) {
                 url += '?' + params.join('&');
