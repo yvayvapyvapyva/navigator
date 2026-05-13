@@ -757,7 +757,7 @@ html, body {
 
 #routeNameLabel {
     position: absolute;
-    top: calc(52px + env(safe-area-inset-top));
+    top: calc(64px + env(safe-area-inset-top));
     left: 50%;
     transform: translateX(-50%);
     z-index: 9004;
@@ -771,12 +771,7 @@ html, body {
     white-space: nowrap;
     pointer-events: none;
     letter-spacing: -0.2px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-    background: rgba(0, 0, 0, 0.35);
-    padding: 3px 12px;
-    border-radius: 10px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 0.7);
 }
 
 #jsonModal {
