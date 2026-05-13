@@ -236,6 +236,7 @@ const MenuModule = {
     selectRoute(routeKey) {
         const route = this.routesDescriptions[routeKey];
         if (route) {
+            this._lastRouteDisplayName = route.name || route.m;
             this.loadRouteByName(route.m, route.id);
         }
     },
@@ -396,6 +397,7 @@ const MenuModule = {
                 </svg>
                 <span>Меню</span>
             </button>
+            <div id="routeNameLabel"></div>
         `;
         
         const loading = document.getElementById('loading');
@@ -445,6 +447,8 @@ const MenuModule = {
     // Загрузка маршрута по названию (внутренний метод)
     async loadRouteByName(routeName, routeId = null) {
         this.showSpinner();
+        this.setRouteName(this._lastRouteDisplayName || routeName);
+        delete this._lastRouteDisplayName;
         try {
             this.currentRoute = routeId ? `${routeId}-${routeName}` : routeName;
             
@@ -553,5 +557,10 @@ this.callback(jsonData);
     hideSpinner() {
         const spinner = document.getElementById('loadingSpinner');
         if (spinner) spinner.classList.remove('active');
+    },
+
+    setRouteName(name) {
+        const el = document.getElementById('routeNameLabel');
+        if (el) el.textContent = name || '';
     }
 };
