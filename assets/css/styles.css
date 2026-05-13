@@ -761,16 +761,22 @@ html, body {
     left: 50%;
     transform: translateX(-50%);
     z-index: 9004;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 12px;
-    font-weight: 600;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
     text-align: center;
     max-width: calc(100% - 24px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     pointer-events: none;
-    letter-spacing: -0.1px;
+    letter-spacing: -0.2px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 3px 12px;
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 #jsonModal {

@@ -89,9 +89,11 @@ const $ = id => document.getElementById(id);
 if (typeof window.Telegram?.WebApp !== 'undefined') {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
-    Telegram.WebApp.enableClosingConfirmation();
-    if (Telegram.WebApp.requestFullscreen) {
-        Telegram.WebApp.requestFullscreen();
+    if (Telegram.WebApp.enableClosingConfirmation) {
+        Telegram.WebApp.enableClosingConfirmation();
+    }
+    if (typeof Telegram.WebApp.requestFullscreen === 'function') {
+        try { Telegram.WebApp.requestFullscreen(); } catch (e) {}
     }
 }
 
