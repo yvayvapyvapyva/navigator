@@ -757,7 +757,7 @@ html, body {
 
 #routeNameLabel {
     position: absolute;
-    top: calc(64px + env(safe-area-inset-top));
+    top: calc(52px + env(safe-area-inset-top));
     left: 50%;
     transform: translateX(-50%);
     z-index: 9004;
@@ -765,7 +765,7 @@ html, body {
     font-size: 14px;
     font-weight: 700;
     text-align: center;
-    max-width: calc(100% - 24px);
+    max-width: calc(100% - 140px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
