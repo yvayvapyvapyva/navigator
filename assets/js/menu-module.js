@@ -260,7 +260,8 @@ const MenuModule = {
         for (const route of routes) {
             const routeKey = route.key;
             const hasDesc = route.description && route.description.trim() !== '';
-            html += `<button class="route-item" onclick="event.stopPropagation();MenuModule.selectRoute('${route.key}')">
+            const isActive = routeKey === this.currentRoute;
+            html += `<button class="route-item${isActive ? ' active' : ''}" onclick="event.stopPropagation();MenuModule.selectRoute('${route.key}')"${isActive ? ' style="background:rgba(48,209,88,0.2);border-color:rgba(48,209,88,0.4);"' : ''}>
                 <span class="route-name">${route.name}</span>
                 ${hasDesc ? `<span class="route-info-btn" onclick="event.stopPropagation();MenuModule._showRouteDescription('${routeKey}')">?</span>` : ''}
             </button>`;
@@ -602,6 +603,10 @@ this.callback(jsonData);
         const modal = document.getElementById('jsonModal');
         if (modal) modal.classList.remove('hidden');
         this._hideRouteDescription();
+        if (this.currentRoute && this.routesDescriptions[this.currentRoute]) {
+            const category = this.routesDescriptions[this.currentRoute].category || 'Без категории';
+            this.openCategory(category);
+        }
     },
     
     showSpinner() {
