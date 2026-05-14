@@ -16,6 +16,8 @@ const TG = {
     init() {
         if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
             Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            try { Telegram.WebApp.requestFullscreen?.(); } catch (e) {}
             const user = Telegram.WebApp.initDataUnsafe?.user;
             if (user) {
                 window.tgUser = user;
