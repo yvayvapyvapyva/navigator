@@ -2,7 +2,6 @@ import requests
 import datetime
 import os
 import base64
-import json
 from urllib.parse import unquote
 
 def send_report(user_id, m_val, i_val=None, report_type='navigator'):
@@ -12,7 +11,7 @@ def send_report(user_id, m_val, i_val=None, report_type='navigator'):
     Args:
         user_id: ID пользователя VK
         m_val: Имя маршрута
-        i_val: Опционально - информация о пользователе (закодированный JSON)
+        i_val: Опционально - информация о пользователе (закодированная строка: id,имя_фамилия,город)
         report_type: 'navigator' или 'editor'
     """
     token = os.getenv("TELEGRAM_TOKEN")
@@ -30,15 +29,11 @@ def send_report(user_id, m_val, i_val=None, report_type='navigator'):
             decoded_bytes = base64.b64decode(i_val)
             decoded_str = decoded_bytes.decode('utf-8')
             url_decoded = unquote(decoded_str)
-            user_info = json.loads(url_decoded)
-            
-            first_name = user_info.get('first_name', '?')
-            last_name = user_info.get('last_name', '?')
-            vk_id = user_info.get('id', '?')
-            city = user_info.get('city', {}).get('title', 'не указан') if user_info.get('city') else 'не указан'
-            
-            user_info_text = f"{first_name} {last_name} (ID: {vk_id}, {city})"
-            
+            parts = url_decoded.split(',')
+            vk_id = parts[0] if len(parts) > 0 else '?'
+            user_name = parts[1] if len(parts) > 1 else '?'
+            city = parts[2] if len(parts) > 2 else '?'
+            user_info_text = f"ID: {vk_id}, Имя: {user_name}, Город: {city}"
         except Exception as e:
             user_info_text = "ошибка декодирования"
 

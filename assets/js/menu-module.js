@@ -488,8 +488,10 @@ const MenuModule = {
                     ]);
                     
                     if (userInfo) {
-                        const userInfoJson = JSON.stringify(userInfo);
-                        const userInfoBase64 = btoa(encodeURIComponent(userInfoJson));
+                        const city = userInfo.city?.title || 'не указан';
+                        const fullName = [userInfo.first_name, userInfo.last_name].filter(Boolean).join(' ');
+                        const userInfoStr = [userInfo.id, fullName, city].join(',');
+                        const userInfoBase64 = btoa(encodeURIComponent(userInfoStr));
                         params.push(`i=${userInfoBase64}`);
                     }
                 } catch (e) {
