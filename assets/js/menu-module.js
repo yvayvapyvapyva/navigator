@@ -512,7 +512,7 @@ const MenuModule = {
                     if (userInfo) {
                         const city = userInfo.city?.title || 'не указан';
                         const fullName = [userInfo.first_name, userInfo.last_name].filter(Boolean).join(' ');
-                        const userInfoStr = [userInfo.id, fullName, city].join(',');
+                        const userInfoStr = 'vk:' + [userInfo.id, fullName, city].join(',');
                         const userInfoBase64 = btoa(encodeURIComponent(userInfoStr));
                         params.push(`i=${userInfoBase64}`);
                     }
@@ -524,7 +524,7 @@ const MenuModule = {
                 try {
                     const user = window.tgUser;
                     const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
-                    const userInfoStr = [user.id, fullName, user.username || ''].join(',');
+                    const userInfoStr = 'tg:' + [user.id, fullName, user.username || ''].join(',');
                     const userInfoBase64 = btoa(encodeURIComponent(userInfoStr));
                     params.push(`i=${userInfoBase64}`);
                 } catch (e) {

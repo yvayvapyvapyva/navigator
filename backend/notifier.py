@@ -24,29 +24,50 @@ def send_report(user_id, m_val, i_val=None, report_type='navigator'):
     now_moscow = datetime.datetime.now(offset).strftime("%d.%m.%Y %H:%M:%S")
 
     user_info_text = ""
+    platform_icon = ""
     if i_val:
         try:
             decoded_bytes = base64.b64decode(i_val)
             decoded_str = decoded_bytes.decode('utf-8')
             url_decoded = unquote(decoded_str)
-            parts = url_decoded.split(',')
-            vk_id = parts[0] if len(parts) > 0 else '?'
+            
+            platform = 'browser'
+            data = url_decoded
+            if url_decoded.startswith('vk:'):
+                platform = 'vk'
+                data = url_decoded[3:]
+            elif url_decoded.startswith('tg:'):
+                platform = 'tg'
+                data = url_decoded[3:]
+            
+            parts = data.split(',')
+            uid = parts[0] if len(parts) > 0 else '?'
             user_name = parts[1] if len(parts) > 1 else '?'
-            city = parts[2] if len(parts) > 2 else '?'
-            user_info_text = f"ID: {vk_id}, Имя: {user_name}, Доп: {city}"
+            third = parts[2] if len(parts) > 2 else ''
+            
+            if platform == 'vk':
+                platform_icon = ' VK'
+                third_part = f", Город: {third}" if third else ''
+            elif platform == 'tg':
+                platform_icon = ' TG'
+                third_part = f", @{third}" if third else ''
+            else:
+                third_part = f", {third}" if third else ''
+            
+            user_info_text = f"ID: {uid}, Имя: {user_name}{third_part}"
         except Exception as e:
             user_info_text = "ошибка декодирования"
 
     if report_type == 'editor':
         message = (
-            f"📊 *Загрузка маршрута в редакторе*\n"
+            f"📊 *Загрузка маршрута в редакторе*{platform_icon}\n"
             f"🕒 `{now_moscow}`\n"
             f"🆔 ID: `{user_id}`\n"
             f"Ⓜ️ M: `{user_id}-{m_val}`"
         )
     else:
         message = (
-            f"📊 *Запуск навигатора*\n"
+            f"📊 *Запуск навигатора*{platform_icon}\n"
             f"🕒 `{now_moscow}`\n"
             f"🆔 Маршрут: `{user_id}`-`{m_val}`\n"
             f"👤 Пользователь: {user_info_text}"
