@@ -533,9 +533,14 @@ const loadRoute = async (routeName) => {
         
         try {
             const meta = await callYcFunction('get_meta', { m: routeName });
-            currentRouteMeta.name = meta.name || routeName;
+            currentRouteMeta = {
+                name: meta.name || routeName,
+                description: meta.description || '',
+                visible: meta.visible !== undefined ? meta.visible : false,
+                category: meta.category || ''
+            };
         } catch (e) {
-            currentRouteMeta.name = routeName;
+            currentRouteMeta = { name: routeName, description: '', visible: false, category: '' };
         }
         
         updateVisibility();
