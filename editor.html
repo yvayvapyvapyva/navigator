@@ -1030,7 +1030,7 @@ async function saveGist() {
     if (topSaveBtn) { topSaveBtn.disabled = true; topSaveBtn.textContent = 'Сохраняем...'; }
     try {
         const data = points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm }));
-        const result = await callYcFunction('save', { m: curRoute }, { data });
+        const result = await callYcFunction('save', { m: curRoute }, { data, category: currentRouteMeta.category || '' });
         if(result && !result.error) {
             lastSavedSnapshot = serializePoints();
             btn.classList.remove('loading');
