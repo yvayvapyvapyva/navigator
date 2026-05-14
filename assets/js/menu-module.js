@@ -70,7 +70,36 @@ const MenuModule = {
         // Загружаем список маршрутов динамически
         await this._loadRoutesList();
 
+        // Проверяем параметры сразу и при получении данных от VK Bridge
         this.checkUrlParam();
+
+        // Подписка на события VK Bridge для параметров запуска
+        if (typeof vkBridge !== 'undefined') {
+            vkBridge.subscribe((event) => {
+                // Проверяем, что маршрут ещё не загружен
+                if (!this.isLoaded && (event && event.type === 'VKWebAppUpdateConfig' || event.detail)) {
+                    this.checkUrlParam();
+                }
+            });
+
+            // Пробуем получить параметры из launchParams
+            try {
+                vkBridge.send('VKWebAppGetLaunchParams')
+                    .then(params => {
+                        // Проверяем, что маршрут ещё не загружен
+                        if (!this.isLoaded && params && params.m) {
+                            const { id, name } = this.parseRouteInput(params.m);
+                            if (name) {
+                                this.isLoaded = true;
+                                this.hide();
+                                this.loadRouteByName(name, id);
+                            }
+                        }
+                    })
+                    .catch(e => {});
+            } catch (e) {
+            }
+        }
 
         this.isInitialized = true;
     },
@@ -236,7 +265,6 @@ const MenuModule = {
     selectRoute(routeKey) {
         const route = this.routesDescriptions[routeKey];
         if (route) {
-            this._lastRouteDisplayName = route.name || route.m;
             this.loadRouteByName(route.m, route.id);
         }
     },
@@ -397,7 +425,6 @@ const MenuModule = {
                 </svg>
                 <span>Меню</span>
             </button>
-            <div id="routeNameLabel"></div>
         `;
         
         const loading = document.getElementById('loading');
@@ -420,18 +447,8 @@ const MenuModule = {
     
     // Проверка URL параметра
     checkUrlParam() {
-        let routeParam = null;
-
-        // 1. Telegram start_param
-        if (typeof window.Telegram?.WebApp?.initDataUnsafe?.start_param !== 'undefined') {
-            const tgParams = new URLSearchParams(window.Telegram.WebApp.initDataUnsafe.start_param);
-            routeParam = tgParams.get('m');
-        }
-
-        // 2. Fallback: URL hash
-        if (!routeParam) {
-            routeParam = this.getUrlParam('m');
-        }
+        // Поддерживаем только формат: #m=id-название
+        const routeParam = this.getUrlParam('m');
 
         if (routeParam) {
             // Парсим формат "id-название"
@@ -447,8 +464,6 @@ const MenuModule = {
     // Загрузка маршрута по названию (внутренний метод)
     async loadRouteByName(routeName, routeId = null) {
         this.showSpinner();
-        this.setRouteName(this._lastRouteDisplayName || routeName);
-        delete this._lastRouteDisplayName;
         try {
             this.currentRoute = routeId ? `${routeId}-${routeName}` : routeName;
             
@@ -463,16 +478,22 @@ const MenuModule = {
                 params.push(`m=${encodeURIComponent(routeName)}`);
             }
 
-            if (typeof window.Telegram?.WebApp?.initDataUnsafe?.user !== 'undefined') {
-                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-                const userData = {
-                    id: tgUser.id,
-                    first_name: tgUser.first_name || 'Telegram',
-                    last_name: tgUser.last_name || '',
-                    city: { title: tgUser.username ? `@${tgUser.username}` : (tgUser.language_code || 'TG') }
-                };
-                const userInfoBase64 = btoa(encodeURIComponent(JSON.stringify(userData)));
-                params.push(`i=${userInfoBase64}`);
+            if (typeof vkBridge !== 'undefined') {
+                try {
+                    const userInfo = await Promise.race([
+                        vkBridge.send('VKWebAppGetUserInfo'),
+                        new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error('timeout')), 1000)
+                        )
+                    ]);
+                    
+                    if (userInfo) {
+                        const userInfoJson = JSON.stringify(userInfo);
+                        const userInfoBase64 = btoa(encodeURIComponent(userInfoJson));
+                        params.push(`i=${userInfoBase64}`);
+                    }
+                } catch (e) {
+                }
             }
 
             if (params.length > 0) {
@@ -557,10 +578,5 @@ this.callback(jsonData);
     hideSpinner() {
         const spinner = document.getElementById('loadingSpinner');
         if (spinner) spinner.classList.remove('active');
-    },
-
-    setRouteName(name) {
-        const el = document.getElementById('routeNameLabel');
-        if (el) el.textContent = name || '';
     }
 };
