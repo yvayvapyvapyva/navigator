@@ -204,7 +204,6 @@ html, body {
     pointer-events: none;
     display: none;
     text-align: center;
-    line-height: 52px;
     opacity: 0.6;
 }
 
