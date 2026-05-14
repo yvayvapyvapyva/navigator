@@ -96,25 +96,22 @@ function showToast(text, type = 'info', duration = 2000) {
     toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 }
 
-let pressTimer = null;
+let clickCount = 0;
+let clickTimer = null;
 const speedEl = document.getElementById('telSpeed');
 if (speedEl) {
-    const startPress = () => {
-        pressTimer = setTimeout(() => {
+    const handleClick = () => {
+        clickCount++;
+        if (clickTimer) clearTimeout(clickTimer);
+        if (clickCount >= 3) {
+            clickCount = 0;
+            clickTimer = null;
             window.location.href = 'editor.html';
-        }, 1000);
-    };
-    const cancelPress = () => {
-        if (pressTimer) {
-            clearTimeout(pressTimer);
-            pressTimer = null;
+        } else {
+            clickTimer = setTimeout(() => { clickCount = 0; }, 500);
         }
     };
-    speedEl.addEventListener('mousedown', startPress);
-    speedEl.addEventListener('mouseup', cancelPress);
-    speedEl.addEventListener('mouseleave', cancelPress);
-    speedEl.addEventListener('touchstart', startPress);
-    speedEl.addEventListener('touchend', cancelPress);
+    speedEl.addEventListener('click', handleClick);
 }
 
 function getUserLocSvg(azimuth = 0) {

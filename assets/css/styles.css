@@ -196,20 +196,21 @@ html, body {
     left: 50%;
     transform: translateX(-50%);
     z-index: 9005;
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 /* ============================================
    Панель телеметрии (спидометр)
    ============================================ */
 #telemetryPanel {
-    background: var(--glass-bg);
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
     border-radius: 50%;
-    border: 0.5px solid var(--glass-border);
+    border: none;
     cursor: pointer;
-    box-shadow: var(--shadow-soft), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: none;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     width: 52px;
     height: 52px;
@@ -220,11 +221,15 @@ html, body {
     justify-content: center;
     gap: 2px;
     padding: 8px;
-    flex-shrink: 0;
 }
 
 #telemetryPanel:active {
-    transform: scale(0.92);
+    transform: translateY(-50%) scale(0.92);
+    background: transparent;
+}
+
+#telemetryPanel:active {
+    transform: translateY(-50%) scale(0.92);
     background: rgba(30, 30, 30, 0.5);
 }
 
@@ -236,10 +241,11 @@ html, body {
 
 .tel-label {
     font-size: 8px;
-    color: var(--text-secondary);
+    color: #ffffff;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.4);
 }
 
 .tel-value {
@@ -247,7 +253,8 @@ html, body {
     font-weight: 800;
     text-align: center;
     font-variant-numeric: tabular-nums;
-    color: #fff;
+    color: #ffffff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.4);
 }
 
 /* ============================================
