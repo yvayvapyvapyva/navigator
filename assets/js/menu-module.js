@@ -444,11 +444,16 @@ const MenuModule = {
             </button>
         `;
         
-        const loading = document.getElementById('loading');
-        if (loading) {
-            loading.insertAdjacentHTML('afterend', html);
+        const container = document.getElementById('topCenterControls');
+        if (container) {
+            container.insertAdjacentHTML('afterbegin', html);
         } else {
-            document.body.insertAdjacentHTML('afterbegin', html);
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.insertAdjacentHTML('afterend', html);
+            } else {
+                document.body.insertAdjacentHTML('afterbegin', html);
+            }
         }
         
         // Обработчик клика
