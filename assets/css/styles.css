@@ -187,6 +187,27 @@ html, body {
     right: 12px;
 }
 
+#routeNameDisplay {
+    position: absolute;
+    top: calc(76px + env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9005;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.4);
+    white-space: nowrap;
+    max-width: calc(100% - 140px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    display: none;
+    text-align: center;
+    line-height: 52px;
+    opacity: 0.6;
+}
+
 /* ============================================
    Верхняя центральная панель (меню + спидометр)
    ============================================ */
