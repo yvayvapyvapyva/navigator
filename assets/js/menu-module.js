@@ -248,12 +248,12 @@ const MenuModule = {
         const container = document.getElementById('routesListContainer');
         
         let html = `
-            <button class="back-btn" onclick="event.stopPropagation();MenuModule.showCategories()">
-                <span>‹</span> Назад
-            </button>
-            <div class="category-title">
+            <div class="category-title" style="display:flex;align-items:center;gap:10px;padding:12px 16px;margin-bottom:8px;background:rgba(0,122,255,0.1);border-radius:12px;border:1px solid rgba(0,122,255,0.2);">
+                <button class="back-btn" onclick="event.stopPropagation();MenuModule.showCategories()" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0;width:auto;margin:0;">
+                    <span>‹</span> Назад
+                </button>
                 <span class="category-icon">📁</span>
-                <span>${categoryName}</span>
+                <span style="flex:1;font-size:18px;font-weight:700;">${categoryName}</span>
             </div>
         `;
         
@@ -351,7 +351,6 @@ const MenuModule = {
         const html = `
             <div id="jsonModal">
                 <div class="modal-sheet">
-                    <div class="modal-title">Выбор маршрута</div>
                     <div id="routesListContainer" class="routes-list">
                         <div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5); font-size:14px;">
                             Загрузка списка маршрутов...
