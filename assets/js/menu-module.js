@@ -101,6 +101,23 @@ const MenuModule = {
             }
         }
 
+        // Проверка start_param от Telegram Mini App
+        if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+            try {
+                const startParam = Telegram.WebApp.initDataUnsafe?.start_param;
+                if (startParam && startParam.startsWith('m=') && !this.isLoaded) {
+                    const mValue = startParam.substring(2);
+                    const { id, name } = this.parseRouteInput(mValue);
+                    if (name) {
+                        this.isLoaded = true;
+                        this.hide();
+                        this.loadRouteByName(name, id);
+                    }
+                }
+            } catch (e) {
+            }
+        }
+
         this.isInitialized = true;
     },
 
@@ -494,6 +511,17 @@ const MenuModule = {
                         const userInfoBase64 = btoa(encodeURIComponent(userInfoStr));
                         params.push(`i=${userInfoBase64}`);
                     }
+                } catch (e) {
+                }
+            }
+
+            if (window.tgUser) {
+                try {
+                    const user = window.tgUser;
+                    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+                    const userInfoStr = [user.id, fullName, user.username || ''].join(',');
+                    const userInfoBase64 = btoa(encodeURIComponent(userInfoStr));
+                    params.push(`i=${userInfoBase64}`);
                 } catch (e) {
                 }
             }

@@ -33,7 +33,7 @@ def send_report(user_id, m_val, i_val=None, report_type='navigator'):
             vk_id = parts[0] if len(parts) > 0 else '?'
             user_name = parts[1] if len(parts) > 1 else '?'
             city = parts[2] if len(parts) > 2 else '?'
-            user_info_text = f"ID: {vk_id}, Имя: {user_name}, Город: {city}"
+            user_info_text = f"ID: {vk_id}, Имя: {user_name}, Доп: {city}"
         except Exception as e:
             user_info_text = "ошибка декодирования"
 
