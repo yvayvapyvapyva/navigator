@@ -55,14 +55,7 @@
             <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
         </button>
         <div class="hud-stats">
-            <div class="stat-item">
-                <div class="azimuth-compass" id="hudCompass">
-                    <div class="compass-arrow compass-arrow-user" id="hudUserArrow"></div>
-                    <div class="compass-arrow compass-arrow-target" id="hudTargetArrow"></div>
-                    <div class="compass-center"></div>
-                </div>
-                <span class="stat-value" id="hudDist">---</span>
-            </div>
+            <span class="stat-value" id="hudDist">---</span>
         </div>
         <div style="display:flex; gap:8px; flex:1; justify-content:center; align-items:center;">
             <button id="selectBtn" style="display:none;">Выбрать</button>
@@ -154,17 +147,7 @@ function initGeolocation() {
 
                 const previewIndex = APP.navPreviewIndex >= 0 ? APP.navPreviewIndex : APP.navCurrentIndex;
                 if (previewIndex >= 0 && APP.navPoints[previewIndex]) {
-                    const t = APP.navPoints[previewIndex];
-                    let ad = Math.abs(APP.lastAz - t.az) % 360;
-                    if (ad > 180) ad = 360 - ad;
-                    const compass = $('hudCompass');
-                    const userArrow = $('hudUserArrow');
-                    const targetArrow = $('hudTargetArrow');
-                    if (compass && userArrow && targetArrow) {
-                        userArrow.style.setProperty('--angle', `${APP.lastAz}deg`);
-                        targetArrow.style.setProperty('--angle', `${t.az}deg`);
-                        compass.classList.toggle('in-range', ad <= APP.navConfig.AZ_TOLERANCE);
-                    }
+                    updateCompassMarker();
                 }
 
                 if (APP.autoCenter && APP.map) APP.map.setCenter(APP.lastPos);
@@ -265,7 +248,7 @@ function renderRoutePoints() {
         const hasComm = p.comm && p.comm.trim() !== '';
 
         const showPoint = APP.navPreviewIndex >= 0 ? isPreview : (!isPassed || isCurrent || isPrevious);
-        const showPath = !isPassed || isPrevious;
+        const showPath = (APP.navPreviewIndex >= 0 && isPreview) || !isPassed || isPrevious;
 
         if (!showPoint) return { ...p, placemark: null, line: null, lineOutline: null, endPlacemark: null, hidden: true };
 
@@ -329,19 +312,31 @@ function renderRoutePoints() {
     updateHud();
 }
 
-function updateCompass(t) {
-    const compass = $('hudCompass');
-    const userArrow = $('hudUserArrow');
-    const targetArrow = $('hudTargetArrow');
-    if (userArrow && targetArrow) {
-        userArrow.style.setProperty('--angle', `${APP.lastAz || 0}deg`);
-        targetArrow.style.setProperty('--angle', `${t.az || 0}deg`);
+function getCompassSvg(targetAz, inRange) {
+    const s = 64, c = s / 2;
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+            <g transform="rotate(${targetAz}, ${c}, ${c})">
+                <polygon points="${c-4},11 ${c+4},11 ${c},-1" fill="#FF453A" stroke="${inRange ? '#30D158' : 'rgba(0,0,0,0.3)'}" stroke-width="1.5"/>
+            </g>
+        </svg>`
+    )));
+}
+
+function updateCompassMarker() {
+    if (!APP.compassMarker) return;
+    const idx = APP.navPreviewIndex >= 0 ? APP.navPreviewIndex : APP.navCurrentIndex;
+    const t = APP.navPoints[idx];
+    if (!t || !APP.lastPos) {
+        APP.compassMarker.options.set('visible', false);
+        return;
     }
-    if (compass) {
-        let ad = Math.abs(APP.lastAz - t.az) % 360;
-        if (ad > 180) ad = 360 - ad;
-        compass.classList.toggle('in-range', ad <= APP.navConfig.AZ_TOLERANCE);
-    }
+    APP.compassMarker.options.set('visible', true);
+    APP.compassMarker.geometry.setCoordinates(APP.lastPos);
+    let ad = Math.abs(APP.lastAz - t.az) % 360;
+    if (ad > 180) ad = 360 - ad;
+    const inRange = ad <= APP.navConfig.AZ_TOLERANCE;
+    APP.compassMarker.options.set('iconImageHref', getCompassSvg(t.az, inRange));
 }
 
 function updateHud() {
@@ -357,18 +352,14 @@ function updateHud() {
     if (isPreview) $('selectBtn').onclick = () => setTarget(idx);
     document.querySelector('.hud-stats').style.display = 'flex';
 
-    const targetArrow = $('hudTargetArrow');
-    if (targetArrow) targetArrow.style.setProperty('--angle', `${t.az}deg`);
-
     if (APP.lastPos) {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
         $('hudDist').textContent = `${Math.round(d)}`;
         $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
-        updateCompass(t);
+        updateCompassMarker();
     } else {
         $('hudDist').textContent = '---';
         $('hudDist').classList.remove('in-range');
-        $('hudCompass').classList.remove('in-range');
     }
 
     const prevBtn = $('prevBtn'), nextBtn = $('nextBtn');
@@ -384,8 +375,7 @@ function updateHud() {
 function updateHudDist(d, ad) {
     $('hudDist').textContent = `${Math.round(d)}`;
     $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
-    const targetPoint = APP.navPoints[APP.navPreviewIndex >= 0 ? APP.navPreviewIndex : APP.navCurrentIndex];
-    if (targetPoint) updateCompass(targetPoint);
+    updateCompassMarker();
 }
 
 function showPreview(i) {
@@ -427,7 +417,7 @@ function updateCurrentPointHud() {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
         $('hudDist').textContent = `${Math.round(d)}`;
         $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
-        updateCompass(t);
+        updateCompassMarker();
     }
 }
 
@@ -649,6 +639,14 @@ ymaps.ready(() => {
         zIndex: 5000, visible: false
     });
     APP.map.geoObjects.add(APP.userMarker);
+
+    APP.compassMarker = new ymaps.Placemark([0, 0], {}, {
+        iconLayout: 'default#image',
+        iconImageHref: getCompassSvg(0, false),
+        iconImageSize: [64, 64], iconImageOffset: [-32, -32],
+        zIndex: 4900, visible: false
+    });
+    APP.map.geoObjects.add(APP.compassMarker);
     initGeolocation();
 
     $('locateBtn').addEventListener('click', toggleAutoCenter);
