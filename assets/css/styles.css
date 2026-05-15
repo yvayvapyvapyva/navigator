@@ -351,39 +351,36 @@ html, body {
     flex-direction: column;
     align-items: center;
     gap: 2px;
+    position: relative;
+    width: 44px;
+    height: 44px;
 }
 
 .stat-value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.2;
     font-variant-numeric: tabular-nums;
-}
-
-.stat-value.in-range {
-    color: var(--accent-green);
-    text-shadow: 0 0 12px var(--accent-green-glow);
-}
-
-.stat-label-unit {
-    font-size: 10px;
-    color: var(--text-secondary);
-    font-weight: 600;
-}
-
-/* ============================================
-   Компас
-   ============================================ */
-.hud-stats .azimuth-compass {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
     position: relative;
+    z-index: 1;
+    text-align: center;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.hud-stats .azimuth-compass {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -396,85 +393,51 @@ html, body {
 }
 
 .hud-stats .compass-arrow {
-    width: 2px;
-    height: 26px;
-    margin-top: -13px;
+    width: 8px;
+    height: 8px;
+    transform: translate(-50%, -50%) rotate(var(--angle, 0deg)) translateY(-22px);
 }
 
-.hud-stats .compass-arrow::before {
-    height: 20px;
-}
-
+.hud-stats .compass-arrow::before,
 .hud-stats .compass-arrow::after {
-    border-left: 3px solid transparent;
-    border-right: 3px solid transparent;
-    border-bottom: 5px solid currentColor;
-    top: -4px;
+    display: none;
 }
 
 .hud-stats .compass-center {
-    width: 5px;
-    height: 5px;
+    display: none;
 }
 
 .compass-arrow {
     position: absolute;
-    width: 2px;
-    height: 26px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     transform-origin: center center;
     top: 50%;
-    margin-top: -13px;
-    border-radius: 2px;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(var(--angle, 0deg)) translateY(-18px);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.compass-arrow::after {
-    content: '';
-    width: 0;
-    height: 0;
-    border-left: 3px solid transparent;
-    border-right: 3px solid transparent;
-    border-bottom: 5px solid currentColor;
-    position: absolute;
-    top: -4px;
-}
-
-.compass-arrow::before {
-    content: '';
-    width: 2px;
-    height: 20px;
-    border-radius: 2px;
-}
-
-.compass-arrow-user {
-    color: var(--accent-red);
     z-index: 2;
 }
 
-.compass-arrow-user::before {
-    background: linear-gradient(to top, var(--accent-red), #FF6961);
+.compass-arrow::after,
+.compass-arrow::before {
+    display: none;
+}
+
+.compass-arrow-user {
+    background: var(--accent-blue);
+    box-shadow: 0 0 6px var(--accent-blue);
 }
 
 .compass-arrow-target {
-    color: var(--accent-blue);
-    z-index: 1;
+    background: var(--accent-red);
+    box-shadow: 0 0 6px var(--accent-red);
     opacity: 0.85;
 }
 
-.compass-arrow-target::before {
-    background: linear-gradient(to top, var(--accent-blue), #5AC8FA);
-}
-
 .compass-center {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
-    z-index: 3;
-    box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+    display: none;
 }
 
 /* ============================================

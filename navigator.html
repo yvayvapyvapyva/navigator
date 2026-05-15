@@ -56,12 +56,12 @@
         </button>
         <div class="hud-stats">
             <div class="stat-item">
+                <div class="azimuth-compass" id="hudCompass">
+                    <div class="compass-arrow compass-arrow-user" id="hudUserArrow"></div>
+                    <div class="compass-arrow compass-arrow-target" id="hudTargetArrow"></div>
+                    <div class="compass-center"></div>
+                </div>
                 <span class="stat-value" id="hudDist">---</span>
-            </div>
-            <div class="azimuth-compass" id="hudCompass">
-                <div class="compass-arrow compass-arrow-user" id="hudUserArrow"></div>
-                <div class="compass-arrow compass-arrow-target" id="hudTargetArrow"></div>
-                <div class="compass-center"></div>
             </div>
         </div>
         <div style="display:flex; gap:8px; flex:1; justify-content:center; align-items:center;">
@@ -161,8 +161,8 @@ function initGeolocation() {
                     const userArrow = $('hudUserArrow');
                     const targetArrow = $('hudTargetArrow');
                     if (compass && userArrow && targetArrow) {
-                        userArrow.style.transform = `rotate(${APP.lastAz}deg)`;
-                        targetArrow.style.transform = `rotate(${t.az}deg)`;
+                        userArrow.style.setProperty('--angle', `${APP.lastAz}deg`);
+                        targetArrow.style.setProperty('--angle', `${t.az}deg`);
                         compass.classList.toggle('in-range', ad <= APP.navConfig.AZ_TOLERANCE);
                     }
                 }
@@ -334,8 +334,8 @@ function updateCompass(t) {
     const userArrow = $('hudUserArrow');
     const targetArrow = $('hudTargetArrow');
     if (userArrow && targetArrow) {
-        userArrow.style.transform = `rotate(${APP.lastAz || 0}deg)`;
-        targetArrow.style.transform = `rotate(${t.az || 0}deg)`;
+        userArrow.style.setProperty('--angle', `${APP.lastAz || 0}deg`);
+        targetArrow.style.setProperty('--angle', `${t.az || 0}deg`);
     }
     if (compass) {
         let ad = Math.abs(APP.lastAz - t.az) % 360;
@@ -358,7 +358,7 @@ function updateHud() {
     document.querySelector('.hud-stats').style.display = 'flex';
 
     const targetArrow = $('hudTargetArrow');
-    if (targetArrow) targetArrow.style.transform = `rotate(${t.az}deg)`;
+    if (targetArrow) targetArrow.style.setProperty('--angle', `${t.az}deg`);
 
     if (APP.lastPos) {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
