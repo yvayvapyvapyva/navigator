@@ -325,8 +325,10 @@ function updateHud() {
 
     if (APP.lastPos) {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
+        let ad = Math.abs(APP.lastAz - t.az) % 360;
+        if (ad > 180) ad = 360 - ad;
         $('hudDist').textContent = `${Math.round(d)}`;
-        $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
+        $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
     } else {
         $('hudDist').textContent = '---';
         $('hudDist').classList.remove('in-range');
@@ -344,7 +346,7 @@ function updateHud() {
 
 function updateHudDist(d, ad) {
     $('hudDist').textContent = `${Math.round(d)}`;
-    $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
+    $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
 }
 
 function showPreview(i) {
@@ -384,8 +386,10 @@ function updateCurrentPointHud() {
     if (APP.lastPos && APP.navPoints[APP.navCurrentIndex]) {
         const t = APP.navPoints[APP.navCurrentIndex];
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
+        let ad = Math.abs(APP.lastAz - t.az) % 360;
+        if (ad > 180) ad = 360 - ad;
         $('hudDist').textContent = `${Math.round(d)}`;
-        $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
+        $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
     }
 }
 
