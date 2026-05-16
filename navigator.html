@@ -38,19 +38,12 @@
 
 <div id="hud">
     <div class="hud-header">
-        <span class="hud-index" id="hudIndex">
-            <span id="hudIndexNum">1</span>
-            <svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-        </span>
-        <div class="hud-cmd" id="hudCmd">Маршрут не выбран</div>
+        <button class="hud-cmd" id="hudCmd"><span id="hudCmdNum">1</span><span id="hudCmdText"><span id="hudCmdTextInner">Маршрут не выбран</span></span><span id="hudCmdDist">---</span></button>
     </div>
     <div class="hud-actions">
         <button id="prevBtn" class="nav-arrow-btn" title="Предыдущая точка">
             <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
         </button>
-        <div class="hud-stats">
-            <span class="stat-value" id="hudDist">---</span>
-        </div>
         <div style="display:flex; gap:8px; flex:1; justify-content:center; align-items:center;">
             <button id="selectBtn" style="display:none;">Выбрать</button>
         </div>
@@ -316,22 +309,21 @@ function updateHud() {
     const t = APP.navPoints[idx];
     if (!t) return;
 
-    $('hudIndexNum').textContent = idx + 1;
-    $('hudIndex').onclick = () => playCommand(t.cmd);
-    $('hudCmd').textContent = t.cmd;
+    $('hudCmdNum').textContent = idx + 1;
+    $('hudCmdTextInner').textContent = t.cmd;
+    $('hudCmd').onclick = () => playCommand(t.cmd);
     $('selectBtn').style.display = isPreview ? 'block' : 'none';
     if (isPreview) $('selectBtn').onclick = () => setTarget(idx);
-    document.querySelector('.hud-stats').style.display = 'flex';
 
     if (APP.lastPos) {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
         let ad = Math.abs(APP.lastAz - t.az) % 360;
         if (ad > 180) ad = 360 - ad;
-        $('hudDist').textContent = formatDistance(d);
-        $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
+        $('hudCmdDist').textContent = formatDistance(d);
+        $('hudCmdDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
     } else {
-        $('hudDist').textContent = '---';
-        $('hudDist').classList.remove('in-range');
+        $('hudCmdDist').textContent = '---';
+        $('hudCmdDist').classList.remove('in-range');
     }
 
     const prevBtn = $('prevBtn'), nextBtn = $('nextBtn');
@@ -350,8 +342,8 @@ function formatDistance(d) {
 }
 
 function updateHudDist(d, ad) {
-    $('hudDist').textContent = formatDistance(d);
-    $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
+    $('hudCmdDist').textContent = formatDistance(d);
+    $('hudCmdDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
 }
 
 function showPreview(i) {
@@ -393,8 +385,8 @@ function updateCurrentPointHud() {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
         let ad = Math.abs(APP.lastAz - t.az) % 360;
         if (ad > 180) ad = 360 - ad;
-        $('hudDist').textContent = formatDistance(d);
-        $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
+        $('hudCmdDist').textContent = formatDistance(d);
+        $('hudCmdDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
     }
 }
 
