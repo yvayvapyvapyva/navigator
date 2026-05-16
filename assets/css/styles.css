@@ -31,6 +31,7 @@
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -41,7 +42,6 @@ html, body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
     overflow: hidden;
     background: var(--bg);
-    position: fixed;
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
 }
@@ -301,6 +301,7 @@ html, body {
     width: calc(100% - 24px);
     box-sizing: border-box;
     transform: translateZ(0);
+    isolation: isolate;
 }
 
 #hud.active {
@@ -361,6 +362,7 @@ html, body {
     gap: 10px;
     align-items: center;
     border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+    touch-action: manipulation;
 }
 
 .hud-stats {
