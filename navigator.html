@@ -38,11 +38,11 @@
 
 <div id="hud">
     <div class="hud-header">
-        <span class="hud-index" id="hudIndex">1</span>
+        <span class="hud-index" id="hudIndex">
+            <span id="hudIndexNum">1</span>
+            <svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        </span>
         <div class="hud-cmd" id="hudCmd">Маршрут не выбран</div>
-        <button id="speakBtn" class="action-icon-btn">
-            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-        </button>
     </div>
     <div class="hud-actions">
         <button id="prevBtn" class="nav-arrow-btn" title="Предыдущая точка">
@@ -346,9 +346,9 @@ function updateHud() {
     const t = APP.navPoints[idx];
     if (!t) return;
 
-    $('hudIndex').textContent = idx + 1;
+    $('hudIndexNum').textContent = idx + 1;
+    $('hudIndex').onclick = () => playCommand(t.cmd);
     $('hudCmd').textContent = t.cmd;
-    $('speakBtn').onclick = () => playCommand(t.cmd);
     $('selectBtn').style.display = isPreview ? 'block' : 'none';
     if (isPreview) $('selectBtn').onclick = () => setTarget(idx);
     document.querySelector('.hud-stats').style.display = 'flex';
