@@ -327,7 +327,7 @@ function updateHud() {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
         let ad = Math.abs(APP.lastAz - t.az) % 360;
         if (ad > 180) ad = 360 - ad;
-        $('hudDist').textContent = `${Math.round(d)}`;
+        $('hudDist').textContent = formatDistance(d);
         $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
     } else {
         $('hudDist').textContent = '---';
@@ -344,8 +344,13 @@ function updateHud() {
     $('commentBlock').classList.toggle('visible', t.comm && t.comm.trim() !== '');
 }
 
+function formatDistance(d) {
+    if (d >= 1000) return `${(d / 1000).toFixed(1)} км`;
+    return `${Math.round(d)} м`;
+}
+
 function updateHudDist(d, ad) {
-    $('hudDist').textContent = `${Math.round(d)}`;
+    $('hudDist').textContent = formatDistance(d);
     $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
 }
 
@@ -388,7 +393,7 @@ function updateCurrentPointHud() {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
         let ad = Math.abs(APP.lastAz - t.az) % 360;
         if (ad > 180) ad = 360 - ad;
-        $('hudDist').textContent = `${Math.round(d)}`;
+        $('hudDist').textContent = formatDistance(d);
         $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST && ad <= APP.navConfig.AZ_TOLERANCE);
     }
 }
