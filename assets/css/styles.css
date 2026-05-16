@@ -330,7 +330,7 @@ html, body {
 }
 
 .hud-index:active {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(48, 209, 88, 0.35);
 }
 
 .hud-index svg {
@@ -391,7 +391,7 @@ html, body {
 }
 
 #selectBtn:active {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(48, 209, 88, 0.35);
 }
 
 .nav-arrow-btn {
@@ -417,7 +417,7 @@ html, body {
 }
 
 .nav-arrow-btn:active {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(48, 209, 88, 0.35);
 }
 
 .nav-arrow-btn:disabled {

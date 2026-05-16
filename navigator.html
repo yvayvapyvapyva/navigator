@@ -147,10 +147,6 @@ function initGeolocation() {
                 $('telSpeed').textContent = Math.round(APP.currentSpeed);
 
                 const previewIndex = APP.navPreviewIndex >= 0 ? APP.navPreviewIndex : APP.navCurrentIndex;
-                if (previewIndex >= 0 && APP.navPoints[previewIndex]) {
-                    updateCompassMarker();
-                }
-
                 if (APP.autoCenter && APP.map) APP.map.setCenter(APP.lastPos);
                 if (APP.navCurrentIndex >= 0 && APP.navPreviewIndex < 0) navCheckTriggers();
             },
@@ -313,32 +309,6 @@ function renderRoutePoints() {
     updateHud();
 }
 
-function getCompassSvg(targetAz, inRange) {
-    const s = 64, c = s / 2;
-    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
-            <g transform="rotate(${targetAz}, ${c}, ${c})">
-                <polygon points="${c-4},11 ${c+4},11 ${c},-1" fill="#FF453A" stroke="${inRange ? '#30D158' : 'rgba(0,0,0,0.3)'}" stroke-width="1.5"/>
-            </g>
-        </svg>`
-    )));
-}
-
-function updateCompassMarker() {
-    if (!APP.compassMarker) return;
-    const idx = APP.navPreviewIndex >= 0 ? APP.navPreviewIndex : APP.navCurrentIndex;
-    const t = APP.navPoints[idx];
-    if (!t || !APP.lastPos) {
-        APP.compassMarker.options.set('visible', false);
-        return;
-    }
-    APP.compassMarker.options.set('visible', true);
-    APP.compassMarker.geometry.setCoordinates(APP.lastPos);
-    let ad = Math.abs(APP.lastAz - t.az) % 360;
-    if (ad > 180) ad = 360 - ad;
-    const inRange = ad <= APP.navConfig.AZ_TOLERANCE;
-    APP.compassMarker.options.set('iconImageHref', getCompassSvg(t.az, inRange));
-}
 
 function updateHud() {
     const isPreview = APP.navPreviewIndex >= 0;
@@ -357,7 +327,6 @@ function updateHud() {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
         $('hudDist').textContent = `${Math.round(d)}`;
         $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
-        updateCompassMarker();
     } else {
         $('hudDist').textContent = '---';
         $('hudDist').classList.remove('in-range');
@@ -376,7 +345,6 @@ function updateHud() {
 function updateHudDist(d, ad) {
     $('hudDist').textContent = `${Math.round(d)}`;
     $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
-    updateCompassMarker();
 }
 
 function showPreview(i) {
@@ -418,7 +386,6 @@ function updateCurrentPointHud() {
         const d = ymaps.coordSystem.geo.getDistance(APP.lastPos, [t.lat, t.lon]);
         $('hudDist').textContent = `${Math.round(d)}`;
         $('hudDist').classList.toggle('in-range', d <= APP.navConfig.TRIGGER_DIST);
-        updateCompassMarker();
     }
 }
 
@@ -640,14 +607,6 @@ ymaps.ready(() => {
         zIndex: 5000, visible: false
     });
     APP.map.geoObjects.add(APP.userMarker);
-
-    APP.compassMarker = new ymaps.Placemark([0, 0], {}, {
-        iconLayout: 'default#image',
-        iconImageHref: getCompassSvg(0, false),
-        iconImageSize: [64, 64], iconImageOffset: [-32, -32],
-        zIndex: 4900, visible: false
-    });
-    APP.map.geoObjects.add(APP.compassMarker);
     initGeolocation();
 
     $('locateBtn').addEventListener('click', toggleAutoCenter);
