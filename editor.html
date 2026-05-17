@@ -145,7 +145,7 @@ const showToast = (text, type = 'info', duration = 2200) => {
     toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 };
 
-document.addEventListener('click', () => {
+document.addEventListener('pointerdown', () => {
     const btn = $('instructionBtn');
     if (btn) btn.style.display = 'none';
 }, { once: true });

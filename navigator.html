@@ -620,7 +620,7 @@ function closeInstruction() {
     if (modal) modal.classList.remove('visible');
 }
 
-document.addEventListener('click', () => {
+document.addEventListener('pointerdown', () => {
     const btn = $('instructionBtn');
     if (btn) btn.style.display = 'none';
 }, { once: true });
