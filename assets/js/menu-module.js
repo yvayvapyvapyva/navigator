@@ -437,10 +437,7 @@ const MenuModule = {
     createButton() {
         const html = `
             <button id="menuBtn" class="circle-btn">
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
-                </svg>
-                <span>Меню</span>
+                <span>Маршруты</span>
             </button>
         `;
         
