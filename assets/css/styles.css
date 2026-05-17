@@ -297,7 +297,7 @@ html, body {
     background: var(--glass-bg);
     border: 1px solid rgba(48, 209, 88, 0.5);
     color: #fff;
-    min-height: 44px;
+    min-height: 52px;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background 0.15s;
