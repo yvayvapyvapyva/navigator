@@ -117,23 +117,22 @@ html, body {
 
 .instruction-overlay {
     position: fixed;
-    inset: 0;
+    top: calc(76px + env(safe-area-inset-top));
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 12px;
+    right: 12px;
     z-index: 20000;
     display: none;
-    align-items: center;
-    justify-content: center;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    padding: 20px;
 }
 
 .instruction-overlay.visible { display: flex; }
 
 .instruction-sheet {
     width: 100%;
-    max-width: 480px;
-    max-height: 90vh;
+    height: 100%;
     background: rgba(15, 15, 15, 0.97);
     border: 0.5px solid rgba(255, 255, 255, 0.12);
     border-radius: 24px;
