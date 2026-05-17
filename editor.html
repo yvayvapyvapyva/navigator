@@ -5,10 +5,12 @@
     <title>Route Editor Pro | Cloud Sync</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://api-maps.yandex.ru/2.1/?apikey=YANDEX_API_KEY&lang=ru_RU&suppressMapOpenBlock=true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/vk-user.js"></script>
+    <script src="assets/js/tg-user.js"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
@@ -81,11 +83,17 @@
 const { byId, round6 } = window.AppShared;
 const $ = byId;
 const f6 = round6;
-const vk = typeof vkBridge !== 'undefined' ? vkBridge : null;
-if (vk) VK.init();
-const USER_ID = VK.getId();
-const USER_NAME = VK.getName();
-const USER_UNAME = window.vkUser?.screen_name ? `vk.com/${window.vkUser.screen_name}` : '';
+
+const isTG = typeof Telegram !== 'undefined' && Telegram.WebApp;
+const isVK = typeof vkBridge !== 'undefined' && !isTG;
+const PLATFORM = isTG ? 'tg' : (isVK ? 'vk' : 'unknown');
+
+if (isTG) TG.init();
+if (isVK) VK.init();
+
+const USER_ID = isTG ? TG.getId() : VK.getId();
+const USER_NAME = isTG ? TG.getName() : VK.getName();
+const USER_UNAME = isTG ? (TG.getUsername() ? `tg://${TG.getUsername()}` : '') : (window.vkUser?.screen_name ? `vk.com/${window.vkUser.screen_name}` : '');
 window.USER_ID = USER_ID;
 window.USER_NAME = USER_NAME;
 window.USER_UNAME = USER_UNAME;
@@ -109,14 +117,19 @@ const showToast = (text, type = 'info', duration = 2200) => {
 };
 
 // Вызов Yandex Cloud Function
-// Получаем все VK-параметры из URL страницы (передаются VK при запуске Mini App)
-const VK_PARAMS = new URLSearchParams(window.location.search);
+const VK_PARAMS = isVK ? new URLSearchParams(window.location.search) : new URLSearchParams();
 
 async function callYcFunction(action, params = {}, bodyData = null) {
     const url = new URL(YC_FUNCTION_URL);
     url.searchParams.set('action', action);
-    // Передаём все VK-параметры для проверки подписи (sign, vk_user_id, vk_app_id, vk_ts и т.д.)
-    VK_PARAMS.forEach((v, k) => url.searchParams.set(k, v));
+    url.searchParams.set('p', PLATFORM);
+    // Передаём параметры для проверки подписи
+    if (isVK) {
+        VK_PARAMS.forEach((v, k) => url.searchParams.set(k, v));
+    }
+    if (isTG && Telegram.WebApp.initData) {
+        url.searchParams.set('tg_init_data', Telegram.WebApp.initData);
+    }
     // Наш параметр id берём из window.USER_ID
     url.searchParams.set('id', window.USER_ID || USER_ID);
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -271,29 +284,33 @@ function initMapWithGeolocation() {
 }
 
 // Инициализация VK Bridge
-vkBridge.send('VKWebAppInit').then(() => {
+if (isVK) {
+    vkBridge.send('VKWebAppInit').then(() => {
+        
+    }).catch((err) => {
+        
+    });
     
-}).catch((err) => {
-    
-});
-
-// Получение данных пользователя VK
-vkBridge.send('VKWebAppGetUserInfo').then((data) => {
-    window.vkUser = data;
-    
-    // Обновляем данные пользователя после загрузки
-    window.USER_ID = String(data.id);
-    window.USER_NAME = data.first_name + (data.last_name ? " " + data.last_name : "");
-    window.USER_UNAME = data.screen_name ? `vk.com/${data.screen_name}` : "";
-    
-}).catch((err) => {
-    
-});
+    // Получение данных пользователя VK
+    vkBridge.send('VKWebAppGetUserInfo').then((data) => {
+        window.vkUser = data;
+        
+        // Обновляем данные пользователя после загрузки
+        window.USER_ID = String(data.id);
+        window.USER_NAME = data.first_name + (data.last_name ? " " + data.last_name : "");
+        window.USER_UNAME = data.screen_name ? `vk.com/${data.screen_name}` : "";
+        
+    }).catch((err) => {
+        
+    });
+}
 
 ymaps.ready(async () => {
-    // Ждём загрузки данных VK (до 2 секунд)
-    for(let i = 0; i < 20 && !window.vkUser; i++) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+    // Ждём загрузки данных пользователя (до 2 секунд)
+    if (isVK) {
+        for(let i = 0; i < 20 && !window.vkUser; i++) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
     }
     
     const userId = window.USER_ID || USER_ID;
@@ -591,7 +608,7 @@ const deleteActiveRoute = async () => {
 };
 const shareActiveRoute = () => {
     if(!curRoute) return;
-    const userId = window.vkUser?.id;
+    const userId = window.USER_ID || USER_ID;
     const link = `https://vk.com/app54507759#m=${userId}-${curRoute}`;
     navigator.clipboard.writeText(link).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
         const el = document.createElement('textarea');
@@ -694,7 +711,7 @@ const executeDeleteRoute = async () => {
 };
 const shareRouteFromSettings = () => {
     if (!settingsRouteName) return;
-    const userId = window.vkUser?.id;
+    const userId = window.USER_ID || USER_ID;
     const link = `https://vk.com/app54507759#m=${userId}-${settingsRouteName}`;
     navigator.clipboard.writeText(link).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
         const el = document.createElement('textarea');
@@ -709,12 +726,12 @@ const shareRouteFromSettings = () => {
 const openInNavigator = () => {
     const routeKey = settingsRouteName || curRoute;
     if (!routeKey) return;
-    const userId = window.vkUser?.id;
+    const userId = window.USER_ID || USER_ID;
     window.location.href = `navigator.html#m=${userId}-${routeKey}`;
 };
 const launchNavigatorWithCurrentRoute = () => { 
     if(!curRoute) return; 
-    const userId = window.vkUser?.id;
+    const userId = window.USER_ID || USER_ID;
     window.location.href = `https://vk.com/app54507759#m=${userId}-${curRoute}`; 
 };
 const saveRouteLocally = () => {

@@ -2,6 +2,7 @@ import os
 import hmac
 import hashlib
 import base64
+import urllib.parse
 import ydb
 import ydb.iam
 import json
@@ -14,6 +15,7 @@ except ImportError:
 endpoint = os.getenv("YDB_ENDPOINT")
 database = os.getenv("YDB_DATABASE")
 VK_APP_SECRET = os.getenv("VK_APP_SECRET")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 pool = None
 
@@ -61,6 +63,52 @@ def verify_vk_signature(params):
     if not uid:
         return None, 'vk_user_id missing'
     return uid, None
+
+
+def verify_tg_init_data(init_data):
+    """Проверка подписи Telegram Mini App initData"""
+    if not TELEGRAM_BOT_TOKEN:
+        return None, 'TELEGRAM_TOKEN not configured'
+    if not init_data:
+        return None, 'tg_init_data missing'
+
+    parsed = urllib.parse.parse_qs(init_data)
+    params = {k: v[0] for k, v in parsed.items()}
+
+    hash_value = params.pop('hash', None)
+    if not hash_value:
+        return None, 'hash missing from tg_init_data'
+
+    sorted_params = sorted(params.items(), key=lambda x: x[0])
+    data_check_string = '\n'.join(f"{k}={v}" for k, v in sorted_params)
+
+    secret_key = hmac.new(
+        'WebAppData'.encode(),
+        TELEGRAM_BOT_TOKEN.encode('utf-8'),
+        hashlib.sha256
+    ).digest()
+
+    calculated_hash = hmac.new(
+        secret_key,
+        data_check_string.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+
+    if calculated_hash != hash_value:
+        return None, 'invalid tg signature'
+
+    user_str = params.get('user')
+    if not user_str:
+        return None, 'user missing from tg_init_data'
+
+    try:
+        user_data = json.loads(urllib.parse.unquote(user_str))
+        uid = str(user_data.get('id'))
+        if not uid:
+            return None, 'user id missing'
+        return uid, None
+    except (json.JSONDecodeError, ValueError) as e:
+        return None, f'invalid user data: {str(e)}'
 
 
 def execute_list_routes_public(session):
@@ -295,24 +343,31 @@ def handler(event, context):
         except Exception as e:
             return create_response(500, {'error': 'internal_error'})
 
-    # Защищенные экшены (требуют VK подпись)
-    verified_user_id, err = verify_vk_signature(params)
-    
+    # Определяем платформу и верифицируем
+    platform = params.get('p', 'vk')
+    verified_user_id = None
+    err = None
+
+    if platform == 'tg':
+        tg_init_data = params.get('tg_init_data', '')
+        verified_user_id, err = verify_tg_init_data(tg_init_data)
+    else:
+        verified_user_id, err = verify_vk_signature(params)
+
     # Для экшенов без подписи, но требующих id - используем параметр id из URL
     if not verified_user_id and id_val:
-        # Проверяем подпись только если есть sign параметр
         if params.get('sign'):
-            # Подпись есть, но неверная
             pass
         else:
-            # Нет подписи - используем id из URL как guest или предварительно авторизованный
-            # Для навигатора это допустимо при прямой ссылке на маршрут
             verified_user_id = id_val
 
     # Если действие требует подписи (редактор) - проверяем обязательно
     if action in ('list', 'save', 'delete', 'get_meta', 'save_meta'):
         if not verified_user_id:
-            return create_response(401, {'error': 'invalid_vk_signature', 'message': err or 'signature required'})
+            error_msg = err or 'signature required'
+            if platform == 'tg':
+                return create_response(401, {'error': 'invalid_tg_signature', 'message': error_msg})
+            return create_response(401, {'error': 'invalid_vk_signature', 'message': error_msg})
 
     user_id = verified_user_id or id_val
 
