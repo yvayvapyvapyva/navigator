@@ -760,6 +760,22 @@ html, body {
     display: none;
 }
 
+#settingsRouteModal {
+    position: fixed;
+    inset: 0;
+    z-index: 13000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#settingsRouteModal .modal-sheet {
+    height: auto;
+}
+
 .modal-title {
     font-size: 12px;
     font-weight: 700;
