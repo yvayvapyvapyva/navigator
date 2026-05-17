@@ -66,6 +66,18 @@
 <div id="confirmDeleteModal" onclick="if(event.target===this) toggleM('confirmDeleteModal')"><div class="modal-sheet modal-sheet-compact"><h3 class="modal-title">Удалить маршрут?</h3><p id="confirmDeleteText" style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;"></p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeleteModal')">Отмена</button><button class="btn-action" onclick="executeDeleteRoute()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
 <div id="confirmDeletePointModal" onclick="if(event.target===this) toggleM('confirmDeletePointModal')"><div class="modal-sheet modal-sheet-compact"><h3 class="modal-title">Удалить точку?</h3><p style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;">Вы уверены, что хотите удалить эту точку?</p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeletePointModal')">Отмена</button><button class="btn-action" onclick="executeDeletePoint()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
 <div id="shareModal" onclick="if(event.target===this) toggleM('shareModal')"><div class="modal-sheet modal-sheet-compact"><h3 class="modal-title">Поделиться маршрутом</h3><p style="margin:0;font-size:14px;color:rgba(255,255,255,0.6);text-align:center;">Выберите платформу для ссылки</p><button class="btn-action" onclick="copyShareLink('vk')">VK</button><button class="btn-action" onclick="copyShareLink('tg')">Telegram</button><button class="btn-action" onclick="toggleM('shareModal')">Отмена</button></div></div>
+<button id="instructionBtn" onclick="openInstruction()">📖 Инструкция</button>
+<div id="instructionModal" class="instruction-overlay" onclick="if(event.target===this) closeInstruction()">
+    <div class="instruction-sheet">
+        <div class="instruction-header">
+            <span class="instruction-title">✏️ Инструкция</span>
+            <button class="instruction-close" onclick="closeInstruction()">✕</button>
+        </div>
+        <div class="instruction-body" id="instructionBody">
+            <div class="instruction-loading">Загрузка...</div>
+        </div>
+    </div>
+</div>
 
 <script>
 (function (global) {
@@ -101,6 +113,28 @@ window.USER_ID = TG_ACTIVE ? TG.getId() : VK.getId();
 window.USER_NAME = TG_ACTIVE ? TG.getName() : VK.getName();
 window.USER_UNAME = '';
 
+function openInstruction() {
+    const modal = $('instructionModal');
+    const body = $('instructionBody');
+    if (!modal || !body) return;
+    modal.classList.add('visible');
+    if (!body.dataset.loaded) {
+        fetch('instr_editor.html')
+            .then(r => r.text())
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                body.innerHTML = doc.body.innerHTML;
+                body.dataset.loaded = '1';
+            })
+            .catch(() => { body.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,100,100,0.8);">Ошибка загрузки инструкции</div>'; });
+    }
+}
+
+function closeInstruction() {
+    const modal = $('instructionModal');
+    if (modal) modal.classList.remove('visible');
+}
+
 const showToast = (text, type = 'info', duration = 2200) => {
     const el = $('toast');
     el.textContent = text;
@@ -110,6 +144,11 @@ const showToast = (text, type = 'info', duration = 2200) => {
     el.classList.add('show');
     toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 };
+
+document.addEventListener('click', () => {
+    const btn = $('instructionBtn');
+    if (btn) btn.style.display = 'none';
+}, { once: true });
 
 async function callYcFunction(action, params = {}, bodyData = null) {
     const url = new URL(YC_FUNCTION_URL);
@@ -1029,6 +1068,8 @@ window.confirmDeleteRoute = confirmDeleteRoute;
 window.confirmDeletePoint = confirmDeletePoint;
 window.executeDeletePoint = executeDeletePoint;
 window.copyShareLink = copyShareLink;
+window.openInstruction = openInstruction;
+window.closeInstruction = closeInstruction;
 </script>
 </body>
 </html>
