@@ -592,6 +592,7 @@ ymaps.ready(() => {
         center: [56.3399, 43.9332], zoom: 17,
         type: 'yandex#satellite', controls: []
     });
+    APP.map.options.set('maxZoom', 20);
     APP.userMarker = new ymaps.Placemark([0, 0], {}, {
         iconLayout: 'default#image',
         iconImageHref: getUserLocSvg(0),
