@@ -1006,7 +1006,7 @@ function startEditPath(p) {
 }
 
 function openPointsOrderModal() {
-    modalMode = 'list'; const list = $('pointsSortList'); list.innerHTML = ''; $('orderModalTitle').textContent = curRoute || "Маршрут"; $('saveInListBtn').style.display = 'block'; $('saveBtnText').textContent = "Готово";
+    modalMode = 'list'; const list = $('pointsSortList'); list.innerHTML = ''; $('orderModalTitle').textContent = currentRouteMeta.name || curRoute || "Маршрут"; $('saveInListBtn').style.display = 'block'; $('saveBtnText').textContent = "Готово";
     if (!points.length) list.innerHTML = '<div style="text-align:center;padding:40px;color:#c7c9d1;font-weight:500;">Маршрут пока пуст</div>'; else points.forEach(p => list.appendChild(createPointCard(p)));
     syncActiveListCard();
     toggleM('pointsOrderModal');
