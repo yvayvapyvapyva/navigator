@@ -1178,13 +1178,6 @@ html, body {
     pointer-events: auto;
 }
 
-#listPointsBtn {
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    z-index: 9010;
-}
-
 #settingsBtn {
     position: absolute;
     top: 10px;
@@ -1210,6 +1203,32 @@ html, body {
     box-sizing: border-box;
 }
 
+#listPointsBtn {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9010;
+    width: auto;
+    padding: 0 18px;
+    border-radius: 100px;
+    height: 48px;
+    gap: 8px;
+    background: rgba(15, 15, 15, 0.75);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    pointer-events: auto;
+    font-weight: 700;
+    font-size: 15px;
+}
+
 .btn-top .btn-icon {
     font-size: 20px;
 }
@@ -1226,13 +1245,6 @@ html, body {
     height: 54px;
     justify-content: center;
     flex-shrink: 0;
-}
-
-#listPointsBtn {
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    z-index: 9010;
 }
 
 #routeLabelText {
