@@ -84,19 +84,9 @@ const { byId, round6 } = window.AppShared;
 const $ = byId;
 const f6 = round6;
 
-const isVK = typeof vkBridge !== 'undefined';
-const isTG = typeof Telegram !== 'undefined' && Telegram.WebApp && !!Telegram.WebApp.initData;
-const PLATFORM = isTG ? 'tg' : (isVK ? 'vk' : 'unknown');
+if (typeof vkBridge !== 'undefined') VK.init();
+TG.init();
 
-if (isTG) TG.init();
-if (isVK) VK.init();
-
-const USER_ID = isTG ? TG.getId() : VK.getId();
-const USER_NAME = isTG ? TG.getName() : VK.getName();
-const USER_UNAME = isTG ? (TG.getUsername() ? `tg://${TG.getUsername()}` : '') : (window.vkUser?.screen_name ? `vk.com/${window.vkUser.screen_name}` : '');
-window.USER_ID = USER_ID;
-window.USER_NAME = USER_NAME;
-window.USER_UNAME = USER_UNAME;
 const YC_FUNCTION_URL = 'https://functions.yandexcloud.net/d4e6qbc1mm9j44h0na3n';
 let map, points = [], cur = null, isAdd = false, isDrawing = false, curRoute = null, activeListPoint = null, modalMode = 'list', tempNewPointData = null, userLocPlacemark = null, activePoint = null, settingsRouteFiles = [];
 let historyStack = [], historyIndex = -1, lastSavedSnapshot = "[]", toastTimer = null;
@@ -105,6 +95,36 @@ let gpsRecordingPoint = null;
 let pendingDeletePoint = null;
 let pendingDeleteSingle = false;
 const GPS_MIN_DISTANCE = 5;
+
+function isPlatformVK() {
+    return typeof vkBridge !== 'undefined';
+}
+
+function isPlatformTG() {
+    return typeof Telegram !== 'undefined' && Telegram.WebApp && !!Telegram.WebApp.initData;
+}
+
+function getPlatform() {
+    if (isPlatformTG()) return 'tg';
+    if (isPlatformVK()) return 'vk';
+    return 'unknown';
+}
+
+function getCurrentUserId() {
+    if (isPlatformTG()) return TG.getId();
+    if (isPlatformVK()) return VK.getId();
+    return null;
+}
+
+function getCurrentUserName() {
+    if (isPlatformTG()) return TG.getName();
+    if (isPlatformVK()) return VK.getName();
+    return null;
+}
+
+window.USER_ID = getCurrentUserId();
+window.USER_NAME = getCurrentUserName();
+window.USER_UNAME = '';
 
 const showToast = (text, type = 'info', duration = 2200) => {
     const el = $('toast');
@@ -116,22 +136,17 @@ const showToast = (text, type = 'info', duration = 2200) => {
     toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 };
 
-// Вызов Yandex Cloud Function
-const VK_PARAMS = isVK ? new URLSearchParams(window.location.search) : new URLSearchParams();
-
 async function callYcFunction(action, params = {}, bodyData = null) {
     const url = new URL(YC_FUNCTION_URL);
     url.searchParams.set('action', action);
-    url.searchParams.set('p', PLATFORM);
-    // Передаём параметры для проверки подписи
-    if (isVK) {
-        VK_PARAMS.forEach((v, k) => url.searchParams.set(k, v));
+    url.searchParams.set('p', getPlatform());
+    if (isPlatformVK()) {
+        new URLSearchParams(window.location.search).forEach((v, k) => url.searchParams.set(k, v));
     }
-    if (isTG && Telegram.WebApp.initData) {
+    if (isPlatformTG() && Telegram.WebApp.initData) {
         url.searchParams.set('tg_init_data', Telegram.WebApp.initData);
     }
-    // Наш параметр id берём из window.USER_ID
-    url.searchParams.set('id', window.USER_ID || USER_ID);
+    url.searchParams.set('id', window.USER_ID || getCurrentUserId());
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
     
     const options = {
@@ -154,13 +169,13 @@ async function callYcFunction(action, params = {}, bodyData = null) {
 
 function encodeUserInfo() {
     try {
-        if (isTG && window.tgUser) {
+        if (isPlatformTG() && window.tgUser) {
             const user = window.tgUser;
             const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
             const userInfoStr = 'tg:' + [user.id, fullName, user.username || ''].join(',');
             return btoa(encodeURIComponent(userInfoStr));
         }
-        if (isVK && window.vkUser) {
+        if (isPlatformVK() && window.vkUser) {
             const user = window.vkUser;
             const city = user.city?.title || 'не указан';
             const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
@@ -303,7 +318,7 @@ function initMapWithGeolocation() {
 }
 
 // Инициализация VK Bridge
-if (isVK) {
+if (isPlatformVK()) {
     vkBridge.send('VKWebAppInit').then(() => {
         
     }).catch((err) => {
@@ -326,13 +341,13 @@ if (isVK) {
 
 ymaps.ready(async () => {
     // Ждём загрузки данных пользователя (до 2 секунд)
-    if (isVK) {
+    if (isPlatformVK()) {
         for(let i = 0; i < 20 && !window.vkUser; i++) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
     }
     
-    const userId = window.USER_ID || USER_ID;
+    const userId = window.USER_ID || getCurrentUserId();
 
     const center = await initMapWithGeolocation();
     map = new ymaps.Map("map", { center: center, zoom: 17, type: 'yandex#satellite', controls: [] });
@@ -427,7 +442,7 @@ const handleInitialAuth = async () => {
     seedHistory();
     updateSaveState();
     await refreshFileList();
-    const userId = window.USER_ID || USER_ID;
+    const userId = window.USER_ID || getCurrentUserId();
     const routeCount = settingsRouteFiles.length;
     $('settingsTitle').textContent = `${userId} - маршрутов:${routeCount}`;
     toggleM('settingsModal');
@@ -485,7 +500,7 @@ const renderSettingsFileList = () => {
             list.appendChild(item);
         });
     }
-    const userId = window.USER_ID || USER_ID;
+    const userId = window.USER_ID || getCurrentUserId();
     $('settingsTitle').textContent = `${userId} - маршрутов:${settingsRouteFiles.length}`;
 };
 
@@ -630,7 +645,7 @@ const deleteActiveRoute = async () => {
 };
 const shareActiveRoute = () => {
     if(!curRoute) return;
-    const userId = window.USER_ID || USER_ID;
+    const userId = window.USER_ID || getCurrentUserId();
     const link = `https://vk.com/app54507759#m=${userId}-${curRoute}`;
     navigator.clipboard.writeText(link).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
         const el = document.createElement('textarea');
@@ -733,7 +748,7 @@ const executeDeleteRoute = async () => {
 };
 const shareRouteFromSettings = () => {
     if (!settingsRouteName) return;
-    const userId = window.USER_ID || USER_ID;
+    const userId = window.USER_ID || getCurrentUserId();
     const link = `https://vk.com/app54507759#m=${userId}-${settingsRouteName}`;
     navigator.clipboard.writeText(link).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
         const el = document.createElement('textarea');
@@ -748,19 +763,19 @@ const shareRouteFromSettings = () => {
 const openInNavigator = () => {
     const routeKey = settingsRouteName || curRoute;
     if (!routeKey) return;
-    const userId = window.USER_ID || USER_ID;
+    const userId = window.USER_ID || getCurrentUserId();
     window.location.href = `navigator.html#m=${userId}-${routeKey}`;
 };
 const launchNavigatorWithCurrentRoute = () => { 
     if(!curRoute) return; 
-    const userId = window.USER_ID || USER_ID;
+    const userId = window.USER_ID || getCurrentUserId();
     window.location.href = `https://vk.com/app54507759#m=${userId}-${curRoute}`; 
 };
 const saveRouteLocally = () => {
     if(!curRoute) { showToast('Выберите маршрут', 'error'); return; }
     const data = points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm }));
     const jsonStr = formatJsonWithPts(data);
-    const filename = `${window.USER_ID || USER_ID}-${curRoute}.json`;
+    const filename = `${window.USER_ID || getCurrentUserId()}-${curRoute}.json`;
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
