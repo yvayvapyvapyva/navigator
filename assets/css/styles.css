@@ -579,7 +579,7 @@ html, body {
     padding: 14px 24px;
     border-radius: var(--radius-full);
     font-size: 15px;
-    z-index: 9999;
+    z-index: 16000;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0;
     border: 0.5px solid var(--glass-border);
@@ -762,18 +762,16 @@ html, body {
 
 #settingsRouteModal {
     position: fixed;
-    inset: 0;
+    top: calc(76px + env(safe-area-inset-top));
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 12px;
+    right: 12px;
     z-index: 13000;
     display: none;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 
 #settingsRouteModal .modal-sheet {
-    height: auto;
+    height: 100%;
 }
 
 #shareModal {
