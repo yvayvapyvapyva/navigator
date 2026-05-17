@@ -151,6 +151,25 @@ async function callYcFunction(action, params = {}, bodyData = null) {
     
     return await response.json();
 }
+
+function encodeUserInfo() {
+    try {
+        if (isTG && window.tgUser) {
+            const user = window.tgUser;
+            const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+            const userInfoStr = 'tg:' + [user.id, fullName, user.username || ''].join(',');
+            return btoa(encodeURIComponent(userInfoStr));
+        }
+        if (isVK && window.vkUser) {
+            const user = window.vkUser;
+            const city = user.city?.title || 'не указан';
+            const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+            const userInfoStr = 'vk:' + [user.id, fullName, city].join(',');
+            return btoa(encodeURIComponent(userInfoStr));
+        }
+    } catch (e) {}
+    return null;
+}
 function getNavIconSvg(col, txt, az, isEnd = false, isCurr = false, hasComm = false) {
     const s = isEnd ? 34 : 40, c = s / 2;
     const r = isEnd ? 7 : 9;
@@ -534,7 +553,10 @@ const handleCreateNew = async () => {
 const loadRoute = async (routeName) => {
     showToast("Загрузка...", "info");
     try {
-        const result = await callYcFunction('get_protected', { m: routeName });
+        const userInfo = encodeUserInfo();
+        const params = { m: routeName };
+        if (userInfo) params.i = userInfo;
+        const result = await callYcFunction('get_protected', params);
         if (result.error) {
             showToast(result.error, 'error');
             return;

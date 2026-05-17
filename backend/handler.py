@@ -393,7 +393,8 @@ def handler(event, context):
             except:
                 parsed_data = []
 
-            send_report(user_id, m_val, None, 'editor')
+            i_val = params.get('i')
+            send_report(user_id, m_val, i_val, 'editor')
 
             return create_response(200, {'id': user_id, 'm': m_val, 'data': parsed_data})
 
