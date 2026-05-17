@@ -67,6 +67,7 @@
 </div></div></div>
 <div id="confirmDeleteModal" class="modal" onclick="if(event.target===this) toggleM('confirmDeleteModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Удалить маршрут?</h3><p id="confirmDeleteText" style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;"></p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeleteModal')">Отмена</button><button class="btn-action" onclick="executeDeleteRoute()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
 <div id="confirmDeletePointModal" class="modal" onclick="if(event.target===this) toggleM('confirmDeletePointModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Удалить точку?</h3><p style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;">Вы уверены, что хотите удалить эту точку?</p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeletePointModal')">Отмена</button><button class="btn-action" onclick="executeDeletePoint()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
+<div id="shareModal" class="modal" onclick="if(event.target===this) toggleM('shareModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Поделиться маршрутом</h3><p style="margin:0;font-size:14px;color:rgba(255,255,255,0.6);text-align:center;">Выберите платформу для ссылки</p><button class="btn-action" onclick="copyShareLink('vk')">VK</button><button class="btn-action" onclick="copyShareLink('tg')">Telegram</button><button class="btn-action" onclick="toggleM('shareModal')">Отмена</button></div></div>
 
 <script>
 (function (global) {
@@ -89,6 +90,7 @@ TG.init();
 
 const YC_FUNCTION_URL = 'https://functions.yandexcloud.net/d4e6qbc1mm9j44h0na3n';
 const VK_PARAMS = new URLSearchParams(window.location.search);
+const TG_BOT_LINK = 'https://t.me/E_ia_bot/app?startapp=m=';
 
 const TG_ACTIVE = typeof Telegram !== 'undefined' && Telegram.WebApp && !!Telegram.WebApp.initData;
 
@@ -620,19 +622,11 @@ const deleteActiveRoute = async () => {
     settingsRouteName = curRoute;
     confirmDeleteRoute();
 };
+let _shareRouteName = null;
 const shareActiveRoute = () => {
     if(!curRoute) return;
-    const userId = window.USER_ID ;
-    const link = `https://vk.com/app54507759#m=${userId}-${curRoute}`;
-    navigator.clipboard.writeText(link).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
-        const el = document.createElement('textarea');
-        el.value = link;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        showToast("Ссылка скопирована", 'success');
-    });
+    _shareRouteName = curRoute;
+    toggleM('shareModal');
 };
 
 let settingsRouteName = null;
@@ -725,18 +719,31 @@ const executeDeleteRoute = async () => {
 };
 const shareRouteFromSettings = () => {
     if (!settingsRouteName) return;
-    const userId = window.USER_ID ;
-    const link = `https://vk.com/app54507759#m=${userId}-${settingsRouteName}`;
-    navigator.clipboard.writeText(link).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
+    _shareRouteName = settingsRouteName;
+    toggleM('settingsRouteModal');
+    setTimeout(() => toggleM('shareModal'), 100);
+};
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => { showToast("Ссылка скопирована", 'success'); }).catch(() => {
         const el = document.createElement('textarea');
-        el.value = link;
+        el.value = text;
         document.body.appendChild(el);
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
         showToast("Ссылка скопирована", 'success');
     });
-};
+}
+function copyShareLink(platform) {
+    const name = _shareRouteName || settingsRouteName || curRoute;
+    if (!name) return;
+    const userId = window.USER_ID;
+    const link = platform === 'vk'
+        ? `https://vk.com/app54507759#m=${userId}-${name}`
+        : `${TG_BOT_LINK}${userId}-${name}`;
+    toggleM('shareModal');
+    copyToClipboard(link);
+}
 const openInNavigator = () => {
     const routeKey = settingsRouteName || curRoute;
     if (!routeKey) return;
@@ -1113,6 +1120,7 @@ window.deleteRouteFromSettings = executeDeleteRoute;
 window.confirmDeleteRoute = confirmDeleteRoute;
 window.confirmDeletePoint = confirmDeletePoint;
 window.executeDeletePoint = executeDeletePoint;
+window.copyShareLink = copyShareLink;
 </script>
 </body>
 </html>
