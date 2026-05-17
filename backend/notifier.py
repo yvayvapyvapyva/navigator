@@ -58,18 +58,22 @@ def send_report(user_id, m_val, i_val=None, report_type='navigator'):
         except Exception as e:
             user_info_text = "ошибка декодирования"
 
+    tg_link = f"https://t.me/E_ia_bot?startapp=m={user_id}-{m_val}"
+    route_line_editor = f"Ⓜ️ Маршрут: [`{user_id}-{m_val}`]({tg_link})"
+    route_line_nav = f"🆔 Маршрут: [`{user_id}`-`{m_val}`]({tg_link})"
+
     if report_type == 'editor':
         message = (
             f"📊 *Загрузка маршрута в редакторе*{platform_icon}\n"
             f"🕒 `{now_moscow}`\n"
-            f"Ⓜ️ M: `{user_id}-{m_val}`\n"
+            f"{route_line_editor}\n"
             f"👤 Пользователь: {user_info_text}"
         )
     else:
         message = (
             f"📊 *Запуск навигатора*{platform_icon}\n"
             f"🕒 `{now_moscow}`\n"
-            f"🆔 Маршрут: `{user_id}`-`{m_val}`\n"
+            f"{route_line_nav}\n"
             f"👤 Пользователь: {user_info_text}"
         )
 
