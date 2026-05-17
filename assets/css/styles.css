@@ -750,6 +750,16 @@ html, body {
     height: auto;
 }
 
+#pointsOrderModal {
+    position: fixed;
+    top: calc(76px + env(safe-area-inset-top));
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 12px;
+    right: 12px;
+    z-index: 10000;
+    display: none;
+}
+
 .modal-title {
     font-size: 12px;
     font-weight: 700;
@@ -1676,7 +1686,7 @@ input, textarea, select {
     display: none;
     flex-direction: column;
     gap: 4px;
-    z-index: 6000;
+    z-index: 12000;
     box-shadow: 0 30px 100px rgba(0, 0, 0, 0.5);
     width: 90%;
     max-width: 400px;
@@ -1689,7 +1699,7 @@ input, textarea, select {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.35);
-    z-index: 5999;
+    z-index: 11999;
     display: none;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
