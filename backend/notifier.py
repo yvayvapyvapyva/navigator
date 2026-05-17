@@ -62,7 +62,6 @@ def send_report(user_id, m_val, i_val=None, report_type='navigator'):
         message = (
             f"📊 *Загрузка маршрута в редакторе*{platform_icon}\n"
             f"🕒 `{now_moscow}`\n"
-            f"🆔 ID: `{user_id}`\n"
             f"Ⓜ️ M: `{user_id}-{m_val}`\n"
             f"👤 Пользователь: {user_info_text}"
         )
