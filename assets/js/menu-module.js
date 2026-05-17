@@ -23,12 +23,16 @@ const MenuModule = {
     getUrlParam(name) {
         if (name !== 'm') return null;
 
+        // Проверка query-строки URL
+        let value = new URLSearchParams(window.location.search).get(name);
+        if (value) return value;
+
         // Проверка hash: #m=id-название
         const hash = window.location.hash.slice(1);
         if (hash) {
             // Формат: #m=id-название
             const hashParams = new URLSearchParams(hash);
-            let value = hashParams.get(name);
+            value = hashParams.get(name);
             if (value) return value;
 
             // Формат: #/path?m=id-название
