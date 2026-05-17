@@ -374,32 +374,6 @@ const MenuModule = {
             document.body.insertAdjacentHTML('afterbegin', html);
         }
 
-        // Обработчик кликов по списку маршрутов (делегирование событий)
-        document.getElementById('routesListContainer').addEventListener('click', (e) => {
-            // Сначала проверяем клик по кнопке информации (i)
-            const infoBtn = e.target.closest('.route-info-btn');
-            if (infoBtn) {
-                e.stopPropagation();
-                e.preventDefault();
-                const routeKey = infoBtn.getAttribute('data-route');
-                this._showRouteDescription(routeKey);
-                return;
-            }
-
-            // Затем проверяем клик по элементу маршрута
-            const routeItem = e.target.closest('.route-item');
-            if (!routeItem) return;
-
-            // Игнорируем если клик был по кнопке внутри route-item
-            if (e.target.closest('.route-info-btn')) return;
-
-            const routeKey = routeItem.getAttribute('data-route');
-            const routeData = this.routesDescriptions[routeKey];
-            if (routeData) {
-                this.loadRouteByName(routeData.m, routeData.id);
-            }
-        });
-
         // Закрытие при клике на фон (вне modal-sheet)
         document.getElementById('jsonModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('jsonModal')) {
@@ -548,26 +522,6 @@ const MenuModule = {
         }
     },
 
-    // Внутренняя функция для fetch и загрузки
-    async _fetchAndLoad(url) {
-        this.showSpinner();
-        try {
-            const res = await fetch(url);
-
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-
-            this.hideSpinner();
-            this.loadRoute(data);
-        } catch (e) {
-            this.hideSpinner();
-            console.error('[MenuModule] Ошибка загрузки маршрута:', e);
-            if (typeof showToast === 'function') {
-                showToast('Ошибка загрузки: ' + e.message, 'error', 5000);
-            }
-        }
-    },
-    
     // Загрузка маршрута (публичный метод, передаёт JSON в навигатор)
     loadRoute(jsonData) {
         // Очищаем предыдущий маршрут
@@ -581,11 +535,6 @@ this.callback(jsonData);
         }
         this.isLoaded = true;
         this.hide();
-    },
-    
-    // Публичный метод для загрузки JSON напрямую (для будущих источников)
-    loadFromJSON(jsonData) {
-        this.loadRoute(jsonData);
     },
     
     // Скрыть модальное окно

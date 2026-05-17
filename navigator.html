@@ -585,11 +585,6 @@ function startWakeLock() {
     }, 3000);
 }
 
-function stopWakeLock() {
-    if (wakeLockInterval) { clearInterval(wakeLockInterval); wakeLockInterval = null; }
-    if (wakeVideo) { wakeVideo.pause(); wakeVideo.srcObject = null; }
-}
-
 document.addEventListener('DOMContentLoaded', () => { setTimeout(startWakeLock, 500); });
 
 ymaps.ready(() => {
