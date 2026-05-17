@@ -776,6 +776,22 @@ html, body {
     height: auto;
 }
 
+#shareModal {
+    position: fixed;
+    inset: 0;
+    z-index: 14000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#shareModal .modal-sheet {
+    height: auto;
+}
+
 .modal-title {
     font-size: 12px;
     font-weight: 700;
