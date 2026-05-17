@@ -620,9 +620,9 @@ function closeInstruction() {
     if (modal) modal.classList.remove('visible');
 }
 
-document.addEventListener('pointerdown', () => {
+document.addEventListener('pointerdown', (e) => {
     const btn = $('instructionBtn');
-    if (btn) btn.style.display = 'none';
+    if (btn && !btn.contains(e.target)) btn.style.display = 'none';
 }, { once: true });
 
 document.addEventListener('DOMContentLoaded', () => { setTimeout(startWakeLock, 500); });

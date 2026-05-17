@@ -145,9 +145,9 @@ const showToast = (text, type = 'info', duration = 2200) => {
     toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 };
 
-document.addEventListener('pointerdown', () => {
+document.addEventListener('pointerdown', (e) => {
     const btn = $('instructionBtn');
-    if (btn) btn.style.display = 'none';
+    if (btn && !btn.contains(e.target)) btn.style.display = 'none';
 }, { once: true });
 
 async function callYcFunction(action, params = {}, bodyData = null) {
