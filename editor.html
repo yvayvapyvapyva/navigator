@@ -25,9 +25,6 @@
     <button id="listPointsBtn" class="btn-top" onclick="openPointsOrderModal()" style="visibility:hidden">
         <span id="routeLabelText">Маршрут</span>
     </button>
-    <button class="btn-top btn-icon-only" id="gpsModeBtn" onclick="toggleGpsMode()" style="display:none;">
-        <span class="btn-icon">🌍</span>
-    </button>
     <button id="settingsBtn" class="btn-top btn-icon-only" onclick="openSettingsModal()">
         <span class="btn-icon">⚙️</span>
     </button>
@@ -36,6 +33,7 @@
     <button id="addMarkerBtn" class="btn-add-main" onclick="handleAddBtnClick()" style="visibility:hidden">
         <span id="addText">Добавить новую точку</span>
     </button>
+    <button id="gpsModeBtn" onclick="toggleGpsMode()" style="display:none;">🌍</button>
 </div>
 <div id="floatingSave" class="floating-save"><button id="saveStateBtn" class="btn-save-glass" onclick="saveGist()">Сохранить изменения</button></div>
 <div id="dropdownOverlay" class="dropdown-overlay" onclick="closeD()"></div>
