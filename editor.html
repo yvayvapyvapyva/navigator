@@ -96,11 +96,8 @@ const TG_ACTIVE = typeof Telegram !== 'undefined' && Telegram.WebApp && !!Telegr
 
 let map, points = [], cur = null, isAdd = false, isDrawing = false, curRoute = null, activeListPoint = null, modalMode = 'list', tempNewPointData = null, userLocPlacemark = null, activePoint = null, settingsRouteFiles = [];
 let historyStack = [], historyIndex = -1, lastSavedSnapshot = "[]", toastTimer = null;
-let lastGpsPoint = null;
-let gpsRecordingPoint = null;
 let pendingDeletePoint = null;
 let pendingDeleteSingle = false;
-const GPS_MIN_DISTANCE = 5;
 
 window.USER_ID = TG_ACTIVE ? TG.getId() : VK.getId();
 window.USER_NAME = TG_ACTIVE ? TG.getName() : VK.getName();
@@ -390,20 +387,7 @@ const initGeolocation = () => {
                 userLocPlacemark.geometry.setCoordinates(coords);
                 userLocPlacemark.options.set('visible', true);
             }
-            if (gpsRecordingPoint) {
-                const currentCoords = p.coords;
-                const dist = getDistanceFromLatLonInM(
-                    lastGpsPoint.lat, lastGpsPoint.lon,
-                    currentCoords.latitude, currentCoords.longitude
-                );
-                if (dist < GPS_MIN_DISTANCE) return;
-                const pts = gpsRecordingPoint.line.geometry.getCoordinates();
-                pts.push(coords);
-                gpsRecordingPoint.line.geometry.setCoordinates(pts);
-                gpsRecordingPoint.pts = pts.map(pt => [f6(pt[0]), f6(pt[1])]);
-                lastGpsPoint = { lat: currentCoords.latitude, lon: currentCoords.longitude };
-                map.setCenter(coords);
-            }
+
         }, null, { enableHighAccuracy: true, maximumAge: 5000 });
     }
 };
@@ -488,7 +472,7 @@ const updateVisibility = () => {
     $('listPointsBtn').style.visibility = act ? 'visible' : 'hidden';
     $('layerSwitchBtn').style.visibility = act ? 'visible' : 'hidden';
     $('addMarkerBtn').style.visibility = act ? 'visible' : 'hidden';
-    $('gpsModeBtn').style.display = act ? 'flex' : 'none';
+    updateGpsBtnVisibility();
     if(curRoute) {
         if ($('fileActions')) $('fileActions').style.display = 'block';
         $('routeLabelText').textContent = currentRouteMeta.name || curRoute;
@@ -839,6 +823,7 @@ const startDrawingForPoint = (p, isNewPoint = false) => {
     setActivePoint(p, !isNewPoint);
     p.line.editor.startDrawing();
     p.pm.options.set('draggable', true);
+    updateGpsBtnVisibility();
 };
 const stopDrawingMode = async () => {
     if (cur) {
@@ -851,52 +836,45 @@ const stopDrawingMode = async () => {
     $('addText').textContent = "Добавить новую точку";
     $('addMarkerBtn').classList.remove('drawing');
     cur = null;
+    updateGpsBtnVisibility();
     await saveGist();
     showToast("Изменения сохранены", "success");
 };
 const handleAddBtnClick = () => {
-    if (gpsRecordingPoint) { stopGpsRecordMode(); }
-    else if (isDrawing) { stopDrawingMode(); }
+    if (isDrawing) { stopDrawingMode(); }
     else if (isAdd) { stopAdd(); }
     else { openCreatePointModal(); }
 };
 
+function updateGpsBtnVisibility() {
+    $('gpsModeBtn').style.display = (isAdd || isDrawing) ? 'flex' : 'none';
+}
 function toggleGpsMode() {
-    if (gpsRecordingPoint) { stopGpsRecordMode(); }
-    else {
-        if (!navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const coords = [position.coords.latitude, position.coords.longitude];
-                gpsRecordingPoint = addP(coords, { id: points.length + 1, color: 'Gold', cmd: 'Выполняем разгон до максимальной скорости', comm: '', pts: [coords] }, false);
-                lastGpsPoint = { lat: coords[0], lon: coords[1] };
-                gpsRecordingPoint.line.editor.startDrawing();
-                gpsRecordingPoint.pm.options.set('draggable', true);
-                $('addText').textContent = 'Завершить запись';
-                $('gpsModeBtn').classList.add('active');
-            },
-            () => {},
-            { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
-        );
-    }
+    if (!navigator.geolocation || !(isAdd || isDrawing)) return;
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const coords = [position.coords.latitude, position.coords.longitude];
+            if (isAdd && tempNewPointData) {
+                const newPoint = addP(coords, { ...tempNewPointData });
+                pushHistorySnapshot();
+                updateSaveState();
+                setActivePoint(newPoint, false);
+                startDrawingForPoint(newPoint, true);
+                tempNewPointData = null;
+            } else if (isDrawing && cur) {
+                const pts = cur.line.geometry.getCoordinates();
+                pts.push(coords);
+                cur.line.geometry.setCoordinates(pts);
+                cur.pts = pts.map(pt => [f6(pt[0]), f6(pt[1])]);
+                map.setCenter(coords);
+            }
+        },
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
 }
 
-async function stopGpsRecordMode() {
-    if (gpsRecordingPoint) {
-        gpsRecordingPoint.line.editor.stopEditing();
-        gpsRecordingPoint.pm.options.set('draggable', false);
-        gpsRecordingPoint = null;
-    }
-    lastGpsPoint = null;
-    $('gpsModeBtn').classList.remove('active');
-    $('addText').textContent = 'Добавить новую точку';
-    pushHistorySnapshot();
-    modalMode = 'gps';
-    await saveGist();
-    showToast("Изменения сохранены", "success");
-}
-
-const stopAdd = () => { isAdd = false; tempNewPointData = null; $('addText').textContent = "Добавить новую точку"; $('addMarkerBtn').classList.remove('active'); map.setCursor('grab'); points.forEach(p => { if (p.endPlacemark) p.endPlacemark.options.set('interactive', false); }); };
+const stopAdd = () => { isAdd = false; tempNewPointData = null; $('addText').textContent = "Добавить новую точку"; $('addMarkerBtn').classList.remove('active'); map.setCursor('grab'); points.forEach(p => { if (p.endPlacemark) p.endPlacemark.options.set('interactive', false); }); updateGpsBtnVisibility(); };
 const updI = p => { 
     const isCurrent = p === activePoint;
     const hasComm = !!p.comm;
@@ -1021,6 +999,7 @@ function startEditPath(p) {
     p.pm.options.set('draggable', true);
     p.line.editor.startEditing();
     setActivePoint(p, true);
+    updateGpsBtnVisibility();
 }
 
 function openPointsOrderModal() {
@@ -1055,6 +1034,7 @@ async function handleModalSave() {
         points.forEach(p => { if (p.endPlacemark) p.endPlacemark.options.set('interactive', true); });
         $('addMarkerBtn').classList.add('active');
         $('addText').textContent = "Выберите место на карте";
+        updateGpsBtnVisibility();
     }
 }
 
