@@ -479,18 +479,22 @@ const MenuModule = {
     
     // Проверка URL параметра
     checkUrlParam() {
-        // Поддерживаем только формат: #m=id-название
         const routeParam = this.getUrlParam('m');
+        if (!routeParam) return;
 
-        if (routeParam) {
-            // Парсим формат "id-название"
-            const { id, name } = this.parseRouteInput(routeParam);
-            this.currentRoute = routeParam;
+        const { id, name } = this.parseRouteInput(routeParam);
 
-            this.isLoaded = true;
-            this.hide();
-            this.loadRouteByName(name, id);
+        // Только ID, без названия — фильтруем список, не загружаем маршрут
+        if (!name) {
+            this.currentRoute = `${id}-`;
+            return;
         }
+
+        // ID и название — загружаем маршрут
+        this.currentRoute = routeParam;
+        this.isLoaded = true;
+        this.hide();
+        this.loadRouteByName(name, id);
     },
     
     // Загрузка маршрута по названию (внутренний метод)
