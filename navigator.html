@@ -19,6 +19,18 @@
     <div id="loadingText">ЗАГРУЗКА...</div>
 </div>
 
+<div id="instructionModal" class="instruction-overlay" onclick="if(event.target===this) closeInstruction()">
+    <div class="instruction-sheet">
+        <div class="instruction-header">
+            <span class="instruction-title">🧭 Инструкция</span>
+            <button class="instruction-close" onclick="closeInstruction()">✕</button>
+        </div>
+        <div class="instruction-body" id="instructionBody">
+            <div class="instruction-loading">Загрузка...</div>
+        </div>
+    </div>
+</div>
+
 <video id="wakeLockVideo" playsinline muted loop></video>
 
 <div id="map"></div>
@@ -34,6 +46,7 @@
     <div class="tel-item"><span class="tel-label">КМ/Ч</span><span class="tel-value" id="telSpeed">0</span></div>
 </div>
 <div id="topCenterControls"></div>
+<button id="instructionBtn" onclick="openInstruction()">📖 Инструкция</button>
 
 <div id="hud">
     <div class="hud-header">
@@ -584,6 +597,33 @@ function startWakeLock() {
         }
     }, 3000);
 }
+
+function openInstruction() {
+    const modal = $('instructionModal');
+    const body = $('instructionBody');
+    if (!modal || !body) return;
+    modal.classList.add('visible');
+    if (!body.dataset.loaded) {
+        fetch('instr.html')
+            .then(r => r.text())
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                body.innerHTML = doc.body.innerHTML;
+                body.dataset.loaded = '1';
+            })
+            .catch(() => { body.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,100,100,0.8);">Ошибка загрузки инструкции</div>'; });
+    }
+}
+
+function closeInstruction() {
+    const modal = $('instructionModal');
+    if (modal) modal.classList.remove('visible');
+}
+
+document.addEventListener('click', () => {
+    const btn = $('instructionBtn');
+    if (btn) btn.style.display = 'none';
+}, { once: true });
 
 document.addEventListener('DOMContentLoaded', () => { setTimeout(startWakeLock, 500); });
 

@@ -89,6 +89,109 @@ html, body {
     transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+#instructionBtn {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9005;
+    padding: 32px 64px;
+    border-radius: 24px;
+    background: rgba(15, 15, 15, 0.85);
+    border: 1px solid rgba(48, 209, 88, 0.4);
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 22px;
+    font-weight: 700;
+    outline: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 0 40px rgba(48, 209, 88, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#instructionBtn:active {
+    transform: translate(-50%, -50%) scale(0.95);
+    background: rgba(30, 30, 30, 0.5);
+}
+
+.instruction-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 20px;
+}
+
+.instruction-overlay.visible { display: flex; }
+
+.instruction-sheet {
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    background: rgba(15, 15, 15, 0.97);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.instruction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.instruction-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.instruction-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.instruction-close:active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.instruction-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px;
+}
+
+.instruction-loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #8b8f99;
+    font-size: 15px;
+}
+
 #loadingSpinner {
     position: fixed;
     top: 0;
