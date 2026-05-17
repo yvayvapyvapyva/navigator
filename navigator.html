@@ -622,7 +622,10 @@ function closeInstruction() {
 
 document.addEventListener('pointerdown', (e) => {
     const btn = $('instructionBtn');
-    if (btn && !btn.contains(e.target)) btn.style.display = 'none';
+    if (!btn) return;
+    const isBtn = btn.contains(e.target);
+    btn.style.display = 'none';
+    if (isBtn) openInstruction();
 }, { once: true });
 
 document.addEventListener('DOMContentLoaded', () => { setTimeout(startWakeLock, 500); });
