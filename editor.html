@@ -84,8 +84,8 @@ const { byId, round6 } = window.AppShared;
 const $ = byId;
 const f6 = round6;
 
-const isTG = typeof Telegram !== 'undefined' && Telegram.WebApp;
-const isVK = typeof vkBridge !== 'undefined' && !isTG;
+const isVK = typeof vkBridge !== 'undefined';
+const isTG = typeof Telegram !== 'undefined' && Telegram.WebApp && !!Telegram.WebApp.initData;
 const PLATFORM = isTG ? 'tg' : (isVK ? 'vk' : 'unknown');
 
 if (isTG) TG.init();
