@@ -19,9 +19,7 @@
 <div id="welcomeScreen" style="display:flex;align-items:center;justify-content:center;background:rgba(10,11,15,0.95);"><div style="display:flex;flex-direction:column;align-items:center;gap:16px;"><span style="width:32px;height:32px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;"></span><div style="font-size:16px;font-weight:600;color:#fff;">Загрузка</div></div></div>
 <div id="map"></div>
 <div class="top-controls" id="uiControls" style="display:none">
-    <button id="layerSwitchBtn" class="circle-btn" onclick="toggleLayer()" style="visibility:hidden">
-        <svg viewBox="0 0 24 24"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
-    </button>
+    <button id="layerSwitchBtn" class="circle-btn" onclick="toggleLayer()" style="visibility:hidden">🗺️</button>
     <button id="listPointsBtn" class="circle-btn" onclick="openPointsOrderModal()" style="visibility:hidden">
         <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
     </button>
@@ -42,7 +40,7 @@
 
 <div id="pointsOrderModal" onclick="if(event.target===this) toggleM('pointsOrderModal')"><div class="modal-sheet" style="gap:0;"><div class="modal-header" style="padding:16px 20px;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0;"><h3 id="orderModalTitle" style="margin:0;font-size:18px;font-weight:700;">Маршрут</h3><button class="close-circle" onclick="toggleM('pointsOrderModal')">✕</button></div><div id="pointsSortList" style="flex:1;overflow-y:auto;padding:14px;"></div><div style="padding:16px 20px;border-top:0.5px solid rgba(255,255,255,0.08);flex-shrink:0;"><button id="saveInListBtn" class="btn-action" onclick="handleModalSave()"><span id="saveBtnText">Готово</span></button></div></div></div>
 <div id="settingsModal" onclick="if(event.target===this) toggleM('settingsModal')"><div class="modal-sheet"><div class="modal-header" style="padding:16px 20px;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0;"><span id="settingsTitle" style="font-size:18px;font-weight:700;">Ваши маршруты</span><button class="close-circle" onclick="toggleM('settingsModal')">✕</button></div><div class="settings-body" id="routesList" style="padding:14px 14px 24px;overflow-y:auto;display:flex;flex-direction:column;flex:1;min-height:0;"></div><button class="settings-tool-btn settings-tool-btn-green" onclick="openCreateRouteModal()" style="width:100%;flex-shrink:0;">➕ Создать новый маршрут</button></div></div>
-<div id="createRouteModal" onclick="if(event.target===this) toggleM('createRouteModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Новый маршрут</h3><div class="input-wrapper" style="padding:4px;border-radius:14px;"><input type="text" id="newRouteNameInput" placeholder="Название маршрута" style="width:100%;padding:14px;border:none;font-size:17px;outline:none;background:transparent;color:#f5f7fa;font-family:inherit;"></div><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('createRouteModal')" style="flex:1;">Отмена</button><button class="btn-action" onclick="handleCreateNew()" style="flex:1;background:linear-gradient(180deg, rgba(52,199,89,0.9), rgba(40,160,70,0.85));">Создать</button></div></div></div>
+<div id="createRouteModal" onclick="if(event.target===this) toggleM('createRouteModal')"><div class="modal-sheet modal-sheet-compact"><h3 class="modal-title">Новый маршрут</h3><div class="input-wrapper" style="padding:4px;border-radius:14px;"><input type="text" id="newRouteNameInput" placeholder="Название маршрута" style="width:100%;padding:14px;border:none;font-size:17px;outline:none;background:transparent;color:#f5f7fa;font-family:inherit;"></div><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('createRouteModal')" style="flex:1;">Отмена</button><button class="btn-action" onclick="handleCreateNew()" style="flex:1;background:linear-gradient(180deg, rgba(52,199,89,0.9), rgba(40,160,70,0.85));">Создать</button></div></div></div>
 <div id="settingsRouteModal" onclick="if(event.target===this) toggleM('settingsRouteModal')"><div class="modal-sheet" style="gap:0;padding:0;"><div class="modal-header" style="padding:16px 20px;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0;"><h3 id="settingsRouteTitle" style="margin:0;font-size:18px;font-weight:700;">Настройки маршрута</h3><button class="close-circle" onclick="toggleM('settingsRouteModal')">✕</button></div><div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;padding:20px;">
 <div style="font-size:12px;color:#8b8f99;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Имя маршрута</div>
 <div class="input-wrapper" style="padding:3px;border-radius:12px;margin-bottom:8px;"><input type="text" id="routeDisplayName" placeholder="Введите имя маршрута" style="width:100%;padding:10px;border:none;font-size:16px;outline:none;background:transparent;color:#f5f7fa;font-family:inherit;"></div>
@@ -63,9 +61,9 @@
 <button class="btn-action" onclick="shareRouteFromSettings();">🔗 Скопировать ссылку</button>
 <button class="btn-action" onclick="confirmDeleteRoute();" style="background:rgba(255,80,80,0.8);">🗑️ Удалить маршрут</button>
 </div></div></div>
-<div id="confirmDeleteModal" onclick="if(event.target===this) toggleM('confirmDeleteModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Удалить маршрут?</h3><p id="confirmDeleteText" style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;"></p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeleteModal')">Отмена</button><button class="btn-action" onclick="executeDeleteRoute()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
-<div id="confirmDeletePointModal" onclick="if(event.target===this) toggleM('confirmDeletePointModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Удалить точку?</h3><p style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;">Вы уверены, что хотите удалить эту точку?</p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeletePointModal')">Отмена</button><button class="btn-action" onclick="executeDeletePoint()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
-<div id="shareModal" onclick="if(event.target===this) toggleM('shareModal')"><div class="modal-sheet" style="gap:16px;padding:24px;max-width:400px;margin:auto;"><h3 style="margin:0;font-size:20px;font-weight:700;text-align:center;">Поделиться маршрутом</h3><p style="margin:0;font-size:14px;color:rgba(255,255,255,0.6);text-align:center;">Выберите платформу для ссылки</p><button class="btn-action" onclick="copyShareLink('vk')">VK</button><button class="btn-action" onclick="copyShareLink('tg')">Telegram</button><button class="btn-action" onclick="toggleM('shareModal')">Отмена</button></div></div>
+<div id="confirmDeleteModal" onclick="if(event.target===this) toggleM('confirmDeleteModal')"><div class="modal-sheet modal-sheet-compact"><h3 class="modal-title">Удалить маршрут?</h3><p id="confirmDeleteText" style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;"></p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeleteModal')">Отмена</button><button class="btn-action" onclick="executeDeleteRoute()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
+<div id="confirmDeletePointModal" onclick="if(event.target===this) toggleM('confirmDeletePointModal')"><div class="modal-sheet modal-sheet-compact"><h3 class="modal-title">Удалить точку?</h3><p style="margin:0;font-size:16px;color:rgba(255,255,255,0.7);text-align:center;">Вы уверены, что хотите удалить эту точку?</p><div style="display:flex;gap:12px;"><button class="btn-action" onclick="toggleM('confirmDeletePointModal')">Отмена</button><button class="btn-action" onclick="executeDeletePoint()" style="background:rgba(255,80,80,0.8);">Удалить</button></div></div></div>
+<div id="shareModal" onclick="if(event.target===this) toggleM('shareModal')"><div class="modal-sheet modal-sheet-compact"><h3 class="modal-title">Поделиться маршрутом</h3><p style="margin:0;font-size:14px;color:rgba(255,255,255,0.6);text-align:center;">Выберите платформу для ссылки</p><button class="btn-action" onclick="copyShareLink('vk')">VK</button><button class="btn-action" onclick="copyShareLink('tg')">Telegram</button><button class="btn-action" onclick="toggleM('shareModal')">Отмена</button></div></div>
 
 <script>
 (function (global) {
@@ -218,11 +216,9 @@ const clearRouteObjects = () => {
     points = [];
     activePoint = null;
 };
-const updateHistoryButtons = () => { return; };
 const seedHistory = () => {
     historyStack = [serializePoints()];
     historyIndex = 0;
-    updateHistoryButtons();
 };
 const pushHistorySnapshot = () => {
     const snap = serializePoints();
@@ -230,7 +226,6 @@ const pushHistorySnapshot = () => {
     historyStack = historyStack.slice(0, historyIndex + 1);
     historyStack.push(snap);
     historyIndex = historyStack.length - 1;
-    updateHistoryButtons();
 };
 const updateSaveState = () => {
     $('floatingSave').style.display = 'none';
@@ -271,7 +266,7 @@ function toggleLayer() {
     map.setType(currentLayerType);
     const btn = $('layerSwitchBtn');
     if (btn) {
-        btn.querySelector('.btn-icon').textContent = currentLayerType === 'yandex#satellite' ? '🗺️' : '🛰️';
+        btn.textContent = currentLayerType === 'yandex#satellite' ? '🗺️' : '🛰️';
     }
 }
 
@@ -571,48 +566,7 @@ const loadRoute = async (routeName) => {
     }
 };
 
-const renameActiveRoute = async () => {
-    if (!curRoute) { showToast('Выберите маршрут', 'error'); return; }
-    const currentName = curRoute;
-    const nextNameRaw = prompt('Новое имя маршрута', currentName);
-    if (nextNameRaw === null) return;
-    const nextName = nextNameRaw.replace(/\s/g, '_');
-    if (!nextName) { showToast('Введите имя маршрута', 'error'); return; }
-    if (nextName === curRoute) return;
-    
-    try {
-        // Получаем данные текущего маршрута
-        const getResult = await callYcFunction('get', { m: curRoute });
-        if (getResult.error) { showToast('Ошибка загрузки данных', 'error'); return; }
-        
-        // Сохраняем с новым именем
-        const content = getResult.data || [];
-        await callYcFunction('save', { m: nextName }, { data: content });
-        
-        // Удаляем старый
-        await callYcFunction('delete', { m: curRoute });
-        
-        curRoute = nextName;
-        updateVisibility();
-        refreshFileList();
-        showToast('Маршрут переименован', 'success');
-    } catch (e) {
-        
-        showToast('Ошибка переименования', 'error');
-    }
-};
-
-const deleteActiveRoute = async () => {
-    if (!curRoute) return;
-    settingsRouteName = curRoute;
-    confirmDeleteRoute();
-};
 let _shareRouteName = null;
-const shareActiveRoute = () => {
-    if(!curRoute) return;
-    _shareRouteName = curRoute;
-    toggleM('shareModal');
-};
 
 let settingsRouteName = null;
 let currentRouteMeta = { name: '', description: '', visible: false, category: '' };
@@ -736,29 +690,7 @@ const openInNavigator = () => {
     const userId = window.USER_ID ;
     window.location.href = `navigator.html#m=${userId}-${routeKey}`;
 };
-const launchNavigatorWithCurrentRoute = () => { 
-    if(!curRoute) return; 
-    const userId = window.USER_ID ;
-    window.location.href = `https://vk.com/app54507759#m=${userId}-${curRoute}`; 
-};
-const saveRouteLocally = () => {
-    if(!curRoute) { showToast('Выберите маршрут', 'error'); return; }
-    const data = points.map(p => ({ id: p.id, color: p.color, pts: p.pts, cmd: p.cmd, comm: p.comm }));
-    const jsonStr = formatJsonWithPts(data);
-    const filename = `${window.USER_ID }-${curRoute}.json`;
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast(`Сохранено: ${filename}`, 'success');
-};
 const openSettingsModal = () => { refreshFileList(); toggleM('settingsModal'); };
-const onSettingsRouteSelect = async (e) => { const val = e.target.value || ''; if (!val || val === curRoute) return; await loadRoute(val); };
 const toggleM = id => { const m = $(id); m.style.display = (m.style.display === 'none' || !m.style.display) ? 'flex' : 'none'; };
 const closeD = () => { document.querySelectorAll('.color-dropdown').forEach(dr => dr.style.display = 'none'); $('dropdownOverlay').style.display = 'none'; };
 const toggleD = id => { const d = $(id), vis = d.style.display === 'flex'; closeD(); if(!vis) { d.style.display = 'flex'; $('dropdownOverlay').style.display = 'block'; } };
@@ -1089,12 +1021,7 @@ window.saveGist = saveGist;
 window.closeD = closeD;
 window.toggleM = toggleM;
 window.handleModalSave = handleModalSave;
-window.renameActiveRoute = renameActiveRoute;
-window.shareActiveRoute = shareActiveRoute;
-window.deleteActiveRoute = deleteActiveRoute;
-window.launchNavigatorWithCurrentRoute = launchNavigatorWithCurrentRoute;
 window.openInNavigator = openInNavigator;
-window.saveRouteLocally = saveRouteLocally;
 window.handleCreateNew = handleCreateNew;
 window.openCreateRouteModal = openCreateRouteModal;
 window.openRouteSettings = openRouteSettings;
