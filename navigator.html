@@ -611,6 +611,9 @@ ymaps.ready(() => {
     initGeolocation();
 
     $('locateBtn').addEventListener('click', toggleAutoCenter);
+    $('commentBlock').addEventListener('click', () => {
+        $('commentBlock').classList.remove('visible');
+    });
     $('closeCommentBtn').addEventListener('click', e => {
         e.stopPropagation();
         $('commentBlock').classList.remove('visible');

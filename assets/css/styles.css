@@ -385,7 +385,7 @@ html, body {
 
 #selectBtn {
     padding: 0 12px;
-    height: 44px;
+    height: 52px;
     border-radius: var(--radius-sm);
     border: 1px solid rgba(48, 209, 88, 0.5);
     background: var(--glass-bg);
