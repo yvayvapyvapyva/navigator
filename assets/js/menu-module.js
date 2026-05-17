@@ -94,7 +94,7 @@ const MenuModule = {
                                 this.hide();
                                 this.loadRouteByName(name, id);
                             } else if (id) {
-                                this.currentRoute = `${id}-`;
+                                this.currentRoute = id;
                             }
                         }
                     })
@@ -115,7 +115,7 @@ const MenuModule = {
                         this.hide();
                         this.loadRouteByName(name, id);
                     } else if (id) {
-                        this.currentRoute = `${id}-`;
+                        this.currentRoute = id;
                     }
                 }
             } catch (e) {
@@ -209,7 +209,7 @@ const MenuModule = {
         let filterId = null;
         if (this.currentRoute) {
             const dashIdx = this.currentRoute.indexOf('-');
-            if (dashIdx > 0) filterId = this.currentRoute.substring(0, dashIdx);
+            filterId = dashIdx > 0 ? this.currentRoute.substring(0, dashIdx) : this.currentRoute;
         }
 
         const container = document.getElementById('routesListContainer');
@@ -264,7 +264,7 @@ const MenuModule = {
         let filterId = null;
         if (this.currentRoute) {
             const dashIdx = this.currentRoute.indexOf('-');
-            if (dashIdx > 0) filterId = this.currentRoute.substring(0, dashIdx);
+            filterId = dashIdx > 0 ? this.currentRoute.substring(0, dashIdx) : this.currentRoute;
         }
         if (filterId) {
             routes = routes.filter(r => String(r.id) === filterId);
@@ -490,7 +490,7 @@ const MenuModule = {
 
         // Только ID, без названия — фильтруем список, не загружаем маршрут
         if (!name) {
-            this.currentRoute = `${id}-`;
+            this.currentRoute = id;
             return;
         }
 
