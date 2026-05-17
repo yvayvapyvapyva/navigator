@@ -93,6 +93,8 @@ const MenuModule = {
                                 this.isLoaded = true;
                                 this.hide();
                                 this.loadRouteByName(name, id);
+                            } else if (id) {
+                                this.currentRoute = `${id}-`;
                             }
                         }
                     })
@@ -112,6 +114,8 @@ const MenuModule = {
                         this.isLoaded = true;
                         this.hide();
                         this.loadRouteByName(name, id);
+                    } else if (id) {
+                        this.currentRoute = `${id}-`;
                     }
                 }
             } catch (e) {
