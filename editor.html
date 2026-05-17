@@ -22,13 +22,14 @@
     <button id="layerSwitchBtn" class="circle-btn" onclick="toggleLayer()" style="visibility:hidden">
         <svg viewBox="0 0 24 24"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
     </button>
-    <button id="listPointsBtn" onclick="openPointsOrderModal()" style="visibility:hidden">
-        <span id="routeLabelText">Маршрут</span>
+    <button id="listPointsBtn" class="circle-btn" onclick="openPointsOrderModal()" style="visibility:hidden">
+        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
     </button>
-    <button id="settingsBtn" class="btn-top btn-icon-only" onclick="openSettingsModal()">
-        <span class="btn-icon">⚙️</span>
+    <button id="settingsBtn" onclick="openSettingsModal()">
+        Маршруты
     </button>
 </div>
+<div id="routeNameDisplay"></div>
 <div class="bottom-center-controls" id="bottomControls">
     <button id="addMarkerBtn" class="btn-add-main" onclick="handleAddBtnClick()" style="visibility:hidden">
         <span id="addText">Добавить новую точку</span>
@@ -473,11 +474,14 @@ const updateVisibility = () => {
     updateGpsBtnVisibility();
     if(curRoute) {
         if ($('fileActions')) $('fileActions').style.display = 'block';
-        $('routeLabelText').textContent = currentRouteMeta.name || curRoute;
+        const label = currentRouteMeta.name || curRoute;
+        const rnd = $('routeNameDisplay');
+        if (rnd) { rnd.textContent = label; rnd.style.display = 'block'; }
     }
     else {
         if ($('fileActions')) $('fileActions').style.display = 'none';
-        $('routeLabelText').textContent = 'Маршрут';
+        const rnd = $('routeNameDisplay');
+        if (rnd) rnd.style.display = 'none';
     }
     renderSettingsFileList();
     updateSaveState();
@@ -665,7 +669,8 @@ const saveRouteMeta = async () => {
         currentRouteMeta = { name, description, visible, category };
         
         if (curRoute === settingsRouteName || curRoute === result.new_m) {
-            $('routeLabelText').textContent = name;
+            const rnd = $('routeNameDisplay');
+            if (rnd) { rnd.textContent = name; rnd.style.display = 'block'; }
         }
         
         showToast('Метаданные сохранены', 'success');
