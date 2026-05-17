@@ -398,7 +398,7 @@ const handleInitialAuth = async () => {
     await refreshFileList();
     const userId = window.USER_ID ;
     const routeCount = settingsRouteFiles.length;
-    $('settingsTitle').textContent = `${userId} - маршрутов:${routeCount}`;
+    $('settingsTitle').textContent = `${window.USER_NAME || userId} - маршрутов:${routeCount}`;
     toggleM('settingsModal');
 };
 
@@ -455,7 +455,7 @@ const renderSettingsFileList = () => {
         });
     }
     const userId = window.USER_ID ;
-    $('settingsTitle').textContent = `${userId} - маршрутов:${settingsRouteFiles.length}`;
+    $('settingsTitle').textContent = `${window.USER_NAME || userId} - маршрутов:${settingsRouteFiles.length}`;
 };
 
 const updateVisibility = () => {
