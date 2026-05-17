@@ -399,7 +399,6 @@ const handleInitialAuth = async () => {
     const userId = window.USER_ID ;
     const routeCount = settingsRouteFiles.length;
     $('settingsTitle').textContent = `${window.USER_NAME || userId} - маршрутов:${routeCount}`;
-    toggleM('settingsModal');
 };
 
 const refreshFileList = async () => {
