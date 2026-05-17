@@ -404,8 +404,8 @@ html, body {
 }
 
 .nav-arrow-btn {
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
     border-radius: var(--radius-sm);
     background: var(--glass-bg);
     border: 1px solid rgba(48, 209, 88, 0.5);
@@ -421,8 +421,8 @@ html, body {
 
 .nav-arrow-btn svg {
     fill: #fff;
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
 }
 
 .nav-arrow-btn:active {
